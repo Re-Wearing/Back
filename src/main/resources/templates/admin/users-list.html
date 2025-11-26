@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원 목록 - 관리자 페이지</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: #333;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .action-link {
+            color: #dc3545;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .action-link:hover {
+            background-color: #fee;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 16px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .back-btn:hover {
+            background: #555;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>회원 관리</h1>
+            <p>가입 회원 목록 및 관리</p>
+        </div>
+
+        <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+        <div class="card">
+            <h2>가입 회원 목록</h2>
+
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>이름</th>
+                    <th>아이디</th>
+                    <th>이메일</th>
+                    <th>전화번호</th>
+                    <th>주소</th>
+                    <th>역할</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.id}">1</td>
+                    <td th:text="${user.name}">홍길동</td>
+                    <td th:text="${user.username}">hong123</td>
+                    <td th:text="${user.email}">hong@example.com</td>
+                    <td th:text="${user.phone}">01012345678</td>
+                    <td th:text="${user.address ?: '-'}">-</td>
+                    <td>
+                        <span class="role-badge" th:each="role : ${user.roles}" th:text="${role}">ROLE_USER</span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/admin/users/delete/' + ${user.id}}"
+                           onclick="return confirm('정말 이 사용자를 삭제하시겠습니까?')"
+                           class="action-link">삭제</a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(users)}">
+                    <td colspan="8" class="empty-msg">등록된 회원이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/admin" class="back-btn">← 관리자 홈으로</a>
+    </div>
+</body>
+</html>
