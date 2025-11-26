@@ -36,9 +36,11 @@ public class SecurityConfig {
                         .requestMatchers("/", "/main", "/login", "/signup",
                                 "/css/**", "/js/**", "/images/**", "/fragments/**", "/uploads/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/faq", "/faq/**").permitAll()
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/donations/apply", "/donations").hasRole("USER")
                         .requestMatchers("/posts/requests", "/posts/requests/**").hasRole("ORGAN")
+                        .requestMatchers("/notifications/**").authenticated()
                         .requestMatchers("/mypage/**").authenticated()
                         .anyRequest().authenticated()
                 )

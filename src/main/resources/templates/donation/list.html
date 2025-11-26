@@ -175,6 +175,18 @@
                 <div th:if="${donation.imagePath != null}" class="donation-item-image">
                     <img th:src="@{'/uploads/' + ${donation.imagePath}}" alt="기부 이미지"/>
                 </div>
+
+                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <a th:if="${donation.delivery != null}" 
+                       th:href="@{/deliveries/{id}(id=${donation.delivery.id})}" 
+                       style="padding: 8px 16px; background: var(--ok); color: #fff; text-decoration: none; border-radius: 8px; font-size: 12px; font-weight: 600;">
+                        배송 정보 보기
+                    </a>
+                    <span th:if="${donation.delivery == null && donation.status == T(com.rewear.common.enums.DonationStatus).MATCHED}" 
+                          style="padding: 8px 16px; background: var(--bd); color: var(--sub); border-radius: 8px; font-size: 12px;">
+                        배송 정보 대기 중
+                    </span>
+                </div>
             </div>
         </div>
 

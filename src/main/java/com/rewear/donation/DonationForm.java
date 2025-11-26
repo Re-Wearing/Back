@@ -13,7 +13,7 @@ public class DonationForm {
     @NotNull(message = "기부 방법을 선택해주세요.")
     private DonationMethod donationMethod;
 
-    @NotNull(message = "기관을 선택해주세요.")
+    // 기관 선택은 선택 사항 (null 가능)
     private Long organId;
 
     @NotNull(message = "배송 방법을 선택해주세요.")
