@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>기부 물품 목록 | RE-WEAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bd: #e5e7eb;
+            --txt: #111827;
+            --sub: #6b7280;
+            --ok: #065f46;
+            --warn: #b91c1c;
+            --bg: #f7f7fb;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--txt);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+        .wrap {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--bd);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px;
+        }
+        .success-msg {
+            padding: 12px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            color: #065f46;
+            margin-bottom: 20px;
+        }
+        .error-msg {
+            padding: 12px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: var(--warn);
+            margin-bottom: 20px;
+        }
+        .donation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .donation-card {
+            border: 1px solid var(--bd);
+            border-radius: 12px;
+            padding: 16px;
+            background: #fff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .donation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .donation-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid var(--bd);
+        }
+        .donation-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .donation-info {
+            font-size: 14px;
+            color: var(--sub);
+            margin-bottom: 8px;
+        }
+        .donation-info strong {
+            color: var(--txt);
+        }
+        .donation-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: var(--ok);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #047857;
+        }
+        .btn-secondary {
+            background: var(--bd);
+            color: var(--txt);
+        }
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--sub);
+        }
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+    <div class="card">
+        <h1>기부 물품 목록</h1>
+
+        <div class="nav-links">
+            <a th:href="@{/organ/donations}" class="btn btn-primary">신청 가능한 기부</a>
+            <a th:href="@{/organ/matched}" class="btn btn-secondary">내가 매칭한 기부</a>
+        </div>
+
+        <div th:if="${success}" class="success-msg" th:text="${success}"></div>
+        <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+
+        <div th:if="${donations == null || donations.isEmpty()}" class="empty-state">
+            <p>현재 신청 가능한 기부 물품이 없습니다.</p>
+        </div>
+
+        <div th:if="${donations != null && !donations.isEmpty()}" class="donation-grid">
+            <div th:each="donation : ${donations}" class="donation-card">
+                <img th:if="${donation.imagePath != null}" 
+                     th:src="@{'/uploads/' + ${donation.imagePath}}" 
+                     alt="기부 이미지" 
+                     class="donation-image"/>
+                <div th:unless="${donation.imagePath != null}" 
+                     style="width: 100%; height: 200px; background: var(--bd); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--sub); margin-bottom: 12px;">
+                    이미지 없음
+                </div>
+                
+                <div class="donation-title" th:text="${donation.clothType.name()}">옷의 종류</div>
+                
+                <div th:if="${donation.organ != null}" style="margin-bottom: 8px; padding: 6px 12px; background: #fef3c7; border-radius: 6px; font-size: 12px; color: #92400e;">
+                    <strong>현재 매칭:</strong> <span th:text="${donation.organ.orgName}"></span>
+                </div>
+                
+                <div class="donation-info">
+                    <div>
+                        <strong>기부 방법:</strong>
+                        <span th:text="${donation.donationMethod == T(com.rewear.common.enums.DonationMethod).DIRECT_MATCH ? '직접 매칭' : '간접 매칭'}"></span>
+                    </div>
+                    <div>
+                        <strong>배송 방법:</strong>
+                        <span th:text="${donation.deliveryMethod == T(com.rewear.common.enums.DeliveryMethod).DIRECT_DELIVERY ? '직접 배송' : '택배 배송'}"></span>
+                    </div>
+                    <div>
+                        <strong>익명:</strong>
+                        <span th:text="${donation.isAnonymous ? '익명' : '비익명'}"></span>
+                    </div>
+                    <div>
+                        <strong>신청일:</strong>
+                        <span th:text="${#temporals.format(donation.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+                    </div>
+                    <div>
+                        <strong>상태:</strong>
+                        <span th:text="${donation.status.name()}"></span>
+                    </div>
+                </div>
+
+                <div class="donation-actions">
+                    <a th:href="@{/organ/donations/{id}(id=${donation.id})}" class="btn btn-primary">상세보기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

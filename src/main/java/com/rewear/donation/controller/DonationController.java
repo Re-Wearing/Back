@@ -1,5 +1,6 @@
 package com.rewear.donation.controller;
 
+import com.rewear.delivery.service.DeliveryService;
 import com.rewear.donation.DonationForm;
 import com.rewear.donation.entity.Donation;
 import com.rewear.donation.service.DonationService;
@@ -29,6 +30,7 @@ public class DonationController {
     private final DonationService donationService;
     private final OrganRepository organRepository;
     private final UserServiceImpl userService;
+    private final DeliveryService deliveryService;
 
     @GetMapping("/apply")
     @PreAuthorize("hasRole('USER')")
@@ -72,6 +74,14 @@ public class DonationController {
         User user = userService.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
         List<Donation> donations = donationService.getDonationsByUser(user);
+        
+        // 각 기부에 대한 배송 정보 로드
+        donations.forEach(donation -> {
+            deliveryService.getDeliveryByDonation(donation).ifPresent(delivery -> {
+                donation.setDelivery(delivery);
+            });
+        });
+        
         model.addAttribute("donations", donations);
         return "donation/list";
     }
