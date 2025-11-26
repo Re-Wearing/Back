@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav th:fragment="mainNav">
+    <style>
+        .nav{display:flex;gap:12px;align-items:center;justify-content:space-between;
+            background:#111827;color:#fff;padding:10px 14px;border-radius:12px;margin-bottom:12px}
+        .nav a{color:#fff;text-decoration:none;padding:6px 8px;border-radius:8px}
+        .nav a:hover{background:rgba(255,255,255,.12)}
+        .left,.right{display:flex;gap:8px;align-items:center}
+        .role-badge{font-size:12px;background:#10b981;color:#052e29;padding:4px 8px;border-radius:999px}
+        .btn-logout{background:transparent;border:none;color:#fff;cursor:pointer;padding:6px 8px;border-radius:8px}
+        .btn-logout:hover{background:rgba(255,255,255,.12)}
+    </style>
+    <div class="nav">
+        <div class="left">
+            <a th:href="@{/main}"><strong>RE-WEAR</strong></a>
+            <a th:href="@{/main}">메인</a>
+
+            <span sec:authorize="hasRole('ADMIN')" class="left">
+                <a th:href="@{/admin}">관리자 대시보드</a>
+                <a th:href="@{/admin/orgs/pending}">기관 계정 승인</a>
+            </span>
+        </div>
+
+        <div class="right">
+            <span sec:authorize="isAnonymous()">
+                <a th:href="@{/login}">로그인</a>
+                <a th:href="@{/signup}">회원가입</a>
+            </span>
+
+            <span sec:authorize="isAuthenticated()">
+                <span class="role-badge" th:text="${#authentication?.name}">user</span>
+                <form th:action="@{/logout}" method="post" style="display:inline">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button class="btn-logout" type="submit">로그아웃</button>
+                </form>
+            </span>
+        </div>
+    </div>
+</nav>
+</body>
+</html>
