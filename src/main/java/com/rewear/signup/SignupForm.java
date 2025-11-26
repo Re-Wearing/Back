@@ -43,14 +43,17 @@ public class SignupForm {
     @NotNull
     private RegistrationType registrationType = RegistrationType.USER;
 
-    // 기관 회원 전용
-    @Pattern(regexp = "^[0-9]{10}$", message = "사업자번호는 숫자 10자리여야 합니다.")
+    // 기관 회원 전용 (일반 회원일 때는 검증하지 않음 - 컨트롤러에서 처리)
     private String businessNo; // 숫자만(예: 1234567890)
     
-    @Size(max = 100, message = "기관명은 최대 100자까지 입력 가능합니다.")
     private String orgName;    // 기관명
 
     public boolean isOrgan() {
         return registrationType == RegistrationType.ORGAN;
+    }
+
+    // Thymeleaf에서 *{organ}으로 접근하기 위한 getter
+    public boolean getOrgan() {
+        return isOrgan();
     }
 }

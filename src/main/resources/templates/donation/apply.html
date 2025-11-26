@@ -160,15 +160,16 @@
                 <small class="help warn" th:if="${#fields.hasErrors('donationMethod')}" th:errors="*{donationMethod}"></small>
             </div>
 
-            <!-- 기관 선택 -->
+            <!-- 기관 선택 (선택 사항 - 원하는 기관이 있으면 선택, 없으면 Organ이 선택) -->
             <div class="row">
-                <label>기관 선택 <span class="required">*</span> 필수</label>
-                <select th:field="*{organId}" required>
-                    <option value="">선택해주세요</option>
+                <label>희망 기관 선택 <span class="muted">(선택 사항)</span></label>
+                <select th:field="*{organId}">
+                    <option value="">선택 안함 (모든 기관이 볼 수 있음)</option>
                     <option th:each="organ : ${organs}"
                             th:value="${organ.id}"
                             th:text="${organ.orgName}"></option>
                 </select>
+                <small class="help">특정 기관을 선택하면 해당 기관에 우선적으로 표시됩니다. 선택하지 않으면 모든 기관이 볼 수 있습니다.</small>
                 <small class="help warn" th:if="${#fields.hasErrors('organId')}" th:errors="*{organId}"></small>
             </div>
 

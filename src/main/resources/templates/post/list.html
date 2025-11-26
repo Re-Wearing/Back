@@ -191,13 +191,16 @@
 
         <div class="actions">
             <div></div>
-            <a th:if="${postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW || postType == null}"
-               th:href="@{'/posts/new?type=' + ${postType != null ? postType.name() : 'DONATION_REVIEW'}}"
-               class="btn">게시물 작성</a>
-            <a th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" 
-               sec:authorize="hasRole('ORGAN')"
-               th:href="@{'/posts/new?type=' + ${postType.name()}}"
-               class="btn">게시물 작성</a>
+            <div style="display: flex; gap: 8px;">
+                <a th:if="${postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW || postType == null}"
+                   sec:authorize="isAuthenticated()"
+                   th:href="@{'/posts/new?type=' + ${postType != null ? postType.name() : 'DONATION_REVIEW'}}"
+                   class="btn">기부 후기 작성</a>
+                <a th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" 
+                   sec:authorize="hasRole('ORGAN')"
+                   th:href="@{'/posts/new?type=' + ${postType.name()}}"
+                   class="btn">기관 요청 작성</a>
+            </div>
         </div>
 
         <div th:if="${posts == null || #lists.isEmpty(posts)}" class="empty-state">

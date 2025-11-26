@@ -100,15 +100,22 @@ public class PostController {
             @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirectAttributes) {
         
+        // 로그인 체크
+        if (principal == null) {
+            redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
+            return "redirect:/login";
+        }
+        
         try {
             PostType postType = PostType.valueOf(type.toUpperCase());
             
             // 기관 요청 게시물 작성은 기관만 가능
             if (postType == PostType.ORGAN_REQUEST) {
-                if (principal == null || !principal.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_ORGAN"))) {
+                boolean hasOrganRole = principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ORGAN"));
+                if (!hasOrganRole) {
                     redirectAttributes.addFlashAttribute("error", "기관 요청 게시물은 기관 회원만 작성할 수 있습니다.");
-                    return "redirect:/posts/reviews";
+                    return "redirect:/posts/requests";
                 }
             }
             
@@ -130,12 +137,19 @@ public class PostController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
+        // 로그인 체크
+        if (principal == null) {
+            redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
+            return "redirect:/login";
+        }
+
         // 기관 요청 게시물 작성은 기관만 가능
         if (form.getPostType() == PostType.ORGAN_REQUEST) {
-            if (principal == null || !principal.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ORGAN"))) {
+            boolean hasOrganRole = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ORGAN"));
+            if (!hasOrganRole) {
                 redirectAttributes.addFlashAttribute("error", "기관 요청 게시물은 기관 회원만 작성할 수 있습니다.");
-                return "redirect:/posts/reviews";
+                return "redirect:/posts/requests";
             }
         }
 
@@ -147,9 +161,14 @@ public class PostController {
         User author = userService.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
-        postService.createPost(author, form, form.getImage());
-
-        redirectAttributes.addFlashAttribute("success", "게시물이 작성되었습니다.");
+        try {
+            postService.createPost(author, form, form.getImage());
+            redirectAttributes.addFlashAttribute("success", "게시물이 작성되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            model.addAttribute("postType", form.getPostType());
+            return "post/new";
+        }
 
         if (form.getPostType() == PostType.DONATION_REVIEW) {
             return "redirect:/posts/reviews";
