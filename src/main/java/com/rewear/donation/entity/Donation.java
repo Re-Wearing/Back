@@ -4,6 +4,7 @@ import com.rewear.common.enums.ClothType;
 import com.rewear.common.enums.DeliveryMethod;
 import com.rewear.common.enums.DonationMethod;
 import com.rewear.common.enums.DonationStatus;
+import com.rewear.delivery.entity.Delivery;
 import com.rewear.organ.entity.Organ;
 import com.rewear.user.entity.User;
 import jakarta.persistence.*;
@@ -53,6 +54,9 @@ public class Donation {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private DonationStatus status = DonationStatus.REQUESTED;
+
+    @OneToOne(mappedBy = "donation", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Delivery delivery;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

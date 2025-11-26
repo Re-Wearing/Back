@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ko">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -124,35 +125,22 @@
         <p>지속가능한 패션을 위한 기부 플랫폼</p>
     </div>
 
+    <!-- 네비게이션 배너 - 모든 사용자에게 표시 -->
     <div th:replace="~{fragments/nav :: mainNav}"></div>
 
     <div class="card">
         <div th:if="${error}" class="error-msg" th:text="${error}"></div>
 
-        <div class="welcome-section">
+        <!-- 로그인된 사용자용 환영 메시지 -->
+        <div sec:authorize="isAuthenticated()" class="welcome-section">
             <h2 th:text="'안녕하세요, ' + ${user.name} + '님'">안녕하세요</h2>
             <p class="user-email" th:text="${user.email}">email</p>
         </div>
 
-        <div class="menu-section">
-            <h3>서비스 메뉴</h3>
-            <ul class="menu-list">
-                <li class="menu-item" sec:authorize="hasRole('USER')">
-                    <a th:href="@{/donations}">내 기부 관리</a>
-                </li>
-                <li class="menu-item">
-                    <a th:href="@{/posts/reviews}">기부 후기</a>
-                </li>
-                <li class="menu-item" sec:authorize="hasRole('ORGAN')">
-                    <a th:href="@{/posts/requests}">기관 요청</a>
-                </li>
-                <li class="menu-item" sec:authorize="hasRole('USER')">
-                    <a th:href="@{/donations/apply}">기부 신청</a>
-                </li>
-                <li class="menu-item">
-                    <a th:href="@{/mypage}">마이 페이지</a>
-                </li>
-            </ul>
+        <!-- 비로그인 사용자용 환영 메시지 -->
+        <div sec:authorize="isAnonymous()" class="welcome-section">
+            <h2>RE-WEAR에 오신 것을 환영합니다</h2>
+            <p class="user-email">지속가능한 패션을 위한 기부 플랫폼입니다</p>
         </div>
 
         <p class="description">
