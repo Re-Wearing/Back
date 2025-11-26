@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ 관리 - RE-WEAR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #374151;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .success-msg {
+            padding: 12px 16px;
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            color: #065f46;
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9fafb;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        td {
+            color: #6b7280;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>FAQ 관리</h1>
+        <a th:href="@{/admin/faqs/new}" class="btn btn-primary">새 FAQ 작성</a>
+    </div>
+
+    <div th:if="${success}" class="success-msg" th:text="${success}"></div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>질문</th>
+                <th>카테고리</th>
+                <th>순서</th>
+                <th>상태</th>
+                <th>작성일</th>
+                <th>작업</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="faq : ${faqs}">
+                <td th:text="${faq.id}">1</td>
+                <td>
+                    <strong th:text="${faq.question}">질문</strong>
+                </td>
+                <td th:text="${faq.category != null ? faq.category : '기타'}">카테고리</td>
+                <td th:text="${faq.displayOrder}">0</td>
+                <td>
+                            <span th:classappend="${faq.isActive} ? 'badge badge-active' : 'badge badge-inactive'"
+                                  th:text="${faq.isActive ? '활성' : '비활성'}">활성</span>
+                </td>
+                <td th:text="${#temporals.format(faq.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
+                <td>
+                    <div class="actions">
+                        <a th:href="@{/admin/faqs/{id}/edit(id=${faq.id})}"
+                           class="btn btn-secondary btn-sm">수정</a>
+                        <form th:action="@{/admin/faqs/{id}/toggle(id=${faq.id})}"
+                              method="post" style="display: inline;">
+                            <input type="hidden" th:if="${_csrf != null}"
+                                   th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn btn-secondary btn-sm">
+                                <span th:text="${faq.isActive ? '비활성화' : '활성화'}">비활성화</span>
+                            </button>
+                        </form>
+                        <form th:action="@{/admin/faqs/{id}/delete(id=${faq.id})}"
+                              method="post" style="display: inline;"
+                              onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <input type="hidden" th:if="${_csrf != null}"
+                                   th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn btn-danger btn-sm">삭제</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${faqs == null || faqs.isEmpty()}">
+                <td colspan="7" style="text-align: center; padding: 40px; color: #9ca3af;">
+                    등록된 FAQ가 없습니다.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">대시보드로 돌아가기</a>
+    </div>
+</div>
+</body>
+</html>
