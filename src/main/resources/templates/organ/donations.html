@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>기부 물품 목록 | RE-WEAR</title>
+    <title>매칭된 기부 목록 | RE-WEAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         :root {
@@ -139,18 +139,18 @@
     <div th:replace="~{fragments/nav :: mainNav}"></div>
 
     <div class="card">
-        <h1>기부 물품 목록</h1>
+        <h1>매칭된 기부 목록</h1>
 
         <div class="nav-links">
-            <a th:href="@{/organ/donations}" class="btn btn-primary">신청 가능한 기부</a>
-            <a th:href="@{/organ/matched}" class="btn btn-secondary">내가 매칭한 기부</a>
+            <a th:href="@{/organ/donations}" class="btn btn-primary">매칭된 기부</a>
+            <a th:href="@{/organ/matched}" class="btn btn-secondary">받은 기부</a>
         </div>
 
         <div th:if="${success}" class="success-msg" th:text="${success}"></div>
         <div th:if="${error}" class="error-msg" th:text="${error}"></div>
 
         <div th:if="${donations == null || donations.isEmpty()}" class="empty-state">
-            <p>현재 신청 가능한 기부 물품이 없습니다.</p>
+            <p>현재 매칭된 기부 물품이 없습니다.</p>
         </div>
 
         <div th:if="${donations != null && !donations.isEmpty()}" class="donation-grid">
@@ -195,6 +195,21 @@
 
                 <div class="donation-actions">
                     <a th:href="@{/organ/donations/{id}(id=${donation.id})}" class="btn btn-primary">상세보기</a>
+                    <!-- 간접 매칭이고 REQUESTED 상태이며 해당 기관에 할당된 경우 승인/거부 버튼 표시 -->
+                    <form th:if="${donation.status == T(com.rewear.common.enums.DonationStatus).REQUESTED && donation.donationMethod == T(com.rewear.common.enums.DonationMethod).INDIRECT_MATCH && donation.organ != null}" 
+                          th:action="@{/organ/donations/{id}/approve(id=${donation.id})}" 
+                          method="post" 
+                          style="display:inline;">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('이 기부를 최종 승인하여 완료하시겠습니까?')">승인</button>
+                    </form>
+                    <form th:if="${donation.status == T(com.rewear.common.enums.DonationStatus).REQUESTED && donation.donationMethod == T(com.rewear.common.enums.DonationMethod).INDIRECT_MATCH && donation.organ != null}" 
+                          th:action="@{/organ/donations/{id}/reject(id=${donation.id})}" 
+                          method="post" 
+                          style="display:inline;">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('이 기부를 거부하시겠습니까?')">거부</button>
+                    </form>
                 </div>
             </div>
         </div>
