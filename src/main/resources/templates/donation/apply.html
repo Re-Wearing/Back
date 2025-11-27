@@ -85,9 +85,15 @@
             background: #f9fafb;
         }
         .radio-btn.selected {
-            background: #065f46;
+            background: #1d4ed8;
             color: #fff;
-            border-color: #065f46;
+            border-color: #1d4ed8;
+        }
+        .selection-status {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #4b5563;
+            min-height: 18px;
         }
         input[type="radio"] {
             display: none;
@@ -152,7 +158,7 @@
             <!-- 기부 방법 -->
             <div class="row">
                 <label>기부 방법 <span class="required">*</span> 필수</label>
-                <select th:field="*{donationMethod}" required>
+                <select id="donationMethodSelect" th:field="*{donationMethod}" required>
                     <option value="">선택해주세요</option>
                     <option value="DIRECT_MATCH">직접 매칭</option>
                     <option value="INDIRECT_MATCH">간접 매칭</option>
@@ -163,13 +169,13 @@
             <!-- 기관 선택 (선택 사항 - 원하는 기관이 있으면 선택, 없으면 Organ이 선택) -->
             <div class="row">
                 <label>희망 기관 선택 <span class="muted">(선택 사항)</span></label>
-                <select th:field="*{organId}">
+                <select id="organSelect" th:field="*{organId}">
                     <option value="">선택 안함 (모든 기관이 볼 수 있음)</option>
                     <option th:each="organ : ${organs}"
                             th:value="${organ.id}"
                             th:text="${organ.orgName}"></option>
                 </select>
-                <small class="help">특정 기관을 선택하면 해당 기관에 우선적으로 표시됩니다. 선택하지 않으면 모든 기관이 볼 수 있습니다.</small>
+                <small class="help" id="organHelp">특정 기관을 선택하면 해당 기관에 우선적으로 표시됩니다. 선택하지 않으면 모든 기관이 볼 수 있습니다.</small>
                 <small class="help warn" th:if="${#fields.hasErrors('organId')}" th:errors="*{organId}"></small>
             </div>
 
@@ -247,6 +253,38 @@
             imagePreview.innerHTML = '';
         }
     });
+</script>
+<script>
+    const radioButtons = document.querySelectorAll('.radio-btn');
+    radioButtons.forEach((button) => {
+        const input = button.querySelector('input[type="radio"]');
+        if (input?.checked) {
+            button.classList.add('selected');
+        }
+        input?.addEventListener('change', () => {
+            radioButtons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+        });
+    });
+</script>
+<script>
+    const donationMethodSelect = document.getElementById('donationMethodSelect');
+    const organSelect = document.getElementById('organSelect');
+    const organHelp = document.getElementById('organHelp');
+
+    function updateOrganField() {
+        const isAutomatic = donationMethodSelect.value === 'INDIRECT_MATCH';
+        organSelect.disabled = isAutomatic;
+        if (isAutomatic && organSelect.value !== '') {
+            organSelect.value = '';
+        }
+        organHelp.textContent = isAutomatic
+            ? '자동 매칭을 선택하면 희망 기관을 선택할 수 없습니다.'
+            : '특정 기관을 선택하면 해당 기관에 우선적으로 표시됩니다. 선택하지 않으면 모든 기관이 볼 수 있습니다.';
+    }
+
+    donationMethodSelect.addEventListener('change', updateOrganField);
+    updateOrganField();
 </script>
 </body>
 </html>
