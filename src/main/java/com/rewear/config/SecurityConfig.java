@@ -3,6 +3,7 @@ package com.rewear.config;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -36,12 +37,18 @@ public class SecurityConfig {
                         .requestMatchers("/", "/main", "/login", "/signup",
                                 "/css/**", "/js/**", "/images/**", "/fragments/**", "/uploads/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/faq", "/faq/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/faq", "/faq/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/faq/question").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/posts", "/posts/reviews", "/posts/reviews/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/{postId:\\d+}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/requests", "/posts/requests/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/posts").authenticated()
                         .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/donations/apply", "/donations").hasRole("USER")
-                        .requestMatchers("/posts/requests", "/posts/requests/**").hasRole("ORGAN")
+                        .requestMatchers("/posts/new").authenticated()
+                        .requestMatchers("/posts/*/edit", "/posts/*/delete").authenticated()
                         .requestMatchers("/notifications/**").authenticated()
-                        .requestMatchers("/mypage/**").authenticated()
+                        .requestMatchers("/mypage", "/mypage/**").authenticated()
                         .anyRequest().authenticated()
                 )
 

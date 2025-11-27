@@ -1,6 +1,7 @@
 package com.rewear.notification.service;
 
 import com.rewear.common.enums.NotificationType;
+import com.rewear.common.enums.Role;
 import com.rewear.notification.entity.Notification;
 import com.rewear.notification.repository.NotificationRepository;
 import com.rewear.user.entity.User;
@@ -24,6 +25,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public Notification createNotification(User user, NotificationType type, String title, String message, Long relatedId, String relatedType) {
+        if (user == null || (user.hasRole(Role.ADMIN))) {
+            return null;
+        }
+
         Notification notification = Notification.builder()
                 .user(user)
                 .type(type)

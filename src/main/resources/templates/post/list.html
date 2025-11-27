@@ -185,7 +185,7 @@
                 <a th:href="@{/posts/requests}"
                    class="tab"
                    th:classappend="${postType != null && postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST ? 'active' : ''}">
-                    기관 요청
+                    요청 게시물
                 </a>
             </div>
 
@@ -199,7 +199,7 @@
                 <a th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" 
                    sec:authorize="hasRole('ORGAN')"
                    th:href="@{'/posts/new?type=' + ${postType.name()}}"
-                   class="btn">기관 요청 작성</a>
+                   class="btn">요청 게시물 작성</a>
             </div>
         </div>
 
@@ -213,7 +213,7 @@
                     <h3 class="post-title" th:text="${post.title}">제목</h3>
                     <span class="post-badge"
                           th:classappend="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? 'review' : ''}"
-                          th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '기관 요청'}">
+                          th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '요청 게시물'}">
                         타입
                     </span>
                 </div>
