@@ -151,14 +151,93 @@
     </div>
 
     <div th:if="${success}" class="success-msg" th:text="${success}"></div>
+    <div th:if="${error}" class="success-msg" style="background: #fee2e2; border-color: #ef4444; color: #991b1b;" th:text="${error}"></div>
 
+    <!-- 답변 대기 중인 FAQ -->
+    <div th:if="${pendingFAQs != null && !pendingFAQs.isEmpty()}" style="margin-bottom: 32px;">
+        <h2 style="margin-bottom: 16px; color: #374151;">답변 대기 중인 FAQ</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>질문</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="faq : ${pendingFAQs}">
+                    <td th:text="${faq.id}">1</td>
+                    <td>
+                        <strong th:text="${faq.question}">질문</strong>
+                    </td>
+                    <td th:text="${faq.author != null ? faq.author.name : '알 수 없음'}">작성자</td>
+                    <td th:text="${#temporals.format(faq.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
+                    <td>
+                        <div class="actions">
+                            <a th:href="@{/admin/faqs/{id}/answer(id=${faq.id})}"
+                               class="btn btn-primary btn-sm">답변 작성</a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 답변 작성 완료 (FAQ 등록 대기) -->
+    <div th:if="${answeredFAQs != null && !answeredFAQs.isEmpty()}" style="margin-bottom: 32px;">
+        <h2 style="margin-bottom: 16px; color: #374151;">답변 작성 완료 (FAQ 등록 대기)</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>질문</th>
+                    <th>답변</th>
+                    <th>작성자</th>
+                    <th>답변 작성일</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="faq : ${answeredFAQs}">
+                    <td th:text="${faq.id}">1</td>
+                    <td>
+                        <strong th:text="${faq.question}">질문</strong>
+                    </td>
+                    <td>
+                        <span th:text="${#strings.abbreviate(faq.answer, 50)}">답변 미리보기</span>
+                    </td>
+                    <td th:text="${faq.author != null ? faq.author.name : '알 수 없음'}">작성자</td>
+                    <td th:text="${#temporals.format(faq.updatedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
+                    <td>
+                        <div class="actions">
+                            <form th:action="@{/admin/faqs/{id}/register(id=${faq.id})}"
+                                  method="post" style="display: inline;">
+                                <input type="hidden" th:if="${_csrf != null}"
+                                       th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-primary btn-sm">FAQ에 등록</button>
+                            </form>
+                            <a th:href="@{/admin/faqs/{id}/answer(id=${faq.id})}"
+                               class="btn btn-secondary btn-sm">답변 수정</a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h2 style="margin-bottom: 16px; color: #374151;">전체 FAQ</h2>
     <div class="table-container">
         <table>
             <thead>
             <tr>
                 <th>ID</th>
                 <th>질문</th>
-                <th>카테고리</th>
                 <th>순서</th>
                 <th>상태</th>
                 <th>작성일</th>
@@ -170,16 +249,34 @@
                 <td th:text="${faq.id}">1</td>
                 <td>
                     <strong th:text="${faq.question}">질문</strong>
+                    <div th:if="${faq.answer != null && !faq.answer.isEmpty()}" style="margin-top: 4px; font-size: 12px; color: #6b7280;">
+                        <em>답변: <span th:text="${#strings.abbreviate(faq.answer, 50)}"></span></em>
+                    </div>
+                    <div th:if="${faq.answer == null || faq.answer.isEmpty()}" style="margin-top: 4px; font-size: 12px; color: #ef4444;">
+                        <em>답변 대기 중</em>
+                    </div>
                 </td>
-                <td th:text="${faq.category != null ? faq.category : '기타'}">카테고리</td>
                 <td th:text="${faq.displayOrder}">0</td>
                 <td>
-                            <span th:classappend="${faq.isActive} ? 'badge badge-active' : 'badge badge-inactive'"
-                                  th:text="${faq.isActive ? '활성' : '비활성'}">활성</span>
+                    <span th:classappend="${faq.isActive} ? 'badge badge-active' : 'badge badge-inactive'"
+                          th:text="${faq.isActive ? '활성' : '비활성'}">활성</span>
+                    <div th:if="${faq.author != null}" style="margin-top: 4px; font-size: 11px; color: #6b7280;">
+                        작성자: <span th:text="${faq.author.name}"></span>
+                    </div>
                 </td>
                 <td th:text="${#temporals.format(faq.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
                 <td>
                     <div class="actions">
+                        <a th:if="${faq.answer == null || faq.answer.isEmpty()}" 
+                           th:href="@{/admin/faqs/{id}/answer(id=${faq.id})}"
+                           class="btn btn-primary btn-sm">답변 작성</a>
+                        <form th:if="${faq.author != null && faq.answer != null && !faq.answer.isEmpty() && !faq.isActive}"
+                              th:action="@{/admin/faqs/{id}/register(id=${faq.id})}"
+                              method="post" style="display: inline;">
+                            <input type="hidden" th:if="${_csrf != null}"
+                                   th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn btn-primary btn-sm">FAQ에 등록</button>
+                        </form>
                         <a th:href="@{/admin/faqs/{id}/edit(id=${faq.id})}"
                            class="btn btn-secondary btn-sm">수정</a>
                         <form th:action="@{/admin/faqs/{id}/toggle(id=${faq.id})}"

@@ -15,6 +15,12 @@ public interface DonationService {
     List<Donation> getAllDonations();
     List<Donation> getDonationsByStatus(DonationStatus status);
     Donation matchDonation(Long donationId, Organ organ);
+    Donation assignDonationToOrgan(Long donationId, Organ organ);
     List<Donation> getMatchedDonationsByOrgan(Organ organ);
     Donation getDonationById(Long donationId);
+    Donation approveDonation(Long donationId);
+    Donation rejectDonation(Long donationId);
+    Donation approveMatch(Long donationId);
+    Donation organApproveDonation(Long donationId, Organ organ);
+    Donation organRejectDonation(Long donationId, Organ organ);
 }
