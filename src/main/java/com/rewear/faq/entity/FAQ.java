@@ -1,6 +1,5 @@
 package com.rewear.faq.entity;
 
-import com.rewear.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,12 +20,11 @@ public class FAQ {
     @Column(name = "question", nullable = false, length = 500)
     private String question;
 
-    @Column(name = "answer", columnDefinition = "TEXT")
-    private String answer; // nullable: 사용자 질문은 answer가 null
+    @Column(name = "answer", nullable = false, columnDefinition = "TEXT")
+    private String answer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User author; // 질문 작성자 (null이면 관리자가 작성한 FAQ)
+    @Column(name = "category", length = 50)
+    private String category; // 예: "기부", "회원가입", "기관", "기타"
 
     @Column(name = "display_order", nullable = false)
     @Builder.Default
