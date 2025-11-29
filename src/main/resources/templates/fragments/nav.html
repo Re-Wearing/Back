@@ -43,7 +43,7 @@
                     </span>
                 </div>
             </div>
-            <a th:href="@{/donations/apply}" sec:authorize="hasRole('USER') and !hasRole('ORGAN')">기부하기</a>
+            <a th:href="@{/donations/apply/item}" sec:authorize="hasRole('USER') and !hasRole('ORGAN')">기부하기</a>
             <a th:href="@{/mypage}" sec:authorize="isAuthenticated()">마이 페이지</a>
 
             <!-- Organ 계정 전용 메뉴 -->

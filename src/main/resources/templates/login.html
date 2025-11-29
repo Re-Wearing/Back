@@ -145,7 +145,7 @@
         <div th:if="${msg}" class="message info" th:text="${msg}"></div>
         <div th:if="${param.registered}" class="message success">회원가입이 완료되었습니다. 로그인해 주세요.</div>
         <div th:if="${param.logout}" class="message success">정상적으로 로그아웃되었습니다.</div>
-        <div th:if="${param.error}" class="message error">아이디 또는 비밀번호가 올바르지 않습니다.</div>
+        <div th:if="${param.error}" class="message error" th:text="${param.error}"></div>
 
         <form th:action="@{/login}" method="post" autocomplete="on">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
