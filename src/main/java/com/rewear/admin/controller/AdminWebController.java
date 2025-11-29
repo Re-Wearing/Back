@@ -2,7 +2,7 @@ package com.rewear.admin.controller;
 
 import com.rewear.admin.service.AdminServiceImpl;
 import com.rewear.common.enums.DeliveryStatus;
-import com.rewear.common.enums.DonationMethod;
+import com.rewear.common.enums.MatchType;
 import com.rewear.common.enums.DonationStatus;
 import com.rewear.common.enums.OrganStatus;
 import com.rewear.delivery.DeliveryForm;
@@ -329,7 +329,7 @@ public class AdminWebController {
     // 매칭된 기부 목록 (배송 정보 등록 가능한 기부)
     @GetMapping("/donations/matched")
     public String matchedDonations(Model model) {
-        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.MATCHED);
+        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS);
         model.addAttribute("donations", donations);
         return "admin/donations-matched";
     }
@@ -346,8 +346,8 @@ public class AdminWebController {
 
     @GetMapping("/donations/auto-match")
     public String autoMatchDonations(Model model) {
-        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.REQUESTED).stream()
-                .filter(d -> d.getDonationMethod() == DonationMethod.INDIRECT_MATCH && d.getOrgan() == null)
+        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
+                .filter(d -> d.getMatchType() == MatchType.INDIRECT && d.getOrgan() == null)
                 .toList();
         List<Organ> organs = organService.findByStatus(OrganStatus.APPROVED);
         model.addAttribute("donations", donations);
@@ -367,7 +367,7 @@ public class AdminWebController {
 
         try {
             Donation donation = donationService.getDonationById(donationId);
-            if (donation.getDonationMethod() != DonationMethod.INDIRECT_MATCH) {
+            if (donation.getMatchType() != MatchType.INDIRECT) {
                 throw new IllegalArgumentException("간접 매칭 요청이 아닌 기부입니다.");
             }
             Organ organ = organService.findById(organId)
@@ -388,7 +388,8 @@ public class AdminWebController {
             @PathVariable Long donationId,
             RedirectAttributes redirectAttributes) {
         try {
-            donationService.approveMatch(donationId);
+            // approveMatch는 approveDonation으로 통합됨
+            donationService.approveDonation(donationId);
             redirectAttributes.addFlashAttribute("success", "기부가 승인되어 기관에게 표시되었습니다. 기관에서 최종 승인 여부를 결정합니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -413,9 +414,10 @@ public class AdminWebController {
     @PostMapping("/donations/{donationId}/reject")
     public String rejectDonation(
             @PathVariable Long donationId,
+            @RequestParam(value = "reason", required = false, defaultValue = "관리자에 의해 반려되었습니다.") String reason,
             RedirectAttributes redirectAttributes) {
         try {
-            donationService.rejectDonation(donationId);
+            donationService.rejectDonation(donationId, reason);
             redirectAttributes.addFlashAttribute("success", "기부가 반려되었습니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
