@@ -204,12 +204,13 @@
                 <div th:each="donation : ${donations}" class="donation-item">
                     <div class="donation-header">
                         <div class="donation-title">
-                            <span th:text="${donation.clothType.name()}">옷의 종류</span>
+                            <span th:if="${donation.donationItem != null}" th:text="${donation.donationItem.mainCategory.name()}">옷의 종류</span>
+                            <span th:if="${donation.donationItem == null}">기부 물품 정보 없음</span>
                         </div>
                     </div>
 
-                    <div th:if="${donation.imagePath != null}">
-                        <img th:src="@{'/uploads/' + ${donation.imagePath}}" 
+                    <div th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null}">
+                        <img th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
                              alt="기부 물품 이미지" 
                              class="donation-image"
                              onerror="this.style.display='none'">
@@ -222,7 +223,7 @@
                         </div>
                         <div>
                             <strong>기부 방법:</strong>
-                            <span th:text="${donation.donationMethod == T(com.rewear.common.enums.DonationMethod).DIRECT_MATCH ? '직접 매칭' : '간접 매칭'}"></span>
+                            <span th:text="${donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></span>
                         </div>
                         <div>
                             <strong>배송 방법:</strong>
@@ -254,7 +255,7 @@
                             <button type="submit" class="btn btn-reject" onclick="return confirm('이 기부를 반려하시겠습니까? 반려된 기부는 삭제됩니다.')">반려</button>
                         </form>
                     </div>
-                    <div th:if="${donation.donationMethod == T(com.rewear.common.enums.DonationMethod).INDIRECT_MATCH}">
+                    <div th:if="${donation.matchType == T(com.rewear.common.enums.MatchType).INDIRECT}">
                         <div th:if="${donation.organ == null}" style="margin-top: 12px;">
                             <form th:action="@{'/admin/donations/' + ${donation.id} + '/assign'}" method="post">
                                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
