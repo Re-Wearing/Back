@@ -15,9 +15,6 @@ public class FAQForm {
     @NotBlank(message = "답변을 입력해주세요.")
     private String answer;
 
-    @Size(max = 50, message = "카테고리는 50자 이하여야 합니다.")
-    private String category;
-
     private Integer displayOrder = 0;
 
     private Boolean isActive = true;

@@ -230,18 +230,6 @@
             </div>
         </div>
 
-        <div class="section">
-            <div class="section-title">기부 정보</div>
-            <div class="info-grid">
-                <div class="info-label">옷의 종류:</div>
-                <div class="info-value" th:text="${delivery.donation.clothType.name()}"></div>
-            </div>
-            <div class="info-grid">
-                <div class="info-label">기관:</div>
-                <div class="info-value" th:text="${delivery.donation.organ != null ? delivery.donation.organ.orgName : '없음'}"></div>
-            </div>
-        </div>
-
         <div class="status-form">
             <form th:action="@{/admin/deliveries/{id}/status(id=${delivery.id})}" method="post">
                 <label for="status">배송 상태 변경:</label>
