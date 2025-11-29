@@ -138,14 +138,15 @@
 
         <div th:if="${donations == null || donations.isEmpty()}" class="empty-state">
             <p>아직 기부 신청 내역이 없습니다.</p>
-            <a th:href="@{/donations/apply}" class="btn">기부 신청하기</a>
+            <a th:href="@{/donations/apply/item}" class="btn">기부 신청하기</a>
         </div>
 
         <div th:if="${donations != null && !donations.isEmpty()}" class="donation-list">
             <div th:each="donation : ${donations}" class="donation-item">
                 <div class="donation-item-header">
                     <div class="donation-item-title">
-                        <span th:text="${donation.clothType.name()}">옷의 종류</span>
+                        <span th:if="${donation.donationItem != null}" th:text="${donation.donationItem.mainCategory.name()}">옷의 종류</span>
+                        <span th:if="${donation.donationItem == null}">기부 물품 정보 없음</span>
                         <span th:if="${donation.organ != null}" th:text="' - ' + ${donation.organ.orgName}"> - 기관명</span>
                     </div>
                     <span class="donation-item-status"
@@ -156,7 +157,7 @@
                 <div class="donation-item-info">
                     <div>
                         <strong>기부 방법:</strong>
-                        <span th:text="${donation.donationMethod == T(com.rewear.common.enums.DonationMethod).DIRECT_MATCH ? '직접 매칭' : '간접 매칭'}"></span>
+                        <span th:text="${donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></span>
                     </div>
                     <div>
                         <strong>배송 방법:</strong>
@@ -172,8 +173,8 @@
                     </div>
                 </div>
 
-                <div th:if="${donation.imagePath != null}" class="donation-item-image">
-                    <img th:src="@{'/uploads/' + ${donation.imagePath}}" alt="기부 이미지"/>
+                <div th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null}" class="donation-item-image">
+                    <img th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" alt="기부 이미지"/>
                 </div>
 
                 <div style="margin-top: 12px; display: flex; gap: 8px;">
@@ -182,7 +183,7 @@
                        style="padding: 8px 16px; background: var(--ok); color: #fff; text-decoration: none; border-radius: 8px; font-size: 12px; font-weight: 600;">
                         배송 정보 보기
                     </a>
-                    <span th:if="${donation.delivery == null && donation.status == T(com.rewear.common.enums.DonationStatus).MATCHED}" 
+                    <span th:if="${donation.delivery == null && donation.status == T(com.rewear.common.enums.DonationStatus).IN_PROGRESS}" 
                           style="padding: 8px 16px; background: var(--bd); color: var(--sub); border-radius: 8px; font-size: 12px;">
                         배송 정보 대기 중
                     </span>
@@ -190,7 +191,7 @@
             </div>
         </div>
 
-        <a th:href="@{/donations/apply}" class="btn">새 기부 신청하기</a>
+        <a th:href="@{/donations/apply/item}" class="btn">새 기부 신청하기</a>
     </div>
 </div>
 </body>
