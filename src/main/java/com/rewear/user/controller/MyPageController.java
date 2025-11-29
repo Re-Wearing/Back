@@ -26,7 +26,7 @@ public class MyPageController {
      * 마이페이지 화면
      */
     @GetMapping
-    public String myPage(@RequestParam(value = "success", required = false) Boolean success,
+    public String myPage(@RequestParam(required = false) Boolean success,
                         Model model, Principal principal) {
         String userId = principal.getName();
         model.addAttribute("info", mypageService.getMyPageInfo(userId));
@@ -40,7 +40,7 @@ public class MyPageController {
      * 비밀번호 확인 화면
      */
     @GetMapping("/verify")
-    public String verifyForm(@RequestParam(value = "redirect", required = false, defaultValue = "/mypage") String redirect, Model model) {
+    public String verifyForm(@RequestParam(required = false, defaultValue = "/mypage") String redirect, Model model) {
         log.info("verifyForm called with redirect: {}", redirect);
         String redirectValue = (redirect != null && !redirect.isEmpty()) ? redirect : "/mypage";
         model.addAttribute("redirect", redirectValue);
@@ -52,8 +52,8 @@ public class MyPageController {
      * 비밀번호 검증 처리
      */
     @PostMapping("/verify")
-    public String verify(@RequestParam(value = "password") String password,
-                         @RequestParam(value = "redirect", required = false, defaultValue = "/mypage") String redirect,
+    public String verify(@RequestParam String password,
+                         @RequestParam(required = false, defaultValue = "/mypage") String redirect,
                          Principal principal,
                          Model model) {
 
@@ -107,9 +107,9 @@ public class MyPageController {
      * 비밀번호 변경 처리
      */
     @PostMapping("/edit/password")
-    public String updatePassword(@RequestParam(value = "currentPassword") String currentPassword,
-                                 @RequestParam(value = "newPassword") String newPassword,
-                                 @RequestParam(value = "confirmPassword") String confirmPassword,
+    public String updatePassword(@RequestParam String currentPassword,
+                                 @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
                                  Principal principal,
                                  Model model) {
         try {
