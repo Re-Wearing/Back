@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>매칭된 기부 목록 | RE-WEAR</title>
+    <title>받은 기부 목록 | RE-WEAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         :root {
@@ -86,8 +86,8 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
-            background: #dbeafe;
-            color: #1e40af;
+            background: #d1fae5;
+            color: #065f46;
         }
         .donation-info {
             display: grid;
@@ -143,6 +143,25 @@
             gap: 12px;
             margin-bottom: 20px;
         }
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
     </style>
 </head>
 <body>
@@ -150,28 +169,28 @@
     <div th:replace="~{fragments/nav :: mainNav}"></div>
 
     <div class="card">
-        <h1>내가 매칭한 기부 목록</h1>
+        <h1>받은 기부 히스토리</h1>
 
         <div class="nav-links">
-            <a th:href="@{/organ/donations}" class="btn btn-secondary">신청 가능한 기부</a>
-            <a th:href="@{/organ/matched}" class="btn btn-primary">내가 매칭한 기부</a>
+            <a th:href="@{/organ/donations}" class="btn btn-secondary">매칭된 기부</a>
+            <a th:href="@{/organ/matched}" class="btn btn-primary">받은 기부</a>
         </div>
 
         <div th:if="${error}" class="error-msg" th:text="${error}"></div>
 
         <div th:if="${donations == null || donations.isEmpty()}" class="empty-state">
-            <p>아직 매칭한 기부가 없습니다.</p>
-            <a th:href="@{/organ/donations}" class="btn btn-primary" style="margin-top: 16px;">기부 물품 보기</a>
+            <p>아직 완료된 기부가 없습니다.</p>
+            <a th:href="@{/organ/donations}" class="btn btn-primary" style="margin-top: 16px;">매칭된 기부 보기</a>
         </div>
 
         <div th:if="${donations != null && !donations.isEmpty()}" class="donation-list">
             <div th:each="donation : ${donations}" class="donation-item">
                 <div class="donation-image-container">
-                    <img th:if="${donation.imagePath != null}" 
-                         th:src="@{'/uploads/' + ${donation.imagePath}}" 
+                    <img th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
+                         th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
                          alt="기부 이미지" 
                          class="donation-image"/>
-                    <div th:unless="${donation.imagePath != null}" 
+                    <div th:unless="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
                          class="donation-image" 
                          style="background: var(--bd); display: flex; align-items: center; justify-content: center; color: var(--sub);">
                         이미지 없음
@@ -180,18 +199,31 @@
                 
                 <div class="donation-content">
                     <div class="donation-header">
-                        <div class="donation-title" th:text="${donation.clothType.name()}">옷의 종류</div>
+                        <div class="donation-title" th:text="${donation.donationItem != null ? donation.donationItem.mainCategory.name() : 'N/A'}">옷의 종류</div>
                         <span class="donation-status" th:text="${donation.status.name()}">상태</span>
                     </div>
 
                     <div class="donation-info">
                         <div>
                             <strong>기부 방법:</strong>
-                            <span th:text="${donation.donationMethod == T(com.rewear.common.enums.DonationMethod).DIRECT_MATCH ? '직접 매칭' : '간접 매칭'}"></span>
+                            <span th:text="${donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></span>
                         </div>
                         <div>
                             <strong>배송 방법:</strong>
                             <span th:text="${donation.deliveryMethod == T(com.rewear.common.enums.DeliveryMethod).DIRECT_DELIVERY ? '직접 배송' : '택배 배송'}"></span>
+                        </div>
+                        <div>
+                            <strong>배송 상태:</strong>
+                            <span th:if="${donation.delivery != null}" 
+                                  th:classappend="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? 'status-badge status-completed' : 
+                                                 donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? 'status-badge status-in-progress' : 
+                                                 'status-badge status-pending'}"
+                                  style="padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;"
+                                  th:text="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).PENDING ? '대기' : 
+                                           donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? '배송중' : 
+                                           donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? '완료' : 
+                                           donation.delivery.status.name()}"></span>
+                            <span th:unless="${donation.delivery != null}" style="color: var(--sub);">배송 정보 없음</span>
                         </div>
                         <div>
                             <strong>익명:</strong>
@@ -200,6 +232,14 @@
                         <div>
                             <strong>신청일:</strong>
                             <span th:text="${#temporals.format(donation.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div>
+                            <strong>완료일:</strong>
+                            <span th:text="${#temporals.format(donation.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div>
+                            <strong>기부자:</strong>
+                            <span th:text="${donation.isAnonymous ? '익명' : donation.donor.name}"></span>
                         </div>
                     </div>
 

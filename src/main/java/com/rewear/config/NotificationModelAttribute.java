@@ -1,5 +1,6 @@
 package com.rewear.config;
 
+import com.rewear.common.enums.Role;
 import com.rewear.notification.service.NotificationService;
 import com.rewear.user.details.CustomUserDetails;
 import com.rewear.user.entity.User;
@@ -32,7 +33,7 @@ public class NotificationModelAttribute implements HandlerInterceptor {
                     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                     User user = userService.findByUsername(userDetails.getUsername())
                             .orElse(null);
-                    if (user != null) {
+                    if (user != null && !user.hasRole(Role.ADMIN)) {
                         Long unreadCount = notificationService.getUnreadCount(user);
                         modelAndView.addObject("unreadNotificationCount", unreadCount);
                     }

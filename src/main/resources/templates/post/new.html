@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기 작성' : '기관 요청 작성'}">게시물 작성 | RE-WEAR</title>
+    <title th:text="${isDonationReview ? '기부 후기 작성' : '요청 게시물 작성'}">게시물 작성 | RE-WEAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="_csrf" th:content="${_csrf?.token}"/>
     <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
@@ -119,7 +119,7 @@
     <div th:replace="~{fragments/nav :: mainNav}"></div>
 
     <div class="card">
-        <h1 th:text="${postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기 작성' : '기관 요청 작성'}">게시물 작성</h1>
+        <h1 th:text="${isDonationReview ? '기부 후기 작성' : '요청 게시물 작성'}">게시물 작성</h1>
 
         <form th:action="@{/posts}" th:object="${form}" method="post" enctype="multipart/form-data">
             <input type="hidden" th:field="*{postType}"/>
@@ -140,7 +140,7 @@
             </div>
 
             <!-- 기관 요청인 경우 옷의 종류와 수량 -->
-            <div th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" class="row">
+            <div th:if="${isOrganRequest}" class="row">
                 <label>옷의 종류</label>
                 <select th:field="*{clothType}">
                     <option value="">선택해주세요</option>
@@ -154,7 +154,7 @@
                 </select>
             </div>
 
-            <div th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" class="row">
+            <div th:if="${isOrganRequest}" class="row">
                 <label>수량</label>
                 <input type="number" th:field="*{quantity}" min="1" placeholder="수량을 입력하세요"/>
             </div>
@@ -167,7 +167,7 @@
             </div>
 
             <div class="actions">
-                <a th:href="${postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '/posts/reviews' : '/posts/requests'}" class="btn">취소</a>
+                <a th:href="${cancelUrl}" class="btn">취소</a>
                 <button type="submit" class="btn btn-primary">작성하기</button>
             </div>
         </form>

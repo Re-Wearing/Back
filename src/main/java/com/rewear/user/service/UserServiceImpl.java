@@ -2,6 +2,7 @@ package com.rewear.user.service;
 
 
 import com.rewear.common.enums.Role;
+import com.rewear.common.enums.WarnStatus;
 import com.rewear.user.entity.User;
 import com.rewear.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +37,8 @@ public class UserServiceImpl implements UserService{
         }
         
         // 아이디 형식 검증
-        if (!user.getUsername().matches("^[A-Za-z0-9._-]+$")) {
-            throw new IllegalArgumentException("아이디는 영문, 숫자, ., _, - 만 사용할 수 있습니다.");
+        if (!user.getUsername().matches("^[A-Za-z0-9]+$")) {
+            throw new IllegalArgumentException("아이디는 영문과 숫자만 사용할 수 있습니다.");
         }
         
         // 비밀번호 길이 검증
@@ -59,9 +60,17 @@ public class UserServiceImpl implements UserService{
             user.setRoles(EnumSet.of(Role.USER));
         }
 
-        if (user.getNickname() == null){
+        // 닉네임이 null이거나 빈 문자열이면 아이디로 설정
+        if (user.getNickname() == null || user.getNickname().trim().isEmpty()){
             user.setNickname(user.getUsername());
         }
+
+        // 신규 회원 기본값 설정
+        user.setStatus(WarnStatus.NORMAL);    // 상태: NORMAL
+        user.setWarnCount(0);                  // 경고 누적 횟수: 0
+        user.setLoginFailCount(0);             // 로그인 실패 횟수: 0
+        user.setIsLocked(false);               // 잠금: false (0)
+        // createdAt, updatedAt은 @CreationTimestamp, @UpdateTimestamp로 자동 설정
 
         return userRepository.save(user);
     }
