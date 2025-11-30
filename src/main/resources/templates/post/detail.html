@@ -131,7 +131,7 @@
         <div class="post-header">
                 <span class="post-badge"
                       th:classappend="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? 'review' : ''}"
-                      th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '요청 게시물'}">
+                      th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '기관 요청'}">
                     타입
                 </span>
             <h1 class="post-title" th:text="${post.title}">제목</h1>

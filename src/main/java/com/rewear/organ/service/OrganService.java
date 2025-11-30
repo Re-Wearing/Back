@@ -1,6 +1,5 @@
 package com.rewear.organ.service;
 
-import com.rewear.common.enums.OrganStatus;
 import com.rewear.organ.entity.Organ;
 import com.rewear.user.entity.User;
 
@@ -22,7 +21,5 @@ public interface OrganService {
     /** 조회 헬퍼들 */
     Optional<Organ> findByUserId(Long userId);
     List<Organ> findPendings();
-    Optional<Organ> findById(Long organId);
-    List<Organ> findByStatus(OrganStatus status);
 }
 

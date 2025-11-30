@@ -2,9 +2,7 @@ package com.rewear.admin.controller;
 
 import com.rewear.admin.service.AdminServiceImpl;
 import com.rewear.common.enums.DeliveryStatus;
-import com.rewear.common.enums.DonationMethod;
 import com.rewear.common.enums.DonationStatus;
-import com.rewear.common.enums.OrganStatus;
 import com.rewear.delivery.DeliveryForm;
 import com.rewear.delivery.entity.Delivery;
 import com.rewear.delivery.service.DeliveryService;
@@ -14,8 +12,6 @@ import com.rewear.donation.service.DonationService;
 import com.rewear.faq.FAQForm;
 import com.rewear.faq.entity.FAQ;
 import com.rewear.faq.service.FAQServiceImpl;
-import com.rewear.organ.entity.Organ;
-import com.rewear.organ.service.OrganService;
 import com.rewear.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +36,6 @@ public class AdminWebController {
     private final DonationService donationService;
     private final DonationRepository donationRepository;
     private final DeliveryService deliveryService;
-    private final OrganService organService;
 
     @GetMapping
     public String root() { return "redirect:/admin/dashboard"; }
@@ -69,11 +64,7 @@ public class AdminWebController {
     @GetMapping("/faqs")
     public String faqList(Model model) {
         List<FAQ> faqs = faqService.getAllFAQs();
-        List<FAQ> pendingFAQs = faqService.getPendingFAQs();
-        List<FAQ> answeredFAQs = faqService.getAnsweredFAQs();
         model.addAttribute("faqs", faqs);
-        model.addAttribute("pendingFAQs", pendingFAQs);
-        model.addAttribute("answeredFAQs", answeredFAQs);
         return "admin/faq-list";
     }
 
@@ -104,6 +95,7 @@ public class AdminWebController {
         form.setId(faq.getId());
         form.setQuestion(faq.getQuestion());
         form.setAnswer(faq.getAnswer());
+        form.setCategory(faq.getCategory());
         form.setDisplayOrder(faq.getDisplayOrder());
         form.setIsActive(faq.getIsActive());
 
@@ -139,50 +131,6 @@ public class AdminWebController {
     public String toggleFAQ(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         faqService.toggleActive(id);
         redirectAttributes.addFlashAttribute("success", "FAQ 상태가 변경되었습니다.");
-        return "redirect:/admin/faqs";
-    }
-
-    // FAQ 답변 작성 폼
-    @GetMapping("/faqs/{id}/answer")
-    public String answerFAQForm(@PathVariable Long id, Model model) {
-        FAQ faq = faqService.getFAQById(id);
-        if (faq.getAuthor() == null) {
-            return "redirect:/admin/faqs";
-        }
-        model.addAttribute("faq", faq);
-        return "admin/faq-answer";
-    }
-
-    // FAQ 답변 작성
-    @PostMapping("/faqs/{id}/answer")
-    public String answerFAQ(
-            @PathVariable Long id,
-            @RequestParam("answer") String answer,
-            RedirectAttributes redirectAttributes) {
-        try {
-            if (answer == null || answer.trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "답변을 입력해주세요.");
-                return "redirect:/admin/faqs/" + id + "/answer";
-            }
-            faqService.answerFAQ(id, answer.trim());
-            redirectAttributes.addFlashAttribute("success", "답변이 작성되었습니다. FAQ에 등록하려면 등록 버튼을 클릭해주세요.");
-        } catch (IllegalStateException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/admin/faqs";
-    }
-
-    // FAQ 등록 (답변이 작성된 FAQ를 FAQ에 등록)
-    @PostMapping("/faqs/{id}/register")
-    public String registerFAQ(
-            @PathVariable Long id,
-            RedirectAttributes redirectAttributes) {
-        try {
-            faqService.registerFAQ(id);
-            redirectAttributes.addFlashAttribute("success", "FAQ에 등록되었습니다.");
-        } catch (IllegalStateException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
         return "redirect:/admin/faqs";
     }
 
@@ -332,94 +280,5 @@ public class AdminWebController {
         List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.MATCHED);
         model.addAttribute("donations", donations);
         return "admin/donations-matched";
-    }
-
-    // 기부 승인 대기 목록
-    @GetMapping("/donations/pending")
-    public String pendingDonations(Model model) {
-        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.PENDING);
-        List<Organ> organs = organService.findByStatus(OrganStatus.APPROVED);
-        model.addAttribute("donations", donations);
-        model.addAttribute("organs", organs);
-        return "admin/donations-pending";
-    }
-
-    @GetMapping("/donations/auto-match")
-    public String autoMatchDonations(Model model) {
-        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.REQUESTED).stream()
-                .filter(d -> d.getDonationMethod() == DonationMethod.INDIRECT_MATCH && d.getOrgan() == null)
-                .toList();
-        List<Organ> organs = organService.findByStatus(OrganStatus.APPROVED);
-        model.addAttribute("donations", donations);
-        model.addAttribute("organs", organs);
-        return "admin/donations-auto-match";
-    }
-
-    @PostMapping("/donations/{donationId}/assign")
-    public String assignDonationToOrgan(
-            @PathVariable Long donationId,
-            @RequestParam("organId") Long organId,
-            @RequestParam(defaultValue = "/admin/donations/pending") String redirect,
-            RedirectAttributes redirectAttributes) {
-        if (!List.of("/admin/donations/pending", "/admin/donations/auto-match").contains(redirect)) {
-            redirect = "/admin/donations/pending";
-        }
-
-        try {
-            Donation donation = donationService.getDonationById(donationId);
-            if (donation.getDonationMethod() != DonationMethod.INDIRECT_MATCH) {
-                throw new IllegalArgumentException("간접 매칭 요청이 아닌 기부입니다.");
-            }
-            Organ organ = organService.findById(organId)
-                    .filter(o -> o.getStatus() == OrganStatus.APPROVED)
-                    .orElseThrow(() -> new IllegalArgumentException("유효한 기관을 선택해주세요."));
-            donationService.assignDonationToOrgan(donationId, organ);
-            redirectAttributes.addFlashAttribute("success", "선택한 기관으로 기부를 할당했습니다. 이제 매칭 승인을 진행해주세요.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-
-        return "redirect:" + redirect;
-    }
-
-    // 간접 매칭 승인 (기관 할당 후 관리자가 승인하여 기관에게 표시)
-    @PostMapping("/donations/{donationId}/approve-match")
-    public String approveMatch(
-            @PathVariable Long donationId,
-            RedirectAttributes redirectAttributes) {
-        try {
-            donationService.approveMatch(donationId);
-            redirectAttributes.addFlashAttribute("success", "기부가 승인되어 기관에게 표시되었습니다. 기관에서 최종 승인 여부를 결정합니다.");
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/admin/donations/pending";
-    }
-    // 기부 승인
-    @PostMapping("/donations/{donationId}/approve")
-    public String approveDonation(
-            @PathVariable Long donationId,
-            RedirectAttributes redirectAttributes) {
-        try {
-            donationService.approveDonation(donationId);
-            redirectAttributes.addFlashAttribute("success", "기부가 승인되었습니다.");
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/admin/donations/pending";
-    }
-
-    // 기부 반려
-    @PostMapping("/donations/{donationId}/reject")
-    public String rejectDonation(
-            @PathVariable Long donationId,
-            RedirectAttributes redirectAttributes) {
-        try {
-            donationService.rejectDonation(donationId);
-            redirectAttributes.addFlashAttribute("success", "기부가 반려되었습니다.");
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/admin/donations/pending";
     }
 }

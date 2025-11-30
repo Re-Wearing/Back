@@ -51,17 +51,9 @@ public class AdminOrgController {
     // 승인
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id, RedirectAttributes ra) {
-        try {
-            log.debug("기관 승인 요청 - ID: {}", id);
-            organService.approve(id);
-            log.info("기관 승인 완료 - ID: {}", id);
-            ra.addFlashAttribute("msg", "승인 완료");
-            return "redirect:/admin/orgs/pending";
-        } catch (Exception e) {
-            log.error("기관 승인 실패 - ID: {}", id, e);
-            ra.addFlashAttribute("error", "승인 처리 중 오류가 발생했습니다: " + e.getMessage());
-            return "redirect:/admin/orgs/pending";
-        }
+        organService.approve(id);
+        ra.addFlashAttribute("msg", "승인 완료");
+        return "redirect:/admin/orgs/pending";
     }
 
     // 반려 (사유 optional)
@@ -69,16 +61,8 @@ public class AdminOrgController {
     public String reject(@PathVariable Long id,
                          @RequestParam(name = "reason", required = false) String reason,
                          RedirectAttributes ra) {
-        try {
-            log.debug("기관 반려 요청 - ID: {}, 사유: {}", id, reason != null ? reason : "없음");
-            organService.reject(id, reason);
-            log.info("기관 반려 완료 - ID: {}, 사유: {}", id, reason != null ? reason : "없음");
-            ra.addFlashAttribute("msg", "반려 처리 완료");
-            return "redirect:/admin/orgs/pending";
-        } catch (Exception e) {
-            log.error("기관 반려 실패 - ID: {}, 사유: {}", id, reason != null ? reason : "없음", e);
-            ra.addFlashAttribute("error", "반려 처리 중 오류가 발생했습니다: " + e.getMessage());
-            return "redirect:/admin/orgs/pending";
-        }
+        organService.reject(id, reason);
+        ra.addFlashAttribute("msg", "반려 처리 완료");
+        return "redirect:/admin/orgs/pending";
     }
 }

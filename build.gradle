@@ -14,10 +14,6 @@ java {
 	}
 }
 
-compileJava {
-	options.compilerArgs += ['-parameters']
-}
-
 repositories {
 	mavenCentral()
 }
