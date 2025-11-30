@@ -50,9 +50,11 @@ public class OrganController {
         
         // IN_PROGRESS 상태인 기부 목록 조회
         // 관리자 승인 완료된 기부만 기관에게 표시
+        // CANCELLED 상태는 제외 (반려된 기부)
         List<Donation> allDonations = donationRepository.findAllWithDetails();
         List<Donation> donations = allDonations.stream()
                 .filter(d -> d.getStatus() == DonationStatus.IN_PROGRESS)
+                .filter(d -> d.getStatus() != DonationStatus.CANCELLED) // 반려된 기부 제외
                 .filter(d -> {
                     // 직접 매칭인 경우
                     if (d.getMatchType() == MatchType.DIRECT) {
@@ -171,12 +173,12 @@ public class OrganController {
 
         try {
             donationService.organApproveDonation(donationId, organ);
-            redirectAttributes.addFlashAttribute("success", "기부를 최종 승인하여 완료되었습니다.");
+            redirectAttributes.addFlashAttribute("success", "기부를 최종 승인하여 완료되었습니다. 받은 기부 목록에서 확인할 수 있습니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/organ/donations";
+        return "redirect:/organ/matched";
     }
 
     // 간접 매칭 기부 거부
@@ -199,7 +201,7 @@ public class OrganController {
 
         try {
             donationService.organRejectDonation(donationId, organ);
-            redirectAttributes.addFlashAttribute("success", "기부를 거부했습니다.");
+            redirectAttributes.addFlashAttribute("success", "기부를 반려했습니다. 해당 기부 요청이 삭제되었습니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
