@@ -16,24 +16,40 @@
         .notification-icon:hover{background:rgba(255,255,255,.12)}
         .notification-badge{position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center}
         .notification-icon svg{width:20px;height:20px;fill:#fff}
+        .dropdown{position:relative;display:inline-block}
+        .dropbtn{background:transparent;border:none;color:#fff;padding:6px 8px;border-radius:8px;cursor:pointer;font:inherit}
+        .dropdown-content{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1f2937;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.4);flex-direction:column;min-width:180px;z-index:20}
+        .dropdown-content a{display:block;padding:8px 12px;border-radius:0;text-align:left}
+        .dropdown-content a:hover{background:rgba(255,255,255,.12)}
+        .dropdown:hover .dropdown-content{display:flex}
     </style>
     <div class="nav">
         <div class="left">
             <a th:href="@{/main}"><strong>RE-WEAR</strong></a>
-            <a th:href="@{/main}">메인</a>
+            <span>사업 소개</span>
             <a th:href="@{/faq}">FAQ</a>
 
-            <!-- 서비스 메뉴 - 모든 사용자에게 표시 -->
-            <a th:href="@{/donations}" sec:authorize="hasRole('USER')">내 기부 관리</a>
-            <a th:href="@{/posts/reviews}">기부 후기</a>
-            <a th:href="@{/posts/requests}">기관 요청</a>
-            <a th:href="@{/donations/apply}" sec:authorize="hasRole('USER')">기부 신청</a>
-            <a th:href="@{/mypage}">마이 페이지</a>
+            <!-- 서비스 메뉴 -->
+            <a th:href="@{/donations}" sec:authorize="hasRole('USER') and !hasRole('ORGAN')">내 기부 관리</a>
+            <div class="dropdown">
+                <a th:href="@{/posts}" class="dropbtn">게시판</a>
+                <div class="dropdown-content">
+                    <a th:href="@{/posts/reviews}">기부 후기</a>
+                    <span sec:authorize="isAuthenticated()">
+                        <a th:href="@{/posts/requests}">요청 게시물</a>
+                    </span>
+                    <span sec:authorize="isAnonymous()">
+                        <a th:href="@{'/login?redirect=' + '/posts/requests'}">요청 게시물 (로그인)</a>
+                    </span>
+                </div>
+            </div>
+            <a th:href="@{/donations/apply/item}" sec:authorize="hasRole('USER') and !hasRole('ORGAN')">기부하기</a>
+            <a th:href="@{/mypage}" sec:authorize="isAuthenticated()">마이 페이지</a>
 
             <!-- Organ 계정 전용 메뉴 -->
             <span sec:authorize="hasRole('ORGAN')" class="left">
-                <a th:href="@{/organ/donations}">기부 물품 선택</a>
-                <a th:href="@{/organ/matched}">내가 매칭한 기부</a>
+                <a th:href="@{/organ/donations}">매칭된 기부</a>
+                <a th:href="@{/organ/matched}">받은 기부</a>
             </span>
 
             <span sec:authorize="hasRole('ADMIN')" class="left">
@@ -49,14 +65,16 @@
             </span>
 
             <span sec:authorize="isAuthenticated()">
-                <a th:href="@{/notifications}" class="notification-icon" title="알림">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25-2.5 7.5-2.5 7.5h15S19 14.25 19 9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5 0 4.67 2.33 6.33 2.5 6.5h-15c.17-.17 2.5-1.83 2.5-6.5 0-2.76 2.24-5 5-5zm-1 13h2v2h-2v-2zm0-4h2v6h-2v-6z"/>
-                    </svg>
-                    <span th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}" 
-                          class="notification-badge" 
-                          th:text="${unreadNotificationCount}">0</span>
-                </a>
+                <span sec:authorize="!hasRole('ADMIN')">
+                    <a th:href="@{/notifications}" class="notification-icon" title="알림">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25-2.5 7.5-2.5 7.5h15S19 14.25 19 9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5 0 4.67 2.33 6.33 2.5 6.5h-15c.17-.17 2.5-1.83 2.5-6.5 0-2.76 2.24-5 5-5zm-1 13h2v2h-2v-2zm0-4h2v6h-2v-6z"/>
+                        </svg>
+                        <span th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}" 
+                              class="notification-badge" 
+                              th:text="${unreadNotificationCount}">0</span>
+                    </a>
+                </span>
                 <span class="role-badge" th:text="${#authentication?.name}">user</span>
                 <form th:action="@{/logout}" method="post" style="display:inline">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

@@ -97,8 +97,9 @@ public class OrganConfig implements ApplicationRunner {
             organUser.setPassword(passwordEncoder.encode(organPassword));
             organUser.setName("기관 담당자");
             organUser.setEmail("organ@example.com");
-            organUser.setNickname(orgName);
+            organUser.setNickname("리웨어");  // 한글 닉네임
             organUser.setPhone("01098765432");
+            organUser.setAddressPostcode("06626");
             organUser.setAddress("서울시 서초구 서초대로 456");
 
             // ORGAN 권한 부여

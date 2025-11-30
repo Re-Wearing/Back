@@ -5,6 +5,8 @@ public enum NotificationType {
     DELIVERY_STATUS_CHANGED, // 배송 상태 변경
     ORGAN_APPROVED,        // 기관 승인 완료
     DONATION_REQUESTED,     // 기부 신청 완료
+    DONATION_APPROVED,      // 기부 승인 완료
+    DONATION_REJECTED,      // 기부 반려
     GENERAL                 // 일반 알림
 }
 
