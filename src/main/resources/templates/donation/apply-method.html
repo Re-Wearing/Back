@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>기부 신청 | RE-WEAR</title>
+    <title>기부 방법 선택 | RE-WEAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="_csrf" th:content="${_csrf?.token}"/>
     <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
@@ -42,6 +42,26 @@
             margin: 0 0 24px;
             text-align: center;
         }
+        .preview {
+            background: #f9fafb;
+            border: 1px solid var(--bd);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .preview h3 {
+            font-size: 16px;
+            margin: 0 0 12px;
+            color: var(--sub);
+        }
+        .preview-item {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .preview-item strong {
+            color: var(--txt);
+            margin-right: 8px;
+        }
         .row {
             margin: 16px 0;
         }
@@ -58,7 +78,7 @@
             color: var(--sub);
             font-size: 12px;
         }
-        select, input[type="text"], input[type="file"], textarea {
+        select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid var(--bd);
@@ -89,14 +109,18 @@
             color: #fff;
             border-color: #1d4ed8;
         }
-        .selection-status {
-            margin-top: 8px;
-            font-size: 13px;
-            color: #4b5563;
-            min-height: 18px;
-        }
         input[type="radio"] {
             display: none;
+        }
+        .help {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--sub);
+            min-height: 16px;
+        }
+        .help.warn {
+            color: var(--warn);
         }
         .actions {
             margin-top: 24px;
@@ -124,25 +148,6 @@
         .btn-primary:hover {
             background: #047857;
         }
-        .help {
-            display: block;
-            margin-top: 6px;
-            font-size: 12px;
-            color: var(--sub);
-            min-height: 16px;
-        }
-        .help.warn {
-            color: var(--warn);
-        }
-        .file-preview {
-            margin-top: 8px;
-        }
-        .file-preview img {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            border: 1px solid var(--bd);
-        }
     </style>
 </head>
 <body>
@@ -150,32 +155,64 @@
     <div th:replace="~{fragments/nav :: mainNav}"></div>
 
     <div class="card">
-        <h1>기부 신청</h1>
+        <h1>기부 방법 선택</h1>
 
-        <form th:action="@{/donations/apply}" th:object="${form}" method="post" enctype="multipart/form-data">
+        <!-- 물품 정보 미리보기 -->
+        <div class="preview" th:if="${itemForm}">
+            <h3>입력하신 물품 정보</h3>
+            <div class="preview-item">
+                <strong>성별:</strong>
+                <span th:text="${itemForm.genderType == T(com.rewear.common.enums.GenderType).MALE ? '남성' : 
+                               itemForm.genderType == T(com.rewear.common.enums.GenderType).FEMALE ? '여성' : 
+                               itemForm.genderType == T(com.rewear.common.enums.GenderType).CHILD ? '아동' : '유니섹스'}"></span>
+            </div>
+            <div class="preview-item">
+                <strong>메인 카테고리:</strong>
+                <span th:text="${itemForm.mainCategory == T(com.rewear.common.enums.ClothType).TOP ? '상의' : 
+                               itemForm.mainCategory == T(com.rewear.common.enums.ClothType).BOTTOM ? '하의' : 
+                               itemForm.mainCategory == T(com.rewear.common.enums.ClothType).OUTERWEAR ? '아우터' : 
+                               itemForm.mainCategory == T(com.rewear.common.enums.ClothType).SHOES ? '신발' : 
+                               itemForm.mainCategory == T(com.rewear.common.enums.ClothType).ACCESSORY ? '액세서리' : 
+                               itemForm.mainCategory == T(com.rewear.common.enums.ClothType).UNDERWEAR ? '속옷' : '기타'}"></span>
+            </div>
+            <div class="preview-item" th:if="${itemForm.detailCategory}">
+                <strong>상세 카테고리:</strong>
+                <span th:text="${itemForm.detailCategory}"></span>
+            </div>
+            <div class="preview-item">
+                <strong>사이즈:</strong>
+                <span th:text="${itemForm.size}"></span>
+            </div>
+            <div class="preview-item" th:if="${itemForm.description}">
+                <strong>상세설명:</strong>
+                <span th:text="${itemForm.description}"></span>
+            </div>
+        </div>
+
+        <form th:action="@{/donations/apply/method}" th:object="${form}" method="post">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-            <!-- 기부 방법 -->
+            <!-- 매칭 방식 -->
             <div class="row">
-                <label>기부 방법 <span class="required">*</span> 필수</label>
-                <select id="donationMethodSelect" th:field="*{donationMethod}" required>
+                <label>매칭 방식 <span class="required">*</span> 필수</label>
+                <select id="matchTypeSelect" th:field="*{matchType}" required>
                     <option value="">선택해주세요</option>
-                    <option value="DIRECT_MATCH">직접 매칭</option>
-                    <option value="INDIRECT_MATCH">간접 매칭</option>
+                    <option value="DIRECT">직접 매칭 (희망 기관 선택)</option>
+                    <option value="INDIRECT">간접 매칭 (관리자가 기관 배정)</option>
                 </select>
-                <small class="help warn" th:if="${#fields.hasErrors('donationMethod')}" th:errors="*{donationMethod}"></small>
+                <small class="help warn" th:if="${#fields.hasErrors('matchType')}" th:errors="*{matchType}"></small>
             </div>
 
-            <!-- 기관 선택 (선택 사항 - 원하는 기관이 있으면 선택, 없으면 Organ이 선택) -->
-            <div class="row">
-                <label>희망 기관 선택 <span class="muted">(선택 사항)</span></label>
+            <!-- 기관 선택 (직접 매칭 시 필수) -->
+            <div class="row" id="organRow">
+                <label>희망 기관 선택 <span class="required" id="organRequired">*</span> <span class="muted" id="organOptional" style="display:none;">(선택 사항)</span></label>
                 <select id="organSelect" th:field="*{organId}">
-                    <option value="">선택 안함 (모든 기관이 볼 수 있음)</option>
+                    <option value="">기관을 선택해주세요</option>
                     <option th:each="organ : ${organs}"
                             th:value="${organ.id}"
                             th:text="${organ.orgName}"></option>
                 </select>
-                <small class="help" id="organHelp">특정 기관을 선택하면 해당 기관에 우선적으로 표시됩니다. 선택하지 않으면 모든 기관이 볼 수 있습니다.</small>
+                <small class="help" id="organHelp">직접 매칭 시 희망 기관을 반드시 선택해주세요.</small>
                 <small class="help warn" th:if="${#fields.hasErrors('organId')}" th:errors="*{organId}"></small>
             </div>
 
@@ -188,22 +225,6 @@
                     <option value="PARCEL_DELIVERY">택배 배송</option>
                 </select>
                 <small class="help warn" th:if="${#fields.hasErrors('deliveryMethod')}" th:errors="*{deliveryMethod}"></small>
-            </div>
-
-            <!-- 옷의 종류 -->
-            <div class="row">
-                <label>옷의 종류 <span class="required">*</span> 필수</label>
-                <select th:field="*{clothType}" required>
-                    <option value="">선택해주세요</option>
-                    <option value="TOP">상의</option>
-                    <option value="BOTTOM">하의</option>
-                    <option value="OUTERWEAR">아우터</option>
-                    <option value="SHOES">신발</option>
-                    <option value="ACCESSORY">액세서리</option>
-                    <option value="UNDERWEAR">속옷</option>
-                    <option value="ETC">기타</option>
-                </select>
-                <small class="help warn" th:if="${#fields.hasErrors('clothType')}" th:errors="*{clothType}"></small>
             </div>
 
             <!-- 익명 선택 -->
@@ -222,38 +243,14 @@
                 <small class="help warn" th:if="${#fields.hasErrors('isAnonymous')}" th:errors="*{isAnonymous}"></small>
             </div>
 
-            <!-- 사진 첨부 -->
-            <div class="row">
-                <label>사진 첨부 <span class="muted">(선택 사항)</span></label>
-                <input type="file" name="image" accept="image/*" id="imageInput"/>
-                <div class="file-preview" id="imagePreview"></div>
-            </div>
-
             <div class="actions">
-                <button type="submit" class="btn btn-primary">기부 신청 하기</button>
-                <a th:href="@{/main}" class="btn">취소</a>
+                <button type="submit" class="btn btn-primary">기부 신청 완료</button>
+                <a th:href="@{/donations/apply/item}" class="btn">이전 단계</a>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-    const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
-
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.innerHTML = '<img src="' + e.target.result + '" alt="미리보기"/>';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            imagePreview.innerHTML = '';
-        }
-    });
-</script>
 <script>
     const radioButtons = document.querySelectorAll('.radio-btn');
     radioButtons.forEach((button) => {
@@ -268,23 +265,42 @@
     });
 </script>
 <script>
-    const donationMethodSelect = document.getElementById('donationMethodSelect');
+    const matchTypeSelect = document.getElementById('matchTypeSelect');
     const organSelect = document.getElementById('organSelect');
     const organHelp = document.getElementById('organHelp');
+    const organRow = document.getElementById('organRow');
+    const organRequired = document.getElementById('organRequired');
+    const organOptional = document.getElementById('organOptional');
 
     function updateOrganField() {
-        const isAutomatic = donationMethodSelect.value === 'INDIRECT_MATCH';
-        organSelect.disabled = isAutomatic;
-        if (isAutomatic && organSelect.value !== '') {
+        const isDirect = matchTypeSelect.value === 'DIRECT';
+        const isIndirect = matchTypeSelect.value === 'INDIRECT';
+        
+        if (isIndirect) {
+            // 간접 매칭: 기관 선택 숨김
+            organRow.style.display = 'none';
             organSelect.value = '';
+            organSelect.removeAttribute('required');
+        } else {
+            // 직접 매칭 또는 미선택: 기관 선택 표시
+            organRow.style.display = 'block';
+            if (isDirect) {
+                organSelect.setAttribute('required', 'required');
+                organRequired.style.display = 'inline';
+                organOptional.style.display = 'none';
+                organHelp.textContent = '직접 매칭 시 희망 기관을 반드시 선택해주세요.';
+            } else {
+                organSelect.removeAttribute('required');
+                organRequired.style.display = 'none';
+                organOptional.style.display = 'inline';
+                organHelp.textContent = '매칭 방식을 먼저 선택해주세요.';
+            }
         }
-        organHelp.textContent = isAutomatic
-            ? '자동 매칭을 선택하면 희망 기관을 선택할 수 없습니다.'
-            : '특정 기관을 선택하면 해당 기관에 우선적으로 표시됩니다. 선택하지 않으면 모든 기관이 볼 수 있습니다.';
     }
 
-    donationMethodSelect.addEventListener('change', updateOrganField);
+    matchTypeSelect.addEventListener('change', updateOrganField);
     updateOrganField();
 </script>
 </body>
 </html>
+

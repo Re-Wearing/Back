@@ -118,9 +118,17 @@
                 <small class="help warn" th:if="${#fields != null && #fields.hasErrors('phone')}" th:errors="*{phone}"></small>
             </div>
 
+            <!-- 우편번호 -->
+            <div class="row">
+                <label>우편번호</label>
+                <input type="text" th:field="*{addressPostcode}" maxlength="5" inputmode="numeric"
+                       pattern="[0-9]{5}" placeholder="우편번호 5자리 (예: 12345)">
+                <small class="help warn" th:if="${#fields != null && #fields.hasErrors('addressPostcode')}" th:errors="*{addressPostcode}"></small>
+            </div>
+
             <!-- 주소 -->
             <div class="row">
-                <label>주소 <span class="muted">(선택 사항)</span></label>
+                <label>주소</label>
                 <textarea th:field="*{address}" maxlength="255" placeholder="주소를 입력하세요 (최대 255자)" style="width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;font-size:14px;background:#fff;min-height: 80px;"></textarea>
                 <small class="help warn" th:if="${#fields != null && #fields.hasErrors('address')}" th:errors="*{address}"></small>
             </div>

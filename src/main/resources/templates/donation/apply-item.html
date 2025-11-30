@@ -2,10 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${isDonationReview ? '기부 후기 작성' : '요청 게시물 작성'}">게시물 작성 | RE-WEAR</title>
+    <title>물품 정보 입력 | RE-WEAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="_csrf" th:content="${_csrf?.token}"/>
     <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+
     <style>
         :root {
             --bd: #e5e7eb;
@@ -25,7 +26,7 @@
             font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         }
         .wrap {
-            max-width: 800px;
+            max-width: 600px;
             margin: 40px auto;
             padding: 0 16px;
         }
@@ -39,6 +40,7 @@
         h1 {
             font-size: 24px;
             margin: 0 0 24px;
+            text-align: center;
         }
         .row {
             margin: 16px 0;
@@ -56,7 +58,7 @@
             color: var(--sub);
             font-size: 12px;
         }
-        input[type="text"], textarea, select {
+        select, input[type="text"], input[type="file"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid var(--bd);
@@ -65,8 +67,18 @@
             background: #fff;
         }
         textarea {
-            min-height: 200px;
+            min-height: 100px;
             resize: vertical;
+        }
+        .help {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--sub);
+            min-height: 16px;
+        }
+        .help.warn {
+            color: var(--warn);
         }
         .file-preview {
             margin-top: 8px;
@@ -81,16 +93,17 @@
             margin-top: 24px;
             display: flex;
             gap: 12px;
-            justify-content: flex-end;
         }
         .btn {
-            padding: 10px 16px;
+            flex: 1;
+            padding: 12px 16px;
             border: 1px solid var(--bd);
             border-radius: 10px;
             background: #fff;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
+            text-align: center;
             text-decoration: none;
             display: inline-block;
         }
@@ -102,16 +115,6 @@
         .btn-primary:hover {
             background: #047857;
         }
-        .help {
-            display: block;
-            margin-top: 6px;
-            font-size: 12px;
-            color: var(--sub);
-            min-height: 16px;
-        }
-        .help.warn {
-            color: var(--warn);
-        }
     </style>
 </head>
 <body>
@@ -119,30 +122,28 @@
     <div th:replace="~{fragments/nav :: mainNav}"></div>
 
     <div class="card">
-        <h1 th:text="${isDonationReview ? '기부 후기 작성' : '요청 게시물 작성'}">게시물 작성</h1>
+        <h1>물품 정보 입력</h1>
 
-        <form th:action="@{/posts}" th:object="${form}" method="post" enctype="multipart/form-data">
-            <input type="hidden" th:field="*{postType}"/>
+        <form th:action="@{/donations/apply/item}" th:object="${itemForm}" method="post" enctype="multipart/form-data">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-            <!-- 제목 -->
+            <!-- 성별 -->
             <div class="row">
-                <label>제목 <span class="required">*</span> 필수</label>
-                <input type="text" th:field="*{title}" required maxlength="200" placeholder="제목을 입력하세요"/>
-                <small class="help warn" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></small>
+                <label>성별 <span class="required">*</span> 필수</label>
+                <select th:field="*{genderType}" required>
+                    <option value="">선택해주세요</option>
+                    <option value="MALE">남성</option>
+                    <option value="FEMALE">여성</option>
+                    <option value="CHILD">아동</option>
+                    <option value="UNISEX">유니섹스</option>
+                </select>
+                <small class="help warn" th:if="${#fields.hasErrors('genderType')}" th:errors="*{genderType}"></small>
             </div>
 
-            <!-- 내용 -->
+            <!-- 메인 카테고리 -->
             <div class="row">
-                <label>내용 <span class="required">*</span> 필수</label>
-                <textarea th:field="*{content}" required placeholder="내용을 입력하세요"></textarea>
-                <small class="help warn" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></small>
-            </div>
-
-            <!-- 기관 요청인 경우 옷의 종류와 수량 -->
-            <div th:if="${isOrganRequest}" class="row">
-                <label>옷의 종류</label>
-                <select th:field="*{clothType}">
+                <label>메인 카테고리 <span class="required">*</span> 필수</label>
+                <select th:field="*{mainCategory}" required>
                     <option value="">선택해주세요</option>
                     <option value="TOP">상의</option>
                     <option value="BOTTOM">하의</option>
@@ -152,23 +153,50 @@
                     <option value="UNDERWEAR">속옷</option>
                     <option value="ETC">기타</option>
                 </select>
+                <small class="help warn" th:if="${#fields.hasErrors('mainCategory')}" th:errors="*{mainCategory}"></small>
             </div>
 
-            <div th:if="${isOrganRequest}" class="row">
-                <label>수량</label>
-                <input type="number" th:field="*{quantity}" min="1" placeholder="수량을 입력하세요"/>
-            </div>
-
-            <!-- 사진 첨부 -->
+            <!-- 상세 카테고리 -->
             <div class="row">
-                <label>사진 첨부 <span class="muted">(선택 사항)</span></label>
+                <label>상세 카테고리 <span class="muted">(선택 사항)</span></label>
+                <input type="text" th:field="*{detailCategory}" placeholder="예: 반팔, 긴팔, 치마, 청바지 등" maxlength="50"/>
+                <small class="help">상세 카테고리를 입력해주세요. (예: 반팔, 긴팔, 치마, 청바지 등)</small>
+                <small class="help warn" th:if="${#fields.hasErrors('detailCategory')}" th:errors="*{detailCategory}"></small>
+            </div>
+
+            <!-- 사이즈 -->
+            <div class="row">
+                <label>사이즈 <span class="required">*</span> 필수</label>
+                <select th:field="*{size}" required>
+                    <option value="">선택해주세요</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="F">F (Free Size)</option>
+                </select>
+                <small class="help warn" th:if="${#fields.hasErrors('size')}" th:errors="*{size}"></small>
+            </div>
+
+            <!-- 상세설명 -->
+            <div class="row">
+                <label>상세설명 <span class="muted">(선택 사항)</span></label>
+                <textarea th:field="*{description}" placeholder="물품에 대한 상세 설명을 입력해주세요." maxlength="500"></textarea>
+                <small class="help">물품의 상태, 브랜드, 특징 등을 자유롭게 입력해주세요. (최대 500자)</small>
+                <small class="help warn" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small>
+            </div>
+
+            <!-- 이미지 첨부 -->
+            <div class="row">
+                <label>이미지 첨부 <span class="muted">(선택 사항)</span></label>
                 <input type="file" name="image" accept="image/*" id="imageInput"/>
                 <div class="file-preview" id="imagePreview"></div>
             </div>
 
             <div class="actions">
-                <a th:href="${cancelUrl}" class="btn">취소</a>
-                <button type="submit" class="btn btn-primary">작성하기</button>
+                <button type="submit" class="btn btn-primary">다음 단계</button>
+                <a th:href="@{/main}" class="btn">취소</a>
             </div>
         </form>
     </div>
@@ -193,3 +221,4 @@
 </script>
 </body>
 </html>
+
