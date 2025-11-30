@@ -1,8 +1,8 @@
 package com.rewear.organ.service;
 
-import com.rewear.common.enums.OrganStatus;
 import com.rewear.common.enums.Role;
 import com.rewear.organ.entity.Organ;
+import com.rewear.common.enums.OrganStatus;
 import com.rewear.organ.repository.OrganRepository;
 import com.rewear.user.entity.User;
 import jakarta.transaction.Transactional;
@@ -82,15 +82,5 @@ public class OrganServiceImpl implements OrganService {
     @Override
     public List<Organ> findPendings() {
         return organRepository.findAllByStatus(OrganStatus.PENDING);
-    }
-
-    @Override
-    public Optional<Organ> findById(Long organId) {
-        return organRepository.findById(organId);
-    }
-
-    @Override
-    public List<Organ> findByStatus(OrganStatus status) {
-        return organRepository.findByStatusOrderByCreatedAtDesc(status);
     }
 }
