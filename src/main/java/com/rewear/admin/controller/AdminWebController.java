@@ -40,6 +40,7 @@ public class AdminWebController {
     private final DonationService donationService;
     private final DonationRepository donationRepository;
     private final DeliveryService deliveryService;
+    private final com.rewear.delivery.repository.DeliveryRepository deliveryRepo;
     private final OrganService organService;
 
     @GetMapping
@@ -194,67 +195,6 @@ public class AdminWebController {
         return "admin/delivery-list";
     }
 
-    @GetMapping("/deliveries/create/{donationId}")
-    public String deliveryForm(
-            @PathVariable Long donationId,
-            Model model) {
-        
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        // 이미 배송 정보가 있는지 확인
-        Optional<Delivery> existingDelivery = deliveryService.getDeliveryByDonation(donation);
-        if (existingDelivery.isPresent()) {
-            return "redirect:/admin/deliveries/" + existingDelivery.get().getId();
-        }
-
-        DeliveryForm form = new DeliveryForm();
-        form.setDonationId(donationId);
-        
-        // 기본값 설정 (발송인 정보는 기부자 정보로)
-        if (donation.getDonor() != null) {
-            form.setSenderName(donation.getDonor().getName() != null ? donation.getDonor().getName() : "");
-            form.setSenderPhone(donation.getDonor().getPhone() != null ? donation.getDonor().getPhone() : "");
-            form.setSenderAddress(donation.getDonor().getAddress() != null ? donation.getDonor().getAddress() : "");
-        }
-        
-        // 수령인 정보는 기관 정보로 (기관이 있는 경우)
-        if (donation.getOrgan() != null) {
-            form.setReceiverName(donation.getOrgan().getOrgName());
-        }
-
-        model.addAttribute("form", form);
-        model.addAttribute("donation", donation);
-        return "admin/delivery-create";
-    }
-
-    @PostMapping("/deliveries/create")
-    public String createDelivery(
-            @Valid @ModelAttribute("form") DeliveryForm form,
-            BindingResult bindingResult,
-            Model model,
-            RedirectAttributes redirectAttributes) {
-
-        if (bindingResult.hasErrors()) {
-            Donation donation = donationRepository.findById(form.getDonationId())
-                    .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-            model.addAttribute("donation", donation);
-            return "admin/delivery-create";
-        }
-
-        Donation donation = donationRepository.findById(form.getDonationId())
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        try {
-            Delivery delivery = deliveryService.createDelivery(donation, form);
-            redirectAttributes.addFlashAttribute("success", "배송 정보가 등록되었습니다.");
-            return "redirect:/admin/deliveries/" + delivery.getId();
-        } catch (IllegalStateException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/admin/deliveries";
-        }
-    }
-
     @GetMapping("/deliveries/{deliveryId}")
     public String deliveryDetail(
             @PathVariable Long deliveryId,
@@ -326,12 +266,70 @@ public class AdminWebController {
         return "redirect:/admin/deliveries/" + deliveryId;
     }
 
-    // 매칭된 기부 목록 (배송 정보 등록 가능한 기부)
+    // 기부 관리 (모든 기부 히스토리)
     @GetMapping("/donations/matched")
     public String matchedDonations(Model model) {
-        List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS);
-        model.addAttribute("donations", donations);
+        List<Donation> allDonations = donationRepository.findAllWithDetails();
+        // 최신순으로 정렬
+        allDonations.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+        model.addAttribute("donations", allDonations);
         return "admin/donations-matched";
+    }
+
+    // 기부 상세보기
+    @GetMapping("/donations/{donationId}")
+    public String donationDetail(@PathVariable Long donationId, Model model) {
+        Donation donation = donationService.getDonationById(donationId);
+        model.addAttribute("donation", donation);
+        return "admin/donation-detail";
+    }
+
+    // 기부의 배송 상태 변경
+    @PostMapping("/donations/{donationId}/delivery/status")
+    public String updateDonationDeliveryStatus(
+            @PathVariable Long donationId,
+            @RequestParam DeliveryStatus status,
+            @RequestParam(value = "carrier", required = false) String carrier,
+            @RequestParam(value = "trackingNumber", required = false) String trackingNumber,
+            RedirectAttributes redirectAttributes) {
+        
+        Donation donation = donationService.getDonationById(donationId);
+        
+        // 배송 정보가 없으면 최소한의 배송 정보 생성
+        if (donation.getDelivery() == null) {
+            // 기본 배송 정보로 Delivery 생성
+            Delivery delivery = Delivery.builder()
+                    .donation(donation)
+                    .senderName(donation.getDonor() != null && donation.getDonor().getName() != null ? donation.getDonor().getName() : "미정")
+                    .senderPhone(donation.getDonor() != null && donation.getDonor().getPhone() != null ? donation.getDonor().getPhone() : "010-0000-0000")
+                    .senderAddress(donation.getDonor() != null && donation.getDonor().getAddress() != null ? donation.getDonor().getAddress() : "주소 미정")
+                    .receiverName(donation.getOrgan() != null ? donation.getOrgan().getOrgName() : "미정")
+                    .receiverPhone("010-0000-0000")
+                    .receiverAddress("주소 미정")
+                    .carrier(carrier != null && !carrier.isEmpty() ? carrier : null)
+                    .trackingNumber(trackingNumber != null && !trackingNumber.isEmpty() ? trackingNumber : null)
+                    .status(status)
+                    .build();
+            
+            // DeliveryRepository를 통해 직접 저장
+            deliveryRepo.save(delivery);
+        } else {
+            // 배송 정보가 있으면 상태, 택배사, 운송장 번호 업데이트
+            Delivery delivery = donation.getDelivery();
+            deliveryService.updateDeliveryStatus(delivery.getId(), status);
+            
+            // 택배사와 운송장 번호 업데이트
+            if (carrier != null && !carrier.isEmpty()) {
+                delivery.setCarrier(carrier);
+            }
+            if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                delivery.setTrackingNumber(trackingNumber);
+            }
+            deliveryRepo.save(delivery);
+        }
+        
+        redirectAttributes.addFlashAttribute("success", "배송 상태가 변경되었습니다.");
+        return "redirect:/admin/donations/" + donationId;
     }
 
     // 기부 승인 대기 목록

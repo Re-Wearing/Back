@@ -18,9 +18,20 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
     @EntityGraph(attributePaths = {"donationItem", "organ", "donor"})
     List<Donation> findByStatus(DonationStatus status);
     
-    @EntityGraph(attributePaths = {"donationItem", "organ", "donor"})
-    @Query("SELECT d FROM Donation d")
+    @Query("SELECT d FROM Donation d " +
+           "LEFT JOIN FETCH d.donationItem " +
+           "LEFT JOIN FETCH d.organ " +
+           "LEFT JOIN FETCH d.donor " +
+           "LEFT JOIN FETCH d.delivery")
     List<Donation> findAllWithDetails();
+    
+    @Query("SELECT d FROM Donation d " +
+           "LEFT JOIN FETCH d.donationItem " +
+           "LEFT JOIN FETCH d.organ " +
+           "LEFT JOIN FETCH d.donor " +
+           "LEFT JOIN FETCH d.delivery " +
+           "WHERE d.id = :id")
+    java.util.Optional<Donation> findByIdWithDetails(Long id);
     
     List<Donation> findByOrganId(Long organId);
     List<Donation> findByOrganIdAndStatus(Long organId, DonationStatus status);
