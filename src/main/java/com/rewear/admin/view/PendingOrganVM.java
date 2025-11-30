@@ -21,6 +21,12 @@ public class PendingOrganVM {
                                     String businessNo,
                                     String requesterUsername,
                                     LocalDateTime requestedAt) {
-        return new PendingOrganVM(id, orgName, businessNo, requesterUsername, requestedAt);
+        PendingOrganVM vm = new PendingOrganVM();
+        vm.setId(id);
+        vm.setOrgName(orgName);
+        vm.setBusinessNo(businessNo);
+        vm.setRequesterUsername(requesterUsername);
+        vm.setRequestedAt(requestedAt);
+        return vm;
     }
 }

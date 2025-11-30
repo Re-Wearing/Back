@@ -1,8 +1,9 @@
 package com.rewear.organ.controller;
 
-import com.rewear.common.enums.DonationMethod;
+import com.rewear.common.enums.MatchType;
 import com.rewear.common.enums.DonationStatus;
 import com.rewear.donation.entity.Donation;
+import com.rewear.donation.repository.DonationRepository;
 import com.rewear.donation.service.DonationService;
 import com.rewear.organ.entity.Organ;
 import com.rewear.organ.service.OrganService;
@@ -27,6 +28,7 @@ import java.util.Optional;
 public class OrganController {
 
     private final DonationService donationService;
+    private final DonationRepository donationRepository;
     private final OrganService organService;
     private final UserServiceImpl userService;
 
@@ -46,32 +48,33 @@ public class OrganController {
 
         Organ organ = organOpt.get();
         
-        // REQUESTED 이상 상태인 기부 목록 조회 (PENDING 제외, SHIPPED, COMPLETED 제외)
+        // IN_PROGRESS 상태인 기부 목록 조회
         // 관리자 승인 완료된 기부만 기관에게 표시
-        List<Donation> allDonations = donationService.getAllDonations();
+        // CANCELLED 상태는 제외 (반려된 기부)
+        List<Donation> allDonations = donationRepository.findAllWithDetails();
         List<Donation> donations = allDonations.stream()
-                .filter(d -> d.getStatus() == DonationStatus.REQUESTED || d.getStatus() == DonationStatus.MATCHED)
+                .filter(d -> d.getStatus() == DonationStatus.IN_PROGRESS)
+                .filter(d -> d.getStatus() != DonationStatus.CANCELLED) // 반려된 기부 제외
                 .filter(d -> {
-                    // 간접 매칭이고 REQUESTED 상태이며 해당 기관에 할당된 경우는 매칭된 기부에 표시 (승인/거부 가능)
-                    if (d.getDonationMethod() == DonationMethod.INDIRECT_MATCH
-                            && d.getStatus() == DonationStatus.REQUESTED
-                            && d.getOrgan() != null && d.getOrgan().getId().equals(organ.getId())) {
-                        return true; // 매칭된 기부에 표시
-                    }
-                    // 이미 같은 기관이 선택한 경우는 제외 (단, MATCHED 상태일 때만 제외)
-                    if (d.getOrgan() != null && d.getOrgan().getId().equals(organ.getId())
-                            && d.getStatus() == DonationStatus.MATCHED) {
+                    // 직접 매칭인 경우
+                    if (d.getMatchType() == MatchType.DIRECT) {
+                        // 해당 기관에 할당된 경우: 표시 (이미 매칭된 기부)
+                        if (d.getOrgan() != null && d.getOrgan().getId().equals(organ.getId())) {
+                            return true;
+                        }
+                        // 아직 할당되지 않은 경우: 표시하지 않음 (직접 매칭은 사용자가 기관을 선택했으므로)
+                        // 다른 기관에 할당된 경우: 표시하지 않음
                         return false;
                     }
-                    // 직접 매칭이고 REQUESTED 상태인 경우는 표시
-                    if (d.getDonationMethod() == DonationMethod.DIRECT_MATCH
-                            && d.getStatus() == DonationStatus.REQUESTED) {
-                        return true;
-                    }
-                    // 직접 매칭이고 MATCHED 상태인 경우는 표시
-                    if (d.getDonationMethod() == DonationMethod.DIRECT_MATCH
-                            && d.getStatus() == DonationStatus.MATCHED) {
-                        return true;
+                    // 간접 매칭인 경우
+                    if (d.getMatchType() == MatchType.INDIRECT) {
+                        // 해당 기관에 할당된 경우: 표시 (승인/거부 가능)
+                        if (d.getOrgan() != null && d.getOrgan().getId().equals(organ.getId())) {
+                            return true;
+                        }
+                        // 아직 할당되지 않은 경우: 표시하지 않음 (관리자가 할당해야 함)
+                        // 다른 기관에 할당된 경우: 표시하지 않음
+                        return false;
                     }
                     return false;
                 })
@@ -170,12 +173,12 @@ public class OrganController {
 
         try {
             donationService.organApproveDonation(donationId, organ);
-            redirectAttributes.addFlashAttribute("success", "기부를 최종 승인하여 완료되었습니다.");
+            redirectAttributes.addFlashAttribute("success", "기부를 최종 승인하여 완료되었습니다. 받은 기부 목록에서 확인할 수 있습니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/organ/donations";
+        return "redirect:/organ/matched";
     }
 
     // 간접 매칭 기부 거부
@@ -198,7 +201,7 @@ public class OrganController {
 
         try {
             donationService.organRejectDonation(donationId, organ);
-            redirectAttributes.addFlashAttribute("success", "기부를 거부했습니다.");
+            redirectAttributes.addFlashAttribute("success", "기부를 반려했습니다. 해당 기부 요청이 삭제되었습니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -223,7 +226,7 @@ public class OrganController {
         Organ organ = organOpt.get();
         
         // 받은 기부는 COMPLETED 상태만 표시 (히스토리)
-        List<Donation> allDonations = donationService.getAllDonations();
+        List<Donation> allDonations = donationRepository.findAllWithDetails();
         List<Donation> matchedDonations = allDonations.stream()
                 .filter(d -> d.getOrgan() != null && d.getOrgan().getId().equals(organ.getId()))
                 .filter(d -> d.getStatus() == DonationStatus.COMPLETED)

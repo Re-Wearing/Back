@@ -15,7 +15,7 @@ public class SignupForm {
     // 공통
     @NotBlank(message = "아이디는 필수입니다.")
     @Size(min = 5, max = 12, message = "아이디는 5~12자 사이여야 합니다.")
-    @Pattern(regexp = "^[A-Za-z0-9._-]+$", message = "아이디는 영문, 숫자, ., _, - 만 사용할 수 있습니다.")
+    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "아이디는 영문과 숫자만 사용할 수 있습니다.")
     private String username;
     
     @NotBlank(message = "비밀번호는 필수입니다.")
@@ -32,7 +32,12 @@ public class SignupForm {
     // 선택/서버에서 정규화
     @Pattern(regexp = "^$|^01[0-9]{8,9}$", message = "올바른 휴대전화 번호 형식이 아닙니다. (예: 01012345678)")
     private String phone;
+
+    @NotBlank(message = "우편번호는 필수입니다.")
+    @Pattern(regexp = "^[0-9]{5}$", message = "우편번호는 5자리 숫자여야 합니다.")
+    private String addressPostcode; // 우편번호
     
+    @NotBlank(message = "주소는 필수입니다.")
     @Size(max = 255, message = "주소는 최대 255자까지 입력 가능합니다.")
     private String address;
     
