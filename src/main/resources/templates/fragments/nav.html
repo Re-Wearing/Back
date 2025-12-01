@@ -55,6 +55,7 @@
             <span sec:authorize="hasRole('ADMIN')" class="left">
                 <a th:href="@{/admin}">관리자 대시보드</a>
                 <a th:href="@{/admin/orgs/pending}">기관 계정 승인</a>
+                <a th:href="@{/admin/deliveries}">배송 관리</a>
             </span>
         </div>
 
@@ -65,16 +66,14 @@
             </span>
 
             <span sec:authorize="isAuthenticated()">
-                <span sec:authorize="!hasRole('ADMIN')">
-                    <a th:href="@{/notifications}" class="notification-icon" title="알림">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25-2.5 7.5-2.5 7.5h15S19 14.25 19 9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5 0 4.67 2.33 6.33 2.5 6.5h-15c.17-.17 2.5-1.83 2.5-6.5 0-2.76 2.24-5 5-5zm-1 13h2v2h-2v-2zm0-4h2v6h-2v-6z"/>
-                        </svg>
-                        <span th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}" 
-                              class="notification-badge" 
-                              th:text="${unreadNotificationCount}">0</span>
-                    </a>
-                </span>
+                <a th:href="@{/notifications}" class="notification-icon" title="알림">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25-2.5 7.5-2.5 7.5h15S19 14.25 19 9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5 0 4.67 2.33 6.33 2.5 6.5h-15c.17-.17 2.5-1.83 2.5-6.5 0-2.76 2.24-5 5-5zm-1 13h2v2h-2v-2zm0-4h2v6h-2v-6z"/>
+                    </svg>
+                    <span th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}" 
+                          class="notification-badge" 
+                          th:text="${unreadNotificationCount}">0</span>
+                </a>
                 <span class="role-badge" th:text="${#authentication?.name}">user</span>
                 <form th:action="@{/logout}" method="post" style="display:inline">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

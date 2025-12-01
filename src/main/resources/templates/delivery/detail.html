@@ -84,10 +84,6 @@
             background: #fef3c7;
             color: #92400e;
         }
-        .status-preparing {
-            background: #dbeafe;
-            color: #1e40af;
-        }
         .status-in_transit {
             background: #e0e7ff;
             color: #3730a3;
@@ -95,10 +91,6 @@
         .status-delivered {
             background: #d1fae5;
             color: #065f46;
-        }
-        .status-cancelled {
-            background: #fee2e2;
-            color: #991b1b;
         }
         .btn-group {
             display: flex;
@@ -159,7 +151,10 @@
                 <div class="info-label">상태:</div>
                 <div class="info-value">
                     <span class="status-badge" th:classappend="${'status-' + delivery.status.name().toLowerCase()}" 
-                          th:text="${delivery.status.name()}">상태</span>
+                          th:text="${delivery.status == T(com.rewear.common.enums.DeliveryStatus).PENDING ? '대기' : 
+                                   delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? '배송중' : 
+                                   delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? '완료' : 
+                                   delivery.status.name()}">상태</span>
                 </div>
             </div>
             <div th:if="${delivery.shippedAt != null}" class="info-grid">
@@ -232,11 +227,15 @@
 
         <div class="section">
             <div class="section-title">기부 정보</div>
-            <div class="info-grid">
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
                 <div class="info-label">옷의 종류:</div>
-                <div class="info-value" th:text="${delivery.donation.clothType.name()}"></div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.mainCategory.name()}"></div>
             </div>
-            <div class="info-grid">
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null && delivery.donation.donationItem.detailCategory != null}">
+                <div class="info-label">상세 카테고리:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.detailCategory}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
                 <div class="info-label">기관:</div>
                 <div class="info-value" th:text="${delivery.donation.organ != null ? delivery.donation.organ.orgName : '없음'}"></div>
             </div>
@@ -246,11 +245,9 @@
             <form th:action="@{/admin/deliveries/{id}/status(id=${delivery.id})}" method="post">
                 <label for="status">배송 상태 변경:</label>
                 <select id="status" name="status">
-                    <option th:value="PENDING" th:selected="${delivery.status.name() == 'PENDING'}">배송 대기</option>
-                    <option th:value="PREPARING" th:selected="${delivery.status.name() == 'PREPARING'}">배송 준비 중</option>
-                    <option th:value="IN_TRANSIT" th:selected="${delivery.status.name() == 'IN_TRANSIT'}">배송 중</option>
-                    <option th:value="DELIVERED" th:selected="${delivery.status.name() == 'DELIVERED'}">배송 완료</option>
-                    <option th:value="CANCELLED" th:selected="${delivery.status.name() == 'CANCELLED'}">배송 취소</option>
+                    <option th:value="PENDING" th:selected="${delivery.status.name() == 'PENDING'}">대기</option>
+                    <option th:value="IN_TRANSIT" th:selected="${delivery.status.name() == 'IN_TRANSIT'}">배송중</option>
+                    <option th:value="DELIVERED" th:selected="${delivery.status.name() == 'DELIVERED'}">완료</option>
                 </select>
                 <button type="submit" class="btn btn-primary">상태 업데이트</button>
             </form>

@@ -303,6 +303,9 @@
             <a th:if="${donation.delivery != null}" 
                th:href="@{/admin/deliveries/{id}(id=${donation.delivery.id})}" 
                class="btn btn-primary">배송 정보 보기</a>
+            <a th:if="${donation.delivery == null}" 
+               th:href="@{/admin/deliveries/create(donationId=${donation.id})}" 
+               class="btn btn-primary">배송 정보 등록</a>
         </div>
     </div>
 </div>

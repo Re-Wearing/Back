@@ -68,10 +68,6 @@
             background: #fef3c7;
             color: #92400e;
         }
-        .status-preparing {
-            background: #dbeafe;
-            color: #1e40af;
-        }
         .status-in_transit {
             background: #e0e7ff;
             color: #3730a3;
@@ -79,10 +75,6 @@
         .status-delivered {
             background: #d1fae5;
             color: #065f46;
-        }
-        .status-cancelled {
-            background: #fee2e2;
-            color: #991b1b;
         }
         .delivery-item-info {
             display: grid;
@@ -156,7 +148,10 @@
                         <span th:if="${delivery.donation.organ != null}" th:text="' - ' + ${delivery.donation.organ.orgName}"> - 기관명</span>
                     </div>
                     <span class="status-badge" th:classappend="${'status-' + delivery.status.name().toLowerCase()}" 
-                          th:text="${delivery.status.name()}">상태</span>
+                          th:text="${delivery.status == T(com.rewear.common.enums.DeliveryStatus).PENDING ? '대기' : 
+                                   delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? '배송중' : 
+                                   delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? '완료' : 
+                                   delivery.status.name()}">상태</span>
                 </div>
 
                 <div class="delivery-item-info">

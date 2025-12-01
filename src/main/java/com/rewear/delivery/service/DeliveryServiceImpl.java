@@ -80,7 +80,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Delivery> getDeliveryById(Long deliveryId) {
-        return deliveryRepository.findById(deliveryId);
+        return deliveryRepository.findByIdWithDetails(deliveryId);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Override
     @Transactional(readOnly = true)
     public List<Delivery> getAllDeliveries() {
-        return deliveryRepository.findAll();
+        return deliveryRepository.findAllWithDetails();
     }
 
     @Override

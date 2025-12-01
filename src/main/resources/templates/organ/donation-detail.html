@@ -165,22 +165,6 @@
             </div>
         </div>
 
-        <div th:if="${donation.organ != null}" class="info-section">
-            <div class="section-title" th:text="${isHistory ? '기부 히스토리' : '현재 매칭 정보'}"></div>
-            <div class="info-grid">
-                <div class="info-label">매칭된 기관:</div>
-                <div class="info-value" th:text="${donation.organ.orgName}"></div>
-            </div>
-            <div th:if="${!isHistory && alreadyMatched}" class="info-grid">
-                <div class="info-label">상태:</div>
-                <div class="info-value" style="color: var(--ok); font-weight: 600;">이미 선택하신 기부입니다.</div>
-            </div>
-            <div th:if="${isHistory}" class="info-grid">
-                <div class="info-label">기부자:</div>
-                <div class="info-value" th:text="${donation.isAnonymous ? '익명' : donation.donor.name}"></div>
-            </div>
-        </div>
-
         <!-- 배송 정보 (COMPLETED 상태일 때만 표시) -->
         <div th:if="${isHistory}" class="info-section">
             <div class="section-title">배송 정보</div>

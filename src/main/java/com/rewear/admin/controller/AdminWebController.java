@@ -195,6 +195,62 @@ public class AdminWebController {
         return "admin/delivery-list";
     }
 
+    @GetMapping("/deliveries/create")
+    public String createDeliveryForm(
+            @RequestParam(required = false) Long donationId,
+            Model model) {
+        DeliveryForm form = new DeliveryForm();
+        if (donationId != null) {
+            Donation donation = donationService.getDonationById(donationId);
+            form.setDonationId(donationId);
+            // 기부 정보에서 기본값 설정
+            if (donation.getDonor() != null) {
+                form.setSenderName(donation.getDonor().getName() != null ? donation.getDonor().getName() : "");
+                form.setSenderPhone(donation.getDonor().getPhone() != null ? donation.getDonor().getPhone() : "");
+                form.setSenderAddress(donation.getDonor().getAddress() != null ? donation.getDonor().getAddress() : "");
+            }
+            if (donation.getOrgan() != null) {
+                form.setReceiverName(donation.getOrgan().getOrgName() != null ? donation.getOrgan().getOrgName() : "");
+            }
+            model.addAttribute("donation", donation);
+        }
+        model.addAttribute("form", form);
+        return "admin/delivery-create";
+    }
+
+    @PostMapping("/deliveries/create")
+    public String createDelivery(
+            @Valid @ModelAttribute("form") DeliveryForm form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            if (form.getDonationId() != null) {
+                Donation donation = donationService.getDonationById(form.getDonationId());
+                model.addAttribute("donation", donation);
+            }
+            return "admin/delivery-create";
+        }
+
+        Donation donation = donationService.getDonationById(form.getDonationId());
+        if (donation == null) {
+            redirectAttributes.addFlashAttribute("error", "기부 정보를 찾을 수 없습니다.");
+            return "redirect:/admin/deliveries";
+        }
+
+        // 이미 배송 정보가 있는지 확인
+        Optional<Delivery> existingDelivery = deliveryService.getDeliveryByDonation(donation);
+        if (existingDelivery.isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "이미 배송 정보가 등록된 기부입니다.");
+            return "redirect:/admin/deliveries";
+        }
+
+        Delivery delivery = deliveryService.createDelivery(donation, form);
+        redirectAttributes.addFlashAttribute("success", "배송 정보가 등록되었습니다.");
+        return "redirect:/admin/deliveries/" + delivery.getId();
+    }
+
     @GetMapping("/deliveries/{deliveryId}")
     public String deliveryDetail(
             @PathVariable Long deliveryId,
