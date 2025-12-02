@@ -158,8 +158,15 @@
             <div class="info-grid">
                 <div class="info-label">상태:</div>
                 <div class="info-value">
-                    <span class="status-badge" th:classappend="${'status-' + delivery.status.name().toLowerCase()}" 
-                          th:text="${delivery.status.name()}">상태</span>
+                    <span class="status-badge" 
+                          th:classappend="${delivery.status.name() == 'PENDING' ? 'status-pending' : 
+                                         delivery.status.name() == 'IN_TRANSIT' ? 'status-in_transit' : 
+                                         delivery.status.name() == 'DELIVERED' ? 'status-delivered' : 
+                                         'status-pending'}"
+                          th:text="${delivery.status.name() == 'PENDING' ? '대기' : 
+                                   delivery.status.name() == 'IN_TRANSIT' ? '배송중' : 
+                                   delivery.status.name() == 'DELIVERED' ? '완료' : 
+                                   delivery.status.name()}">상태</span>
                 </div>
             </div>
             <div th:if="${delivery.shippedAt != null}" class="info-grid">
@@ -232,13 +239,33 @@
 
         <div class="section">
             <div class="section-title">기부 정보</div>
-            <div class="info-grid">
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
                 <div class="info-label">옷의 종류:</div>
-                <div class="info-value" th:text="${delivery.donation.clothType.name()}"></div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.mainCategory.name()}"></div>
             </div>
-            <div class="info-grid">
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
+                <div class="info-label">성별:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.genderType.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
+                <div class="info-label">사이즈:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.size.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null && delivery.donation.donationItem.detailCategory != null}">
+                <div class="info-label">상세 카테고리:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.detailCategory}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
                 <div class="info-label">기관:</div>
                 <div class="info-value" th:text="${delivery.donation.organ != null ? delivery.donation.organ.orgName : '없음'}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
+                <div class="info-label">매칭 방식:</div>
+                <div class="info-value" th:text="${delivery.donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
+                <div class="info-label">배송 방법:</div>
+                <div class="info-value" th:text="${delivery.donation.deliveryMethod == T(com.rewear.common.enums.DeliveryMethod).DIRECT_DELIVERY ? '직접 배송' : '택배 배송'}"></div>
             </div>
         </div>
 
