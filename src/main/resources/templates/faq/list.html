@@ -441,47 +441,19 @@
     <div class="page-header">
         <h1>자주 묻는 질문</h1>
         <p>RE-WEAR에 대해 궁금한 점을 확인해보세요</p>
-    </div>
-
-    <!-- 질문 등록 폼 -->
-    <div class="question-form">
-        <h2>질문하기</h2>
-        <div th:if="${success}" class="message success" th:text="${success}"></div>
-        <div th:if="${error}" class="message error" th:text="${error}"></div>
-        
-        <form th:action="@{/faq/question}" method="post">
-            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            
-            <div class="form-group">
-                <label for="question">질문 <span style="color: #ef4444;">*</span></label>
-                <textarea id="question" 
-                          name="question" 
-                          placeholder="궁금한 점을 입력해주세요 (최대 500자)"
-                          maxlength="500"
-                          required></textarea>
-                <small style="color: #9ca3af; font-size: 12px;">질문은 최대 500자까지 입력 가능합니다.</small>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary" sec:authorize="isAuthenticated()">질문 등록</button>
-                <a th:href="@{/login}" class="btn btn-secondary" sec:authorize="isAnonymous()">로그인 후 질문하기</a>
-            </div>
-        </form>
+        <div style="margin-top: 20px;">
+            <a th:href="@{/faq/my-questions}" class="btn btn-primary" sec:authorize="isAuthenticated()" style="display: inline-block;">질문하러 가기</a>
+            <a th:href="@{/login}" class="btn btn-primary" sec:authorize="isAnonymous()" style="display: inline-block;">질문하러 가기</a>
+        </div>
     </div>
 
     <div th:if="${faqs != null && !faqs.isEmpty()}" class="faq-section">
         <div th:each="faq : ${faqs}" 
-             class="faq-item" 
-             th:classappend="${faq.answer != null && !faq.answer.isEmpty()} ? 'active' : ''">
+             class="faq-item">
             <button class="faq-question" th:text="${faq.question}">질문</button>
             <div class="faq-answer">
-                <div th:if="${faq.answer != null && !faq.answer.isEmpty()}" 
-                     class="faq-answer-content" 
+                <div class="faq-answer-content" 
                      th:text="${faq.answer}">답변</div>
-                <div th:if="${faq.answer == null || faq.answer.isEmpty()}" 
-                     class="faq-answer-content waiting">
-                    <p style="color: #9ca3af; font-style: italic;">답변 대기 중입니다.</p>
-                </div>
             </div>
         </div>
     </div>
@@ -498,4 +470,16 @@
             const isActive = faqItem.classList.contains('active');
 
             // 모든 FAQ 항목 닫기
-            document.querySelectorAll('.faq-i
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 클릭한 항목이 닫혀있었다면 열기
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        });
+    });
+</script>
+</body>
+</html>

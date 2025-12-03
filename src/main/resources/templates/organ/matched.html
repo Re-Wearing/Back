@@ -186,11 +186,12 @@
         <div th:if="${donations != null && !donations.isEmpty()}" class="donation-list">
             <div th:each="donation : ${donations}" class="donation-item">
                 <div class="donation-image-container">
-                    <img th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
+                    <img th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null && !donation.donationItem.imageUrl.isEmpty()}" 
                          th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
                          alt="기부 이미지" 
-                         class="donation-image"/>
-                    <div th:unless="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
+                         class="donation-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+                    <div th:if="${donation.donationItem == null || donation.donationItem.imageUrl == null || donation.donationItem.imageUrl.isEmpty()}" 
                          class="donation-image" 
                          style="background: var(--bd); display: flex; align-items: center; justify-content: center; color: var(--sub);">
                         이미지 없음

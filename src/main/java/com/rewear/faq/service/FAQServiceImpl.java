@@ -22,26 +22,19 @@ public class FAQServiceImpl implements FAQService {
     @Override
     @Transactional(readOnly = true)
     public List<FAQ> getAllActiveFAQs() {
-        // 답변이 있는 FAQ와 사용자 질문(답변 대기 중) 모두 반환
-        // 답변이 있는 FAQ는 isActive=true인 것만, 답변이 없는 사용자 질문은 모두 포함
+        // 공개 FAQ만 반환: 관리자가 작성한 FAQ (author == null) 중 isActive=true인 것만
         List<FAQ> allFAQs = faqRepository.findAll();
         return allFAQs.stream()
                 .filter(faq -> {
-                    // 답변이 있는 경우: isActive가 true인 것만
-                    if (faq.getAnswer() != null && !faq.getAnswer().isEmpty()) {
-                        return faq.getIsActive();
+                    // 관리자가 작성한 FAQ만 (author == null)
+                    if (faq.getAuthor() != null) {
+                        return false;
                     }
-                    // 답변이 없는 경우: 사용자 질문은 모두 포함
-                    return faq.getAuthor() != null;
+                    // 활성화된 것만
+                    return faq.getIsActive();
                 })
                 .sorted((f1, f2) -> {
-                    // 답변이 있는 것 먼저, 그 다음 답변 대기 중인 것
-                    boolean f1HasAnswer = f1.getAnswer() != null && !f1.getAnswer().isEmpty();
-                    boolean f2HasAnswer = f2.getAnswer() != null && !f2.getAnswer().isEmpty();
-                    if (f1HasAnswer != f2HasAnswer) {
-                        return f1HasAnswer ? -1 : 1;
-                    }
-                    // 같은 그룹 내에서는 displayOrder로 정렬
+                    // displayOrder로 정렬
                     return Integer.compare(f1.getDisplayOrder(), f2.getDisplayOrder());
                 })
                 .toList();
@@ -180,5 +173,12 @@ public class FAQServiceImpl implements FAQService {
         FAQ savedFaq = faqRepository.save(faq);
         log.info("FAQ 등록 완료 - ID: {}, 작성자: {}", savedFaq.getId(), faq.getAuthor().getUsername());
         return savedFaq;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FAQ> getUserQuestions(User user) {
+        // 사용자가 작성한 모든 질문 반환 (답변 여부와 관계없이)
+        return faqRepository.findByAuthorOrderByCreatedAtDesc(user);
     }
 }

@@ -8,11 +8,14 @@ import java.util.List;
 import com.rewear.user.entity.User;
 
 public interface FAQService {
-    List<FAQ> getAllActiveFAQs();
+    List<FAQ> getAllActiveFAQs(); // 공개 FAQ만 반환 (관리자 작성)
     FAQ getFAQById(Long id);
 
     // 사용자/기관 질문 등록
     FAQ createUserQuestion(User user, String question);
+    
+    // 사용자별 질문 조회
+    List<FAQ> getUserQuestions(User user);
 
     // 관리자용 메서드
     List<FAQ> getAllFAQs();

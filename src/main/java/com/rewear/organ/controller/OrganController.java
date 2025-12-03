@@ -11,6 +11,7 @@ import com.rewear.user.details.CustomUserDetails;
 import com.rewear.user.entity.User;
 import com.rewear.user.service.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Controller
 @RequestMapping("/organ")
 @RequiredArgsConstructor
@@ -86,7 +88,7 @@ public class OrganController {
 
     @GetMapping("/donations/{donationId}")
     public String donationDetail(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             @AuthenticationPrincipal CustomUserDetails principal,
             Model model) {
         
@@ -100,6 +102,16 @@ public class OrganController {
 
         Organ organ = organOpt.get();
         Donation donation = donationService.getDonationById(donationId);
+        
+        // 디버깅: 이미지 URL 확인
+        if (donation.getDonationItem() != null) {
+            log.info("기부 상세보기 - Donation ID: {}, DonationItem ID: {}, ImageURL: {}", 
+                    donationId,
+                    donation.getDonationItem().getId(), 
+                    donation.getDonationItem().getImageUrl());
+        } else {
+            log.warn("기부 상세보기 - DonationItem이 null입니다. Donation ID: {}", donationId);
+        }
         
         // SHIPPED 상태면 목록으로 리다이렉트
         if (donation.getStatus() == DonationStatus.SHIPPED) {
@@ -128,7 +140,7 @@ public class OrganController {
 
     @PostMapping("/donations/{donationId}/match")
     public String matchDonation(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirectAttributes) {
         
@@ -156,7 +168,7 @@ public class OrganController {
     // 간접 매칭 기부 최종 승인
     @PostMapping("/donations/{donationId}/approve")
     public String approveDonation(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirectAttributes) {
         
@@ -184,7 +196,7 @@ public class OrganController {
     // 간접 매칭 기부 거부
     @PostMapping("/donations/{donationId}/reject")
     public String rejectDonation(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirectAttributes) {
         
