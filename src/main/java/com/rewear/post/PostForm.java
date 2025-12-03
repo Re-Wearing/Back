@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Data
 public class PostForm {
 
@@ -23,7 +25,8 @@ public class PostForm {
     @jakarta.validation.constraints.Size(max = 1000, message = "내용은 1000자 이하여야 합니다.")
     private String content;
 
-    private MultipartFile image;
+    private MultipartFile image; // 단일 이미지 (하위 호환성)
+    private List<MultipartFile> images; // 여러 이미지
 
     // 기부 후기용
     private Boolean isAnonymous = false;

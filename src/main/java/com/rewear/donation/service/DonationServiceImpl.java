@@ -43,10 +43,20 @@ public class DonationServiceImpl implements DonationService {
     @Override
     public Donation createDonation(User donor, DonationForm form, DonationItemForm itemForm, Organ organ) {
         // DonationItem 생성 (아직 저장하지 않음 - cascade로 자동 저장됨)
-        // 이미지는 첫 번째 단계에서 이미 저장되었으므로 imageUrl을 직접 사용
+        // 이미지는 첫 번째 단계에서 이미 저장되었으므로 imageUrl/imageUrls을 직접 사용
         String imageUrl = itemForm.getImageUrl();
+        String imageUrls = null;
         
-        log.info("기부 생성 시작 - DonationItemForm에서 가져온 이미지 URL: {}", imageUrl);
+        // 여러 이미지 URL 처리
+        if (itemForm.getImageUrls() != null && !itemForm.getImageUrls().isEmpty()) {
+            imageUrls = String.join(",", itemForm.getImageUrls());
+            // 첫 번째 이미지를 imageUrl에도 설정 (하위 호환성)
+            if (imageUrl == null) {
+                imageUrl = itemForm.getImageUrls().get(0);
+            }
+        }
+        
+        log.info("기부 생성 시작 - DonationItemForm에서 가져온 이미지 URL: {}, 여러 이미지: {}", imageUrl, imageUrls);
 
         DonationItem item = DonationItem.builder()
                 .owner(donor)
@@ -56,9 +66,10 @@ public class DonationServiceImpl implements DonationService {
                 .size(itemForm.getSize())
                 .description(itemForm.getDescription())
                 .imageUrl(imageUrl)
+                .imageUrls(imageUrls)
                 .build();
         
-        log.info("기부 생성 - DonationItem 생성 완료, 이미지 URL: {}", item.getImageUrl());
+        log.info("기부 생성 - DonationItem 생성 완료, 이미지 URL: {}, 여러 이미지: {}", item.getImageUrl(), item.getImageUrls());
 
         // Donation 생성 (DonationItem을 설정하면 cascade로 자동 저장됨)
         Donation donation = Donation.builder()
@@ -169,9 +180,17 @@ public class DonationServiceImpl implements DonationService {
             throw new IllegalStateException("대기 상태인 기부만 승인할 수 있습니다.");
         }
 
+        // 간접 매칭인 경우 기관이 할당되어 있어야 승인 가능
+        if (donation.getMatchType() == MatchType.INDIRECT && donation.getOrgan() == null) {
+            throw new IllegalStateException("간접 매칭 기부는 관리자가 기관을 할당한 후에만 승인할 수 있습니다.");
+        }
+
         donation.setAdminDecision(AdminDecision.APPROVED);
         donation.setStatus(DonationStatus.IN_PROGRESS);
         
+        Donation savedDonation = donationRepository.save(donation);
+        
+        // 기부자에게 알림
         try {
             String title = "기부 승인 완료";
             String message = "귀하의 기부 신청이 승인되었습니다.";
@@ -180,14 +199,33 @@ public class DonationServiceImpl implements DonationService {
                 com.rewear.common.enums.NotificationType.DONATION_APPROVED,
                 title,
                 message,
-                donation.getId(),
+                savedDonation.getId(),
                 "donation"
             );
         } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
+            log.warn("기부자 알림 생성 실패: {}", e.getMessage());
+        }
+        
+        // 기관이 할당되어 있으면 기관에게도 알림
+        if (savedDonation.getOrgan() != null && savedDonation.getOrgan().getUser() != null) {
+            try {
+                String organTitle = "기부 매칭 승인";
+                String organMessage = String.format("관리자가 '%s' 기부를 승인하여 귀하의 기관에 할당되었습니다.", 
+                    savedDonation.getDonationItem() != null ? savedDonation.getDonationItem().getMainCategory() : "기부물품");
+                notificationService.createNotification(
+                    savedDonation.getOrgan().getUser(),
+                    com.rewear.common.enums.NotificationType.DONATION_MATCHED,
+                    organTitle,
+                    organMessage,
+                    savedDonation.getId(),
+                    "donation"
+                );
+            } catch (Exception e) {
+                log.warn("기관 알림 생성 실패: {}", e.getMessage());
+            }
         }
 
-        return donationRepository.save(donation);
+        return savedDonation;
     }
 
     @Override
@@ -284,6 +322,7 @@ public class DonationServiceImpl implements DonationService {
             deliveryRepository.save(savedDonation.getDelivery());
         }
 
+        // 기부자에게 알림
         try {
             String title = "기부 승인 완료";
             String message = String.format("'%s' 기관이 기부를 최종 승인하여 완료되었습니다.", organ.getOrgName());
@@ -296,7 +335,25 @@ public class DonationServiceImpl implements DonationService {
                 "donation"
             );
         } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
+            log.warn("기부자 알림 생성 실패: {}", e.getMessage());
+        }
+        
+        // 기관에게도 알림
+        if (organ.getUser() != null) {
+            try {
+                String organTitle = "기부 승인 완료";
+                String organMessage = String.format("귀하의 기관이 기부를 승인하여 완료되었습니다.");
+                notificationService.createNotification(
+                    organ.getUser(),
+                    com.rewear.common.enums.NotificationType.DONATION_APPROVED,
+                    organTitle,
+                    organMessage,
+                    savedDonation.getId(),
+                    "donation"
+                );
+            } catch (Exception e) {
+                log.warn("기관 알림 생성 실패: {}", e.getMessage());
+            }
         }
 
         return savedDonation;

@@ -195,8 +195,8 @@
 
             <!-- 사진 첨부 -->
             <div class="row">
-                <label>사진 첨부 <span class="muted">(선택 사항)</span></label>
-                <input type="file" name="image" accept="image/*" id="imageInput"/>
+                <label>사진 첨부 <span class="muted">(선택 사항, 여러 개 선택 가능)</span></label>
+                <input type="file" name="images" accept="image/*" id="imageInput" multiple/>
                 <div class="file-preview" id="imagePreview"></div>
             </div>
 
@@ -213,15 +213,27 @@
     const imagePreview = document.getElementById('imagePreview');
 
     imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.innerHTML = '<img src="' + e.target.result + '" alt="미리보기"/>';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            imagePreview.innerHTML = '';
+        const files = e.target.files;
+        imagePreview.innerHTML = '';
+        
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = '미리보기 ' + (i + 1);
+                        img.style.maxWidth = '200px';
+                        img.style.maxHeight = '200px';
+                        img.style.margin = '5px';
+                        img.style.objectFit = 'cover';
+                        imagePreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
         }
     });
 </script>
