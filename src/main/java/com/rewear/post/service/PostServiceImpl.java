@@ -248,7 +248,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public Post getPostById(Long postId) {
-        return postRepository.findById(postId)
+        return postRepository.findByIdWithAuthors(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
     }
 
