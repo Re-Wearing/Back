@@ -135,6 +135,11 @@ public class PostController {
             
             model.addAttribute("post", post);
             model.addAttribute("isAuthor", isAuthor);
+            
+            // 게시물 타입에 따른 목록 URL 설정
+            boolean isReview = post.getPostType() == PostType.DONATION_REVIEW;
+            model.addAttribute("isReview", isReview);
+            
             log.debug("게시물 상세 조회 완료 - ID: {}, 제목: {}", postId, post.getTitle());
             return "post/detail";
         } catch (Exception e) {
