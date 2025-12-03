@@ -131,37 +131,56 @@
         <div class="post-header">
                 <span class="post-badge"
                       th:classappend="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? 'review' : ''}"
-                      th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '기관 요청'}">
+                      th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '요청 게시물'}">
                     타입
                 </span>
             <h1 class="post-title" th:text="${post.title}">제목</h1>
             <div class="post-meta">
-                <span th:text="${post.author.name}">작성자</span>
-                <span th:if="${post.organ != null}" th:text="${post.organ.orgName}">기관명</span>
+                <!-- 기부 후기: 익명 처리 -->
+                <span th:if="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW}">
+                    <span th:if="${post.isAnonymous != null && post.isAnonymous}">익명</span>
+                    <span th:unless="${post.isAnonymous != null && post.isAnonymous}" th:text="${post.authorUser != null ? post.authorUser.name : '작성자'}">작성자</span>
+                </span>
+                <!-- 요청 게시물: 기관명 -->
+                <span th:if="${post.postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST && post.authorOrgan != null}" th:text="${post.authorOrgan.orgName}">기관명</span>
                 <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span>
-                <span>조회수: <span th:text="${post.viewCount}">0</span></span>
             </div>
         </div>
 
-        <div th:if="${post.imagePath != null}" class="post-image">
-            <img th:src="@{'/uploads/' + ${post.imagePath}}" alt="게시물 이미지"/>
+        <div th:if="${post.imageUrl != null && !post.imageUrl.isEmpty()}" class="post-image">
+            <img th:src="@{'/uploads/' + ${post.imageUrl}}" alt="게시물 이미지" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27%3E%3C/svg%27'; this.alt='이미지 없음';"/>
         </div>
 
-        <div th:if="${post.postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST && (post.clothType != null || post.quantity != null)}"
+        <div th:if="${post.postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST && (post.reqGenderType != null || post.reqMainCategory != null || post.reqDetailCategory != null || post.reqSize != null)}"
              class="post-info">
-            <div th:if="${post.clothType != null}">
-                <strong>옷의 종류:</strong>
-                <span th:text="${post.clothType.name()}"></span>
+            <div th:if="${post.reqGenderType != null}">
+                <strong>성별:</strong>
+                <span th:text="${post.reqGenderType == T(com.rewear.common.enums.GenderType).MALE ? '남성' : 
+                               (post.reqGenderType == T(com.rewear.common.enums.GenderType).FEMALE ? '여성' : 
+                               (post.reqGenderType == T(com.rewear.common.enums.GenderType).CHILD ? '아동' : '유니섹스'))}"></span>
             </div>
-            <div th:if="${post.quantity != null}">
-                <strong>수량:</strong>
-                <span th:text="${post.quantity} + '개'"></span>
+            <div th:if="${post.reqMainCategory != null}">
+                <strong>메인 카테고리:</strong>
+                <span th:text="${post.reqMainCategory == T(com.rewear.common.enums.ClothType).TOP ? '상의' : 
+                               (post.reqMainCategory == T(com.rewear.common.enums.ClothType).BOTTOM ? '하의' : 
+                               (post.reqMainCategory == T(com.rewear.common.enums.ClothType).OUTERWEAR ? '아우터' : 
+                               (post.reqMainCategory == T(com.rewear.common.enums.ClothType).SHOES ? '신발' : 
+                               (post.reqMainCategory == T(com.rewear.common.enums.ClothType).ACCESSORY ? '액세서리' : 
+                               (post.reqMainCategory == T(com.rewear.common.enums.ClothType).UNDERWEAR ? '속옷' : '기타')))))}"></span>
+            </div>
+            <div th:if="${post.reqDetailCategory != null && !post.reqDetailCategory.isEmpty()}">
+                <strong>상세 카테고리:</strong>
+                <span th:text="${post.reqDetailCategory}"></span>
+            </div>
+            <div th:if="${post.reqSize != null}">
+                <strong>사이즈:</strong>
+                <span th:text="${post.reqSize.name() == 'F' ? 'Free Size' : post.reqSize.name()}"></span>
             </div>
         </div>
 
         <div class="post-content" th:text="${post.content}">내용</div>
 
-        <div class="actions" th:if="${#authentication.principal.username == post.author.username}">
+        <div class="actions" th:if="${isAuthor}">
             <a th:href="@{'/posts/' + ${post.id} + '/edit'}" class="btn btn-primary">수정</a>
             <form th:action="@{'/posts/' + ${post.id} + '/delete'}" method="post" style="display:inline;">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

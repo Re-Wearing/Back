@@ -73,8 +73,9 @@ public class AdminConfig implements ApplicationRunner {
             admin.setName("admin");
             admin.setEmail("mymp903@gmail.com");
             admin.setNickname("관리자");
-            admin.setPhone("01000000000");     // 필요 시 채우기
-            admin.setAddress(null);   // 필요 시 채우기
+            admin.setPhone("01000000000");
+            admin.setAddressPostcode("00000");
+            admin.setAddress("관리자 주소");
 
             // ✅ Set<Role>로 권한 부여
             admin.setRoles(EnumSet.of(Role.ADMIN));

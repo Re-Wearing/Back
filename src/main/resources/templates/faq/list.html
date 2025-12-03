@@ -201,47 +201,8 @@
             color: #6b7280;
         }
 
-        .category-filter {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .category-btn {
-            padding: 10px 20px;
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            color: #374151;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .category-btn:hover {
-            border-color: #10b981;
-            color: #10b981;
-        }
-
-        .category-btn.active {
-            background: #10b981;
-            border-color: #10b981;
-            color: white;
-        }
-
         .faq-section {
             margin-bottom: 40px;
-        }
-
-        .category-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e5e7eb;
         }
 
         .faq-item {
@@ -315,6 +276,109 @@
             font-size: 18px;
         }
 
+        .question-form {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-form h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
         /* 반응형 */
         @media (max-width: 768px) {
             .nav-links {
@@ -377,32 +441,24 @@
     <div class="page-header">
         <h1>자주 묻는 질문</h1>
         <p>RE-WEAR에 대해 궁금한 점을 확인해보세요</p>
+        <div style="margin-top: 20px;">
+            <a th:href="@{/faq/my-questions}" class="btn btn-primary" sec:authorize="isAuthenticated()" style="display: inline-block;">질문하러 가기</a>
+            <a th:href="@{/login}" class="btn btn-primary" sec:authorize="isAnonymous()" style="display: inline-block;">질문하러 가기</a>
+        </div>
     </div>
 
-    <div class="category-filter">
-        <a th:href="@{/faq}"
-           th:classappend="${selectedCategory == null} ? 'active' : ''"
-           class="category-btn">전체</a>
-        <a th:each="cat : ${categories}"
-           th:href="@{/faq(category=${cat})}"
-           th:text="${cat}"
-           th:classappend="${selectedCategory == cat} ? 'active' : ''"
-           class="category-btn"></a>
-    </div>
-
-    <div th:if="${faqsByCategory != null && !faqsByCategory.isEmpty()}">
-        <div th:each="categoryEntry : ${faqsByCategory}" class="faq-section">
-            <h2 class="category-title" th:text="${categoryEntry.key}">카테고리</h2>
-            <div th:each="faq : ${categoryEntry.value}" class="faq-item">
-                <button class="faq-question" th:text="${faq.question}">질문</button>
-                <div class="faq-answer">
-                    <div class="faq-answer-content" th:text="${faq.answer}">답변</div>
-                </div>
+    <div th:if="${faqs != null && !faqs.isEmpty()}" class="faq-section">
+        <div th:each="faq : ${faqs}" 
+             class="faq-item">
+            <button class="faq-question" th:text="${faq.question}">질문</button>
+            <div class="faq-answer">
+                <div class="faq-answer-content" 
+                     th:text="${faq.answer}">답변</div>
             </div>
         </div>
     </div>
 
-    <div th:if="${faqsByCategory == null || faqsByCategory.isEmpty()}" class="empty-state">
+    <div th:if="${faqs == null || faqs.isEmpty()}" class="empty-state">
         <p>등록된 FAQ가 없습니다.</p>
     </div>
 </div>
@@ -414,4 +470,16 @@
             const isActive = faqItem.classList.contains('active');
 
             // 모든 FAQ 항목 닫기
-            document.querySelectorAll('.faq-i
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 클릭한 항목이 닫혀있었다면 열기
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        });
+    });
+</script>
+</body>
+</html>

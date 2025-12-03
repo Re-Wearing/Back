@@ -123,25 +123,26 @@
     <div class="card">
         <h1>기부 물품 상세</h1>
 
-        <div th:if="${donation.imagePath != null}">
-            <img th:src="@{'/uploads/' + ${donation.imagePath}}" 
+        <div th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null && !donation.donationItem.imageUrl.isEmpty()}">
+            <img th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
                  alt="기부 이미지" 
-                 class="donation-image"/>
+                 class="donation-image"
+                 onerror="this.parentElement.style.display='none'; this.nextElementSibling.style.display='flex';"/>
         </div>
-        <div th:unless="${donation.imagePath != null}" 
+        <div th:if="${donation.donationItem == null || donation.donationItem.imageUrl == null || donation.donationItem.imageUrl.isEmpty()}" 
              style="width: 100%; max-width: 500px; height: 300px; background: var(--bd); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--sub); margin-bottom: 24px;">
             이미지 없음
         </div>
 
         <div class="info-section">
             <div class="section-title">기본 정보</div>
-            <div class="info-grid">
+            <div class="info-grid" th:if="${donation.donationItem != null}">
                 <div class="info-label">옷의 종류:</div>
-                <div class="info-value" th:text="${donation.clothType.name()}"></div>
+                <div class="info-value" th:text="${donation.donationItem.mainCategory.name()}"></div>
             </div>
             <div class="info-grid">
                 <div class="info-label">기부 방법:</div>
-                <div class="info-value" th:text="${donation.donationMethod == T(com.rewear.common.enums.DonationMethod).DIRECT_MATCH ? '직접 매칭' : '간접 매칭'}"></div>
+                <div class="info-value" th:text="${donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></div>
             </div>
             <div class="info-grid">
                 <div class="info-label">배송 방법:</div>
@@ -159,30 +160,114 @@
                 <div class="info-label">신청일:</div>
                 <div class="info-value" th:text="${#temporals.format(donation.createdAt, 'yyyy-MM-dd HH:mm')}"></div>
             </div>
+            <div th:if="${isHistory}" class="info-grid">
+                <div class="info-label">완료일:</div>
+                <div class="info-value" th:text="${#temporals.format(donation.updatedAt, 'yyyy-MM-dd HH:mm')}"></div>
+            </div>
         </div>
 
         <div th:if="${donation.organ != null}" class="info-section">
-            <div class="section-title">현재 매칭 정보</div>
+            <div class="section-title" th:text="${isHistory ? '기부 히스토리' : '현재 매칭 정보'}"></div>
             <div class="info-grid">
                 <div class="info-label">매칭된 기관:</div>
                 <div class="info-value" th:text="${donation.organ.orgName}"></div>
             </div>
-            <div th:if="${alreadyMatched}" class="info-grid">
+            <div th:if="${!isHistory && alreadyMatched}" class="info-grid">
                 <div class="info-label">상태:</div>
                 <div class="info-value" style="color: var(--ok); font-weight: 600;">이미 선택하신 기부입니다.</div>
             </div>
+            <div th:if="${isHistory}" class="info-grid">
+                <div class="info-label">기부자:</div>
+                <div class="info-value" th:text="${donation.isAnonymous ? '익명' : donation.donor.name}"></div>
+            </div>
         </div>
 
-        <div class="match-form">
-            <p th:if="${!alreadyMatched}">이 기부 물품을 선택하시겠습니까? 선택하시면 매칭이 완료됩니다.</p>
-            <p th:if="${alreadyMatched}" style="color: var(--ok);">이미 선택하신 기부입니다.</p>
-            <form th:action="@{/organ/donations/{id}/match(id=${donation.id})}" method="post">
+        <!-- 배송 정보 (COMPLETED 상태일 때만 표시) -->
+        <div th:if="${isHistory}" class="info-section">
+            <div class="section-title">배송 정보</div>
+            <div th:if="${donation.delivery != null}" class="info-grid">
+                <div class="info-label">배송 상태:</div>
+                <div class="info-value">
+                    <span th:classappend="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? 'status-badge status-completed' : 
+                                         donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? 'status-badge status-in-progress' : 
+                                         'status-badge status-pending'}"
+                          style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block;"
+                          th:styleappend="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? 'background: #d1fae5; color: #065f46;' : 
+                                          donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? 'background: #dbeafe; color: #1e40af;' : 
+                                          'background: #fef3c7; color: #92400e;'}"
+                          th:text="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).PENDING ? '대기' : 
+                                   donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? '배송중' : 
+                                   donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? '완료' : 
+                                   donation.delivery.status.name()}"></span>
+                </div>
+            </div>
+            <div th:if="${donation.delivery != null && donation.delivery.trackingNumber != null}" class="info-grid">
+                <div class="info-label">운송장 번호:</div>
+                <div class="info-value" th:text="${donation.delivery.trackingNumber}"></div>
+            </div>
+            <div th:if="${donation.delivery != null && donation.delivery.carrier != null}" class="info-grid">
+                <div class="info-label">택배사:</div>
+                <div class="info-value" th:text="${donation.delivery.carrier}"></div>
+            </div>
+            <div th:if="${donation.delivery == null}" class="info-grid">
+                <div class="info-label">배송 정보:</div>
+                <div class="info-value" style="color: var(--sub);">배송 정보가 없습니다.</div>
+            </div>
+        </div>
+
+        <!-- COMPLETED 상태인 경우 히스토리 정보만 표시 -->
+        <div th:if="${isHistory}" class="match-form">
+            <p style="color: var(--ok); margin-bottom: 16px; font-weight: 600;">이 기부는 완료되었습니다.</p>
+            <div class="btn-group">
+                <a th:href="@{/organ/matched}" class="btn btn-secondary">받은 기부 목록으로</a>
+            </div>
+        </div>
+
+        <!-- COMPLETED가 아닌 경우에만 액션 버튼 표시 -->
+        <div th:unless="${isHistory}" class="match-form">
+            <!-- 간접 매칭이고 REQUESTED 상태인 경우 승인/거부 버튼 표시 (기존 로직 유지) -->
+            <div th:if="${donation.matchType == T(com.rewear.common.enums.MatchType).INDIRECT && donation.status == T(com.rewear.common.enums.DonationStatus).REQUESTED && alreadyMatched}">
+                <p style="color: var(--ok); margin-bottom: 16px;">관리자가 이 기부를 승인했습니다. 최종 승인 여부를 결정해주세요.</p>
                 <div class="btn-group">
-                    <button th:if="${!alreadyMatched}" type="submit" class="btn btn-primary">기부 선택하기</button>
-                    <button th:if="${alreadyMatched}" type="submit" class="btn btn-primary" disabled>이미 선택됨</button>
+                    <form th:action="@{/organ/donations/{id}/approve(id=${donation.id})}" method="post" style="display:inline;">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('이 기부를 최종 승인하여 완료하시겠습니까?')">승인</button>
+                    </form>
+                    <form th:action="@{/organ/donations/{id}/reject(id=${donation.id})}" method="post" style="display:inline;">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('이 기부를 거부하시겠습니까?')">거부</button>
+                    </form>
                     <a th:href="@{/organ/donations}" class="btn btn-secondary">목록으로</a>
                 </div>
-            </form>
+            </div>
+            <!-- 직접 매칭이고 IN_PROGRESS 상태인 경우 승인/반려 버튼 표시 -->
+            <div th:if="${donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT && donation.status == T(com.rewear.common.enums.DonationStatus).IN_PROGRESS && alreadyMatched}">
+                <p style="color: var(--ok); margin-bottom: 16px; font-weight: 600;">이 기부를 최종 승인하거나 반려할 수 있습니다.</p>
+                <div class="btn-group">
+                    <form th:action="@{/organ/donations/{id}/approve(id=${donation.id})}" method="post" style="display:inline;">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('이 기부를 최종 승인하여 완료하시겠습니까? 승인하면 받은 기부 목록에 추가됩니다.')">승인</button>
+                    </form>
+                    <form th:action="@{/organ/donations/{id}/reject(id=${donation.id})}" method="post" style="display:inline;">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('이 기부를 반려하시겠습니까? 반려하면 해당 기부 요청이 삭제됩니다.')">반려</button>
+                    </form>
+                    <a th:href="@{/organ/donations}" class="btn btn-secondary">목록으로</a>
+                </div>
+            </div>
+            <!-- 직접 매칭이거나 간접 매칭이지만 아직 REQUESTED가 아닌 경우 -->
+            <div th:unless="${(donation.matchType == T(com.rewear.common.enums.MatchType).INDIRECT && donation.status == T(com.rewear.common.enums.DonationStatus).REQUESTED && alreadyMatched) || (donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT && donation.status == T(com.rewear.common.enums.DonationStatus).IN_PROGRESS && alreadyMatched)}">
+                <p th:if="${!alreadyMatched}">이 기부 물품을 선택하시겠습니까? 선택하시면 매칭이 완료됩니다.</p>
+                <p th:if="${alreadyMatched}" style="color: var(--ok);">이미 선택하신 기부입니다.</p>
+                <form th:action="@{/organ/donations/{id}/match(id=${donation.id})}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="btn-group">
+                        <button th:if="${!alreadyMatched}" type="submit" class="btn btn-primary">기부 선택하기</button>
+                        <button th:if="${alreadyMatched}" type="submit" class="btn btn-primary" disabled>이미 선택됨</button>
+                        <a th:href="@{/organ/donations}" class="btn btn-secondary">목록으로</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

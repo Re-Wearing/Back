@@ -185,7 +185,7 @@
                 <a th:href="@{/posts/requests}"
                    class="tab"
                    th:classappend="${postType != null && postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST ? 'active' : ''}">
-                    기관 요청
+                    요청 게시물
                 </a>
             </div>
 
@@ -199,7 +199,7 @@
                 <a th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" 
                    sec:authorize="hasRole('ORGAN')"
                    th:href="@{'/posts/new?type=' + ${postType.name()}}"
-                   class="btn">기관 요청 작성</a>
+                   class="btn">요청 게시물 작성</a>
             </div>
         </div>
 
@@ -213,17 +213,21 @@
                     <h3 class="post-title" th:text="${post.title}">제목</h3>
                     <span class="post-badge"
                           th:classappend="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? 'review' : ''}"
-                          th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '기관 요청'}">
+                          th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '요청 게시물'}">
                         타입
                     </span>
                 </div>
                 <div class="post-content" th:text="${post.content}">내용</div>
                 <div class="post-footer">
                     <div class="post-meta">
-                        <span th:text="${post.author.name}">작성자</span>
-                        <span th:if="${post.organ != null}" th:text="${post.organ.orgName}">기관명</span>
+                        <!-- 기부 후기: 익명 처리 -->
+                        <span th:if="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW}">
+                            <span th:if="${post.isAnonymous != null && post.isAnonymous}">익명</span>
+                            <span th:unless="${post.isAnonymous != null && post.isAnonymous}" th:text="${post.authorUser != null ? post.authorUser.name : '작성자'}">작성자</span>
+                        </span>
+                        <!-- 요청 게시물: 기관명 -->
+                        <span th:if="${post.postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST && post.authorOrgan != null}" th:text="${post.authorOrgan.orgName}">기관명</span>
                         <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span>
-                        <span>조회수: <span th:text="${post.viewCount}">0</span></span>
                     </div>
                 </div>
             </div>

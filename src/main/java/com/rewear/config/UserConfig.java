@@ -66,6 +66,7 @@ public class UserConfig implements ApplicationRunner {
             user.setEmail("user@example.com");
             user.setNickname("user");
             user.setPhone("01012345678");
+            user.setAddressPostcode("06235");
             user.setAddress("서울시 강남구 테헤란로 123");
 
             // USER 권한 부여

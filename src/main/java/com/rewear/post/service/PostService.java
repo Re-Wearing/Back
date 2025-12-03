@@ -15,9 +15,8 @@ public interface PostService {
     Post updatePost(Long postId, User author, PostForm form, MultipartFile image);
     void deletePost(Long postId, User author);
     Post getPostById(Long postId);
-    Post getPostByIdAndIncrementView(Long postId);
     List<Post> getPostsByType(PostType postType);
     Page<Post> getPostsByType(PostType postType, Pageable pageable);
-    List<Post> getPostsByAuthor(User author);
-    List<Post> getPostsByOrgan(Long organId);
+    List<Post> getPostsByAuthorUser(User authorUser);
+    List<Post> getPostsByAuthorOrgan(Long organId);
 }
