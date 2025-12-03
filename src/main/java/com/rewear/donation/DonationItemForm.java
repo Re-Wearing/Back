@@ -26,5 +26,8 @@ public class DonationItemForm {
     private String description;
 
     private MultipartFile image;
+    
+    // 이미지 파일명 (세션 저장용)
+    private String imageUrl;
 }
 

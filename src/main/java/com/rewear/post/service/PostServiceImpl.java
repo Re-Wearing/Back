@@ -38,37 +38,40 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Post createPost(User author, PostForm form, MultipartFile image) {
-        // 기관 게시물인 경우 organ 정보 가져오기
-        Organ organ = null;
-        if (form.getPostType() == PostType.ORGAN_REQUEST) {
-            organ = organService.findByUserId(author.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("기관 정보를 찾을 수 없습니다."));
-        }
-
         // 이미지 저장
-        String imagePath = null;
+        String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             try {
-                imagePath = saveImage(image);
+                imageUrl = saveImage(image);
             } catch (IOException e) {
                 log.error("이미지 저장 실패", e);
                 throw new RuntimeException("이미지 저장에 실패했습니다.", e);
             }
         }
 
-        Post post = Post.builder()
+        Post.PostBuilder postBuilder = Post.builder()
                 .postType(form.getPostType())
-                .author(author)
-                .organ(organ)
                 .title(form.getTitle())
                 .content(form.getContent())
-                .clothType(form.getClothType())
-                .quantity(form.getQuantity())
-                .imagePath(imagePath)
-                .viewCount(0)
-                .build();
+                .imageUrl(imageUrl);
 
-        return postRepository.save(post);
+        // 게시판 타입에 따라 작성자 설정
+        if (form.getPostType() == PostType.DONATION_REVIEW) {
+            // 기부 후기: 일반 회원 작성
+            postBuilder.authorUser(author)
+                    .isAnonymous(form.getIsAnonymous() != null ? form.getIsAnonymous() : false);
+        } else if (form.getPostType() == PostType.ORGAN_REQUEST) {
+            // 요청 게시물: 기관 작성
+            Organ organ = organService.findByUserId(author.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("기관 정보를 찾을 수 없습니다."));
+            postBuilder.authorOrgan(organ)
+                    .reqGenderType(form.getReqGenderType())
+                    .reqMainCategory(form.getReqMainCategory())
+                    .reqDetailCategory(form.getReqDetailCategory())
+                    .reqSize(form.getReqSize());
+        }
+
+        return postRepository.save(postBuilder.build());
     }
 
     @Override
@@ -77,19 +80,28 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
 
         // 작성자 확인
-        if (!post.getAuthor().getId().equals(author.getId())) {
+        boolean isAuthor = false;
+        if (post.getAuthorUser() != null && post.getAuthorUser().getId().equals(author.getId())) {
+            isAuthor = true;
+        } else if (post.getAuthorOrgan() != null) {
+            Organ organ = organService.findByUserId(author.getId()).orElse(null);
+            if (organ != null && organ.getId().equals(post.getAuthorOrgan().getId())) {
+                isAuthor = true;
+            }
+        }
+        if (!isAuthor) {
             throw new IllegalStateException("게시물을 수정할 권한이 없습니다.");
         }
 
         // 이미지 업데이트
         if (image != null && !image.isEmpty()) {
             // 기존 이미지 삭제
-            if (post.getImagePath() != null) {
-                deleteImage(post.getImagePath());
+            if (post.getImageUrl() != null) {
+                deleteImage(post.getImageUrl());
             }
             // 새 이미지 저장
             try {
-                post.setImagePath(saveImage(image));
+                post.setImageUrl(saveImage(image));
             } catch (IOException e) {
                 log.error("이미지 저장 실패", e);
                 throw new RuntimeException("이미지 저장에 실패했습니다.", e);
@@ -99,8 +111,16 @@ public class PostServiceImpl implements PostService {
         // 내용 업데이트
         post.setTitle(form.getTitle());
         post.setContent(form.getContent());
-        post.setClothType(form.getClothType());
-        post.setQuantity(form.getQuantity());
+
+        // 타입별 필드 업데이트
+        if (form.getPostType() == PostType.DONATION_REVIEW) {
+            post.setIsAnonymous(form.getIsAnonymous() != null ? form.getIsAnonymous() : false);
+        } else if (form.getPostType() == PostType.ORGAN_REQUEST) {
+            post.setReqGenderType(form.getReqGenderType());
+            post.setReqMainCategory(form.getReqMainCategory());
+            post.setReqDetailCategory(form.getReqDetailCategory());
+            post.setReqSize(form.getReqSize());
+        }
 
         return postRepository.save(post);
     }
@@ -111,13 +131,22 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
 
         // 작성자 확인
-        if (!post.getAuthor().getId().equals(author.getId())) {
+        boolean isAuthor = false;
+        if (post.getAuthorUser() != null && post.getAuthorUser().getId().equals(author.getId())) {
+            isAuthor = true;
+        } else if (post.getAuthorOrgan() != null) {
+            Organ organ = organService.findByUserId(author.getId()).orElse(null);
+            if (organ != null && organ.getId().equals(post.getAuthorOrgan().getId())) {
+                isAuthor = true;
+            }
+        }
+        if (!isAuthor) {
             throw new IllegalStateException("게시물을 삭제할 권한이 없습니다.");
         }
 
         // 이미지 삭제
-        if (post.getImagePath() != null) {
-            deleteImage(post.getImagePath());
+        if (post.getImageUrl() != null) {
+            deleteImage(post.getImageUrl());
         }
 
         postRepository.delete(post);
@@ -128,14 +157,6 @@ public class PostServiceImpl implements PostService {
     public Post getPostById(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
-    }
-
-    @Override
-    @Transactional
-    public Post getPostByIdAndIncrementView(Long postId) {
-        Post post = getPostById(postId);
-        post.incrementViewCount();
-        return postRepository.save(post);
     }
 
     @Override
@@ -152,14 +173,14 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Post> getPostsByAuthor(User author) {
-        return postRepository.findByAuthor(author);
+    public List<Post> getPostsByAuthorUser(User authorUser) {
+        return postRepository.findByAuthorUser(authorUser);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Post> getPostsByOrgan(Long organId) {
-        return postRepository.findByOrganId(organId);
+    public List<Post> getPostsByAuthorOrgan(Long organId) {
+        return postRepository.findByAuthorOrganId(organId);
     }
 
     private String saveImage(MultipartFile image) throws IOException {

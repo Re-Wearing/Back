@@ -128,21 +128,41 @@
             <!-- 제목 -->
             <div class="row">
                 <label>제목 <span class="required">*</span> 필수</label>
-                <input type="text" th:field="*{title}" required maxlength="200" placeholder="제목을 입력하세요"/>
+                <input type="text" th:field="*{title}" required maxlength="50" placeholder="제목을 입력하세요"/>
                 <small class="help warn" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></small>
             </div>
 
             <!-- 내용 -->
             <div class="row">
                 <label>내용 <span class="required">*</span> 필수</label>
-                <textarea th:field="*{content}" required placeholder="내용을 입력하세요"></textarea>
+                <textarea th:field="*{content}" required placeholder="내용을 입력하세요" maxlength="1000"></textarea>
                 <small class="help warn" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></small>
             </div>
 
-            <!-- 기관 요청인 경우 옷의 종류와 수량 -->
+            <!-- 기부 후기: 익명 선택 -->
+            <div th:if="${isDonationReview}" class="row">
+                <label>
+                    <input type="checkbox" th:field="*{isAnonymous}"/>
+                    익명으로 작성
+                </label>
+                <small class="help">체크 시 작성자 이름이 표시되지 않습니다.</small>
+            </div>
+
+            <!-- 기관 요청: 요청 정보 -->
             <div th:if="${isOrganRequest}" class="row">
-                <label>옷의 종류</label>
-                <select th:field="*{clothType}">
+                <label>성별</label>
+                <select th:field="*{reqGenderType}">
+                    <option value="">선택해주세요</option>
+                    <option value="MALE">남성</option>
+                    <option value="FEMALE">여성</option>
+                    <option value="CHILD">아동</option>
+                    <option value="UNISEX">유니섹스</option>
+                </select>
+            </div>
+
+            <div th:if="${isOrganRequest}" class="row">
+                <label>메인 카테고리</label>
+                <select th:field="*{reqMainCategory}">
                     <option value="">선택해주세요</option>
                     <option value="TOP">상의</option>
                     <option value="BOTTOM">하의</option>
@@ -155,8 +175,22 @@
             </div>
 
             <div th:if="${isOrganRequest}" class="row">
-                <label>수량</label>
-                <input type="number" th:field="*{quantity}" min="1" placeholder="수량을 입력하세요"/>
+                <label>상세 카테고리</label>
+                <input type="text" th:field="*{reqDetailCategory}" placeholder="예: 반팔, 긴팔, 치마, 청바지 등" maxlength="50"/>
+                <small class="help">상세 카테고리를 입력해주세요. (예: 반팔, 긴팔, 치마, 청바지 등)</small>
+            </div>
+
+            <div th:if="${isOrganRequest}" class="row">
+                <label>사이즈</label>
+                <select th:field="*{reqSize}">
+                    <option value="">선택해주세요</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="F">F (Free Size)</option>
+                </select>
             </div>
 
             <!-- 사진 첨부 -->

@@ -39,8 +39,28 @@ public class FAQController {
         return "faq/detail";
     }
 
+    // 개인 질문 페이지
+    @GetMapping("/my-questions")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    public String myQuestions(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            Model model) {
+        try {
+            User user = userService.findByUsername(principal.getUsername())
+                    .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+            
+            List<FAQ> myQuestions = faqService.getUserQuestions(user);
+            model.addAttribute("questions", myQuestions);
+            return "faq/my-questions";
+        } catch (IllegalStateException e) {
+            log.error("개인 질문 페이지 로드 실패 - 사용자 없음", e);
+            return "redirect:/login";
+        }
+    }
+
     // 사용자 질문 등록
     @PostMapping("/question")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
     public String submitQuestion(
             @RequestParam("question") String question,
             @AuthenticationPrincipal CustomUserDetails principal,
@@ -58,7 +78,7 @@ public class FAQController {
 
             if (question == null || question.trim().isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "질문을 입력해주세요.");
-                return "redirect:/faq";
+                return "redirect:/faq/my-questions";
             }
 
             User user = userService.findByUsername(principal.getUsername())
@@ -66,7 +86,7 @@ public class FAQController {
 
             faqService.createUserQuestion(user, question.trim());
             log.info("사용자 질문 등록 완료 - 사용자: {}", principal.getUsername());
-            redirectAttributes.addFlashAttribute("success", "질문이 등록되었습니다. 관리자가 답변을 작성하면 FAQ에 추가됩니다.");
+            redirectAttributes.addFlashAttribute("success", "질문이 등록되었습니다. 관리자가 답변을 작성하면 여기에서 확인할 수 있습니다.");
         } catch (IllegalStateException e) {
             log.error("사용자 질문 등록 실패 - 사용자 없음", e);
             redirectAttributes.addFlashAttribute("error", "사용자를 찾을 수 없습니다.");
@@ -75,6 +95,6 @@ public class FAQController {
             redirectAttributes.addFlashAttribute("error", "질문 등록 중 오류가 발생했습니다: " + e.getMessage());
         }
 
-        return "redirect:/faq";
+        return "redirect:/faq/my-questions";
     }
 }
