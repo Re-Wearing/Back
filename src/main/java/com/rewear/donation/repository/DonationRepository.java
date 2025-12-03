@@ -6,6 +6,7 @@ import com.rewear.user.entity.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
            "LEFT JOIN FETCH d.donor " +
            "LEFT JOIN FETCH d.delivery " +
            "WHERE d.id = :id")
-    java.util.Optional<Donation> findByIdWithDetails(Long id);
+    java.util.Optional<Donation> findByIdWithDetails(@Param("id") Long id);
     
     List<Donation> findByOrganId(Long organId);
     List<Donation> findByOrganIdAndStatus(Long organId, DonationStatus status);

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQ - RE-WEAR</title>
+    <title>내 질문 - RE-WEAR</title>
     <style>
         * {
             margin: 0;
@@ -122,21 +122,6 @@
             font-weight: 600;
         }
 
-        .login-btn {
-            background: #374151;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .login-btn:hover {
-            background: #4b5563;
-        }
-
         .user-badge {
             background: #10b981;
             color: white;
@@ -164,20 +149,6 @@
             color: white;
         }
 
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .menu-toggle::before {
-            content: '☰';
-            font-size: 24px;
-            color: #374151;
-        }
-
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -185,7 +156,6 @@
         }
 
         .page-header {
-            text-align: center;
             margin-bottom: 40px;
         }
 
@@ -199,81 +169,7 @@
         .page-header p {
             font-size: 18px;
             color: #6b7280;
-        }
-
-        .faq-section {
-            margin-bottom: 40px;
-        }
-
-        .faq-item {
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: box-shadow 0.2s;
-        }
-
-        .faq-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .faq-question {
-            padding: 20px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            border: none;
-            width: 100%;
-            text-align: left;
-            font-size: 16px;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .faq-question:hover {
-            background: #f9fafb;
-        }
-
-        .faq-question::after {
-            content: '▼';
-            font-size: 12px;
-            color: #9ca3af;
-            transition: transform 0.3s;
-        }
-
-        .faq-item.active .faq-question::after {
-            transform: rotate(180deg);
-        }
-
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            background: #f9fafb;
-        }
-
-        .faq-item.active .faq-answer {
-            max-height: 500px;
-        }
-
-        .faq-answer-content {
-            padding: 20px;
-            color: #6b7280;
-            line-height: 1.8;
-            white-space: pre-wrap;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #9ca3af;
-        }
-
-        .empty-state p {
-            font-size: 18px;
+            margin-bottom: 20px;
         }
 
         .question-form {
@@ -303,8 +199,6 @@
             font-size: 14px;
         }
 
-        .form-group input,
-        .form-group select,
         .form-group textarea {
             width: 100%;
             padding: 12px;
@@ -312,15 +206,10 @@
             border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
-        }
-
-        .form-group textarea {
             min-height: 100px;
             resize: vertical;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #10b981;
@@ -340,6 +229,8 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn-primary {
@@ -379,23 +270,94 @@
             border: 1px solid #fca5a5;
         }
 
-        /* 반응형 */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
+        .questions-section {
+            margin-bottom: 40px;
+        }
 
-            .menu-toggle {
-                display: block;
-            }
+        .question-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
 
-            .page-header h1 {
-                font-size: 32px;
-            }
+        .question-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
 
-            .page-header p {
-                font-size: 16px;
-            }
+        .question-header {
+            padding: 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .question-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .question-meta {
+            font-size: 12px;
+            color: #9ca3af;
+            display: flex;
+            gap: 16px;
+        }
+
+        .question-content {
+            padding: 20px;
+        }
+
+        .answer-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .answer-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .answer-content {
+            color: #6b7280;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .waiting-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .answered-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state p {
+            font-size: 18px;
         }
     </style>
 </head>
@@ -414,72 +376,91 @@
             <a th:href="@{/faq}">FAQ</a>
         </nav>
         <div class="header-right">
-                <span sec:authorize="isAnonymous()">
-                    <div class="notification-icon">
-                        <span class="notification-badge">3</span>
-                    </div>
-                    <a th:href="@{/login}" class="login-btn">로그인</a>
-                    <button class="menu-toggle"></button>
-                </span>
             <span sec:authorize="isAuthenticated()">
-                    <div class="notification-icon">
-                        <span class="notification-badge">3</span>
-                    </div>
-                    <span class="user-badge" th:text="${#authentication?.name}">user</span>
-                    <form th:action="@{/logout}" method="post" style="display: inline;">
-                        <input type="hidden" th:if="${_csrf != null}"
-                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="logout-btn">로그아웃</button>
-                    </form>
-                    <button class="menu-toggle"></button>
-                </span>
+                <a th:href="@{/notifications}" class="notification-icon">
+                    <span th:if="${unreadNotificationCount != null && unreadNotificationCount > 0}" 
+                          class="notification-badge" 
+                          th:text="${unreadNotificationCount}">0</span>
+                </a>
+                <span class="user-badge" th:text="${#authentication?.name}">user</span>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="logout-btn">로그아웃</button>
+                </form>
+            </span>
         </div>
     </div>
 </div>
 
 <div class="container">
     <div class="page-header">
-        <h1>자주 묻는 질문</h1>
-        <p>RE-WEAR에 대해 궁금한 점을 확인해보세요</p>
-        <div style="margin-top: 20px;">
-            <a th:href="@{/faq/my-questions}" class="btn btn-primary" sec:authorize="isAuthenticated()" style="display: inline-block;">질문하러 가기</a>
-            <a th:href="@{/login}" class="btn btn-primary" sec:authorize="isAnonymous()" style="display: inline-block;">질문하러 가기</a>
-        </div>
+        <h1>내 질문</h1>
+        <p>질문을 등록하고 답변을 확인하세요</p>
+        <a th:href="@{/faq}" class="btn btn-secondary">FAQ 목록으로</a>
     </div>
 
-    <div th:if="${faqs != null && !faqs.isEmpty()}" class="faq-section">
-        <div th:each="faq : ${faqs}" 
-             class="faq-item">
-            <button class="faq-question" th:text="${faq.question}">질문</button>
-            <div class="faq-answer">
-                <div class="faq-answer-content" 
-                     th:text="${faq.answer}">답변</div>
+    <!-- 질문 등록 폼 -->
+    <div class="question-form">
+        <h2>질문하기</h2>
+        <div th:if="${success}" class="message success" th:text="${success}"></div>
+        <div th:if="${error}" class="message error" th:text="${error}"></div>
+        
+        <form th:action="@{/faq/question}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            
+            <div class="form-group">
+                <label for="question">질문 <span style="color: #ef4444;">*</span></label>
+                <textarea id="question" 
+                          name="question" 
+                          placeholder="궁금한 점을 입력해주세요 (최대 500자)"
+                          maxlength="500"
+                          required></textarea>
+                <small style="color: #9ca3af; font-size: 12px;">질문은 최대 500자까지 입력 가능합니다.</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">질문 등록</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 내 질문 목록 -->
+    <div class="questions-section">
+        <h2 style="font-size: 24px; font-weight: 600; color: #374151; margin-bottom: 20px;">질문 목록</h2>
+        
+        <div th:if="${questions != null && !questions.isEmpty()}">
+            <div th:each="question : ${questions}" class="question-item">
+                <div class="question-header">
+                    <div class="question-title" th:text="${question.question}">질문</div>
+                    <div class="question-meta">
+                        <span th:text="${#temporals.format(question.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+                        <span th:if="${question.answer == null || question.answer.isEmpty()}" 
+                              class="waiting-badge">답변 대기 중</span>
+                        <span th:if="${question.answer != null && !question.answer.isEmpty()}" 
+                              class="answered-badge">답변 완료</span>
+                    </div>
+                </div>
+                <div class="question-content">
+                    <div th:if="${question.answer != null && !question.answer.isEmpty()}" class="answer-section">
+                        <div class="answer-label">답변:</div>
+                        <div class="answer-content" th:text="${question.answer}">답변 내용</div>
+                    </div>
+                    <div th:if="${question.answer == null || question.answer.isEmpty()}" class="answer-section">
+                        <div class="answer-content" style="color: #9ca3af; font-style: italic;">
+                            관리자가 답변을 작성 중입니다. 조금만 기다려주세요.
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div th:if="${faqs == null || faqs.isEmpty()}" class="empty-state">
-        <p>등록된 FAQ가 없습니다.</p>
+        <div th:if="${questions == null || questions.isEmpty()}" class="empty-state">
+            <p>등록한 질문이 없습니다. 질문을 작성해보세요!</p>
+        </div>
     </div>
 </div>
-
-<script>
-    document.querySelectorAll('.faq-question').forEach(question => {
-        question.addEventListener('click', function() {
-            const faqItem = this.closest('.faq-item');
-            const isActive = faqItem.classList.contains('active');
-
-            // 모든 FAQ 항목 닫기
-            document.querySelectorAll('.faq-item').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // 클릭한 항목이 닫혀있었다면 열기
-            if (!isActive) {
-                faqItem.classList.add('active');
-            }
-        });
-    });
-</script>
 </body>
 </html>
+
+

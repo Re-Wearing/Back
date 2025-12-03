@@ -155,12 +155,13 @@
 
         <div th:if="${donations != null && !donations.isEmpty()}" class="donation-grid">
             <div th:each="donation : ${donations}" class="donation-card">
-                <img th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
+                <img th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null && !donation.donationItem.imageUrl.isEmpty()}" 
                      th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
                      alt="기부 이미지" 
-                     class="donation-image"/>
-                <div th:unless="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
-                     style="width: 100%; height: 200px; background: var(--bd); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--sub); margin-bottom: 12px;">
+                     class="donation-image"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+                <div th:if="${donation.donationItem == null || donation.donationItem.imageUrl == null || donation.donationItem.imageUrl.isEmpty()}" 
+                     style="width: 100%; height: 200px; background: var(--bd); border-radius: 8px; display: none; align-items: center; justify-content: center; color: var(--sub); margin-bottom: 12px;">
                     이미지 없음
                 </div>
                 

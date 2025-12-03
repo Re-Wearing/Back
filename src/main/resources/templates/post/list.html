@@ -220,10 +220,14 @@
                 <div class="post-content" th:text="${post.content}">내용</div>
                 <div class="post-footer">
                     <div class="post-meta">
-                        <span th:text="${post.author.name}">작성자</span>
-                        <span th:if="${post.organ != null}" th:text="${post.organ.orgName}">기관명</span>
+                        <!-- 기부 후기: 익명 처리 -->
+                        <span th:if="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW}">
+                            <span th:if="${post.isAnonymous != null && post.isAnonymous}">익명</span>
+                            <span th:unless="${post.isAnonymous != null && post.isAnonymous}" th:text="${post.authorUser != null ? post.authorUser.name : '작성자'}">작성자</span>
+                        </span>
+                        <!-- 요청 게시물: 기관명 -->
+                        <span th:if="${post.postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST && post.authorOrgan != null}" th:text="${post.authorOrgan.orgName}">기관명</span>
                         <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span>
-                        <span>조회수: <span th:text="${post.viewCount}">0</span></span>
                     </div>
                 </div>
             </div>
