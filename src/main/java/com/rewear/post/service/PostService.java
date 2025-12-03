@@ -14,7 +14,9 @@ public interface PostService {
     Post createPost(User author, PostForm form, MultipartFile image);
     Post updatePost(Long postId, User author, PostForm form, MultipartFile image);
     void deletePost(Long postId, User author);
+    void deletePostByAdmin(Long postId); // 관리자용 삭제 (작성자 확인 없이)
     Post getPostById(Long postId);
+    List<Post> getAllPosts(); // 모든 게시물 조회 (관리자용)
     List<Post> getPostsByType(PostType postType);
     Page<Post> getPostsByType(PostType postType, Pageable pageable);
     List<Post> getPostsByAuthorUser(User authorUser);

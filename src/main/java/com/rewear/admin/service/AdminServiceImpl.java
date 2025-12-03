@@ -2,6 +2,8 @@ package com.rewear.admin.service;
 
 import com.rewear.admin.entity.Admin;
 import com.rewear.admin.repository.AdminRepository;
+import com.rewear.common.enums.OrganStatus;
+import com.rewear.organ.repository.OrganRepository;
 import com.rewear.user.entity.User;
 import com.rewear.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class AdminServiceImpl {
     private final AdminRepository adminRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final OrganRepository organRepository;
 
     public Admin login(String username, String password){
         Admin admin = adminRepository.findById(username)
@@ -30,7 +34,16 @@ public class AdminServiceImpl {
     }
 
     public List<User> getAllUsers(){
-        return userRepository.findAll();
+        List<User> allUsers = userRepository.findAll();
+        // 승인되지 않은 기관 계정(PENDING, REJECTED) 제외
+        return allUsers.stream()
+                .filter(user -> {
+                    // Organ이 있는 경우, APPROVED 상태인 경우만 포함
+                    return organRepository.findByUserId(user.getId())
+                            .map(organ -> organ.getStatus() == OrganStatus.APPROVED)
+                            .orElse(true); // Organ이 없으면 일반 사용자이므로 포함
+                })
+                .collect(Collectors.toList());
     }
 
     @Transactional

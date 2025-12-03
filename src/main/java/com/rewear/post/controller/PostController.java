@@ -238,7 +238,12 @@ public class PostController {
             User author = userService.findByUsername(principal.getUsername())
                     .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
-            postService.createPost(author, form, form.getImage());
+            // 여러 이미지 또는 단일 이미지 처리
+            if (form.getImages() != null && !form.getImages().isEmpty()) {
+                postService.createPost(author, form, null);
+            } else {
+                postService.createPost(author, form, form.getImage());
+            }
             log.info("게시물 작성 완료 - 타입: {}, 사용자: {}, 제목: {}", 
                     form.getPostType(), principal.getUsername(), form.getTitle());
             redirectAttributes.addFlashAttribute("success", "게시물이 작성되었습니다.");
@@ -367,7 +372,12 @@ public class PostController {
             User author = userService.findByUsername(principal.getUsername())
                     .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
-            postService.updatePost(postId, author, form, form.getImage());
+            // 여러 이미지 또는 단일 이미지 처리
+            if (form.getImages() != null && !form.getImages().isEmpty()) {
+                postService.updatePost(postId, author, form, null);
+            } else {
+                postService.updatePost(postId, author, form, form.getImage());
+            }
             log.info("게시물 수정 완료 - ID: {}, 사용자: {}, 제목: {}", 
                     postId, principal.getUsername(), form.getTitle());
             redirectAttributes.addFlashAttribute("success", "게시물이 수정되었습니다.");

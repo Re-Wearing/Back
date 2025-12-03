@@ -21,7 +21,6 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,6 +30,10 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_organ_id", nullable = true)
     private Organ authorOrgan; // 기관 작성자 (요청 게시물)
+
+    // 하위 호환성을 위한 필드 (데이터베이스에 author_id 컬럼이 있는 경우)
+    @Column(name = "author_id", nullable = true, insertable = false, updatable = false)
+    private Long authorId; // 사용하지 않음 (authorUser 또는 authorOrgan 사용)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "post_type", nullable = false, length = 20)
@@ -43,7 +46,10 @@ public class Post {
     private String content;
 
     @Column(name = "image_url", length = 255)
-    private String imageUrl;
+    private String imageUrl; // 단일 이미지 (하위 호환성)
+
+    @Column(name = "image_urls", columnDefinition = "TEXT")
+    private String imageUrls; // 여러 이미지 (쉼표로 구분)
 
     @Column(name = "is_anonymous", nullable = false)
     @Builder.Default
@@ -64,6 +70,10 @@ public class Post {
     @Enumerated(EnumType.STRING)
     @Column(name = "req_size", nullable = true, length = 10)
     private Size reqSize;
+
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private Integer viewCount = 0; // 조회수
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
