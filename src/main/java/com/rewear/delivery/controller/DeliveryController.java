@@ -32,7 +32,7 @@ public class DeliveryController {
     @GetMapping("/{deliveryId}")
     @PreAuthorize("hasRole('USER')")
     public String deliveryDetail(
-            @PathVariable Long deliveryId,
+            @PathVariable("deliveryId") Long deliveryId,
             @AuthenticationPrincipal CustomUserDetails principal,
             Model model) {
 

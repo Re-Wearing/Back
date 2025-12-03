@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/admin")
@@ -61,7 +60,7 @@ public class AdminWebController {
     }
 
     @GetMapping("/users/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public String deleteUser(@PathVariable("id") Long id) {
         adminService.deleteUserById(id);
         return "redirect:/admin/users";
     }
@@ -99,7 +98,7 @@ public class AdminWebController {
     }
 
     @GetMapping("/faqs/{id}/edit")
-    public String editFAQForm(@PathVariable Long id, Model model) {
+    public String editFAQForm(@PathVariable("id") Long id, Model model) {
         FAQ faq = faqService.getFAQById(id);
         FAQForm form = new FAQForm();
         form.setId(faq.getId());
@@ -115,7 +114,7 @@ public class AdminWebController {
 
     @PostMapping("/faqs/{id}/edit")
     public String updateFAQ(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @ModelAttribute("form") FAQForm form,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
@@ -130,14 +129,14 @@ public class AdminWebController {
     }
 
     @PostMapping("/faqs/{id}/delete")
-    public String deleteFAQ(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String deleteFAQ(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         faqService.deleteFAQ(id);
         redirectAttributes.addFlashAttribute("success", "FAQ가 삭제되었습니다.");
         return "redirect:/admin/faqs";
     }
 
     @PostMapping("/faqs/{id}/toggle")
-    public String toggleFAQ(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String toggleFAQ(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         faqService.toggleActive(id);
         redirectAttributes.addFlashAttribute("success", "FAQ 상태가 변경되었습니다.");
         return "redirect:/admin/faqs";
@@ -145,7 +144,7 @@ public class AdminWebController {
 
     // FAQ 답변 작성 폼
     @GetMapping("/faqs/{id}/answer")
-    public String answerFAQForm(@PathVariable Long id, Model model) {
+    public String answerFAQForm(@PathVariable("id") Long id, Model model) {
         FAQ faq = faqService.getFAQById(id);
         if (faq.getAuthor() == null) {
             return "redirect:/admin/faqs";
@@ -157,7 +156,7 @@ public class AdminWebController {
     // FAQ 답변 작성
     @PostMapping("/faqs/{id}/answer")
     public String answerFAQ(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam("answer") String answer,
             RedirectAttributes redirectAttributes) {
         try {
@@ -176,7 +175,7 @@ public class AdminWebController {
     // FAQ 등록 (답변이 작성된 FAQ를 FAQ에 등록)
     @PostMapping("/faqs/{id}/register")
     public String registerFAQ(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             RedirectAttributes redirectAttributes) {
         try {
             faqService.registerFAQ(id);
@@ -197,7 +196,7 @@ public class AdminWebController {
 
     @GetMapping("/deliveries/{deliveryId}")
     public String deliveryDetail(
-            @PathVariable Long deliveryId,
+            @PathVariable("deliveryId") Long deliveryId,
             Model model) {
 
         Delivery delivery = deliveryService.getDeliveryById(deliveryId)
@@ -209,7 +208,7 @@ public class AdminWebController {
 
     @GetMapping("/deliveries/{deliveryId}/edit")
     public String editDeliveryForm(
-            @PathVariable Long deliveryId,
+            @PathVariable("deliveryId") Long deliveryId,
             Model model) {
 
         Delivery delivery = deliveryService.getDeliveryById(deliveryId)
@@ -237,7 +236,7 @@ public class AdminWebController {
 
     @PostMapping("/deliveries/{deliveryId}/edit")
     public String updateDelivery(
-            @PathVariable Long deliveryId,
+            @PathVariable("deliveryId") Long deliveryId,
             @Valid @ModelAttribute("form") DeliveryForm form,
             BindingResult bindingResult,
             Model model,
@@ -257,8 +256,8 @@ public class AdminWebController {
 
     @PostMapping("/deliveries/{deliveryId}/status")
     public String updateDeliveryStatus(
-            @PathVariable Long deliveryId,
-            @RequestParam DeliveryStatus status,
+            @PathVariable("deliveryId") Long deliveryId,
+            @RequestParam("status") DeliveryStatus status,
             RedirectAttributes redirectAttributes) {
 
         deliveryService.updateDeliveryStatus(deliveryId, status);
@@ -278,7 +277,7 @@ public class AdminWebController {
 
     // 기부 상세보기
     @GetMapping("/donations/{donationId}")
-    public String donationDetail(@PathVariable Long donationId, Model model) {
+    public String donationDetail(@PathVariable("donationId") Long donationId, Model model) {
         Donation donation = donationService.getDonationById(donationId);
         model.addAttribute("donation", donation);
         return "admin/donation-detail";
@@ -287,8 +286,8 @@ public class AdminWebController {
     // 기부의 배송 상태 변경
     @PostMapping("/donations/{donationId}/delivery/status")
     public String updateDonationDeliveryStatus(
-            @PathVariable Long donationId,
-            @RequestParam DeliveryStatus status,
+            @PathVariable("donationId") Long donationId,
+            @RequestParam("status") DeliveryStatus status,
             @RequestParam(value = "carrier", required = false) String carrier,
             @RequestParam(value = "trackingNumber", required = false) String trackingNumber,
             RedirectAttributes redirectAttributes) {
@@ -355,9 +354,9 @@ public class AdminWebController {
 
     @PostMapping("/donations/{donationId}/assign")
     public String assignDonationToOrgan(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             @RequestParam("organId") Long organId,
-            @RequestParam(defaultValue = "/admin/donations/pending") String redirect,
+            @RequestParam(value = "redirect", required = false, defaultValue = "/admin/donations/pending") String redirect,
             RedirectAttributes redirectAttributes) {
         if (!List.of("/admin/donations/pending", "/admin/donations/auto-match").contains(redirect)) {
             redirect = "/admin/donations/pending";
@@ -383,7 +382,7 @@ public class AdminWebController {
     // 간접 매칭 승인 (기관 할당 후 관리자가 승인하여 기관에게 표시)
     @PostMapping("/donations/{donationId}/approve-match")
     public String approveMatch(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             RedirectAttributes redirectAttributes) {
         try {
             // approveMatch는 approveDonation으로 통합됨
@@ -397,7 +396,7 @@ public class AdminWebController {
     // 기부 승인
     @PostMapping("/donations/{donationId}/approve")
     public String approveDonation(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             RedirectAttributes redirectAttributes) {
         try {
             donationService.approveDonation(donationId);
@@ -411,7 +410,7 @@ public class AdminWebController {
     // 기부 반려
     @PostMapping("/donations/{donationId}/reject")
     public String rejectDonation(
-            @PathVariable Long donationId,
+            @PathVariable("donationId") Long donationId,
             @RequestParam(value = "reason", required = false, defaultValue = "관리자에 의해 반려되었습니다.") String reason,
             RedirectAttributes redirectAttributes) {
         try {

@@ -136,12 +136,13 @@
     <div class="card">
         <h1>기부 상세 정보</h1>
 
-        <div th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null}">
+        <div th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null && !donation.donationItem.imageUrl.isEmpty()}">
             <img th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
                  alt="기부 이미지" 
-                 class="donation-image"/>
+                 class="donation-image"
+                 onerror="this.parentElement.style.display='none'; this.nextElementSibling.style.display='flex';"/>
         </div>
-        <div th:unless="${donation.donationItem != null && donation.donationItem.imageUrl != null}" 
+        <div th:if="${donation.donationItem == null || donation.donationItem.imageUrl == null || donation.donationItem.imageUrl.isEmpty()}" 
              style="width: 100%; max-width: 500px; height: 300px; background: var(--bd); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--sub); margin-bottom: 24px;">
             이미지 없음
         </div>

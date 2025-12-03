@@ -43,15 +43,10 @@ public class DonationServiceImpl implements DonationService {
     @Override
     public Donation createDonation(User donor, DonationForm form, DonationItemForm itemForm, Organ organ) {
         // DonationItem 생성 (아직 저장하지 않음 - cascade로 자동 저장됨)
-        String imageUrl = null;
-        if (itemForm.getImage() != null && !itemForm.getImage().isEmpty()) {
-            try {
-                imageUrl = saveImage(itemForm.getImage());
-            } catch (IOException e) {
-                log.error("이미지 저장 실패", e);
-                throw new RuntimeException("이미지 저장에 실패했습니다.", e);
-            }
-        }
+        // 이미지는 첫 번째 단계에서 이미 저장되었으므로 imageUrl을 직접 사용
+        String imageUrl = itemForm.getImageUrl();
+        
+        log.info("기부 생성 시작 - DonationItemForm에서 가져온 이미지 URL: {}", imageUrl);
 
         DonationItem item = DonationItem.builder()
                 .owner(donor)
@@ -62,6 +57,8 @@ public class DonationServiceImpl implements DonationService {
                 .description(itemForm.getDescription())
                 .imageUrl(imageUrl)
                 .build();
+        
+        log.info("기부 생성 - DonationItem 생성 완료, 이미지 URL: {}", item.getImageUrl());
 
         // Donation 생성 (DonationItem을 설정하면 cascade로 자동 저장됨)
         Donation donation = Donation.builder()
@@ -336,158 +333,6 @@ public class DonationServiceImpl implements DonationService {
         // 기관 할당 해제
         donation.setOrgan(null);
         
-        return donationRepository.save(donation);
-    }
-
-    @Override
-    public Donation approveDonation(Long donationId) {
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        if (donation.getAdminDecision() != AdminDecision.PENDING) {
-            throw new IllegalStateException("대기 상태인 기부만 승인할 수 있습니다.");
-        }
-
-        donation.setAdminDecision(AdminDecision.APPROVED);
-        donation.setStatus(DonationStatus.IN_PROGRESS);
-        
-        try {
-            String title = "기부 승인 완료";
-            String message = "귀하의 기부 신청이 승인되었습니다.";
-            notificationService.createNotification(
-                donation.getDonor(),
-                com.rewear.common.enums.NotificationType.DONATION_APPROVED,
-                title,
-                message,
-                donation.getId(),
-                "donation"
-            );
-        } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
-        }
-
-        return donationRepository.save(donation);
-    }
-
-    @Override
-    public Donation rejectDonation(Long donationId, String reason) {
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        if (donation.getAdminDecision() != AdminDecision.PENDING) {
-            throw new IllegalStateException("대기 상태인 기부만 반려할 수 있습니다.");
-        }
-
-        donation.setAdminDecision(AdminDecision.REJECTED);
-        donation.setCancelReason(reason);
-        
-        try {
-            String title = "기부 반려";
-            String message = "귀하의 기부 신청이 반려되었습니다. 사유: " + reason;
-            notificationService.createNotification(
-                donation.getDonor(),
-                com.rewear.common.enums.NotificationType.DONATION_REJECTED,
-                title,
-                message,
-                donation.getId(),
-                "donation"
-            );
-        } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
-        }
-
-        return donationRepository.save(donation);
-    }
-
-    @Override
-    public Donation cancelDonation(Long donationId, String reason) {
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        if (donation.getStatus() == DonationStatus.COMPLETED) {
-            throw new IllegalStateException("완료된 기부는 취소할 수 없습니다.");
-        }
-
-        donation.setStatus(DonationStatus.CANCELLED);
-        donation.setCancelReason(reason);
-        
-        try {
-            String title = "기부 취소";
-            String message = "기부가 취소되었습니다. 사유: " + reason;
-            notificationService.createNotification(
-                donation.getDonor(),
-                com.rewear.common.enums.NotificationType.DONATION_REJECTED,
-                title,
-                message,
-                donation.getId(),
-                "donation"
-            );
-        } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
-        }
-
-        return donationRepository.save(donation);
-    }
-
-    @Override
-    public Donation organApproveDonation(Long donationId, Organ organ) {
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        if (donation.getOrgan() == null || !donation.getOrgan().getId().equals(organ.getId())) {
-            throw new IllegalStateException("해당 기관에 할당된 기부만 승인할 수 있습니다.");
-        }
-
-        donation.setStatus(DonationStatus.IN_PROGRESS);
-
-        Donation savedDonation = donationRepository.save(donation);
-
-        try {
-            String title = "기부 승인";
-            String message = String.format("'%s' 기관이 기부를 승인했습니다.", organ.getOrgName());
-            notificationService.createNotification(
-                donation.getDonor(),
-                com.rewear.common.enums.NotificationType.DONATION_APPROVED,
-                title,
-                message,
-                savedDonation.getId(),
-                "donation"
-            );
-        } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
-        }
-
-        return savedDonation;
-    }
-
-    @Override
-    public Donation organRejectDonation(Long donationId, Organ organ) {
-        Donation donation = donationRepository.findById(donationId)
-                .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
-
-        if (donation.getOrgan() == null || !donation.getOrgan().getId().equals(organ.getId())) {
-            throw new IllegalStateException("해당 기관에 할당된 기부만 거부할 수 있습니다.");
-        }
-
-        // 기관 할당 해제하고 다시 대기 상태로
-        donation.setOrgan(null);
-        donation.setStatus(DonationStatus.PENDING);
-
-        try {
-            String title = "기부 거부";
-            String message = String.format("'%s' 기관이 기부를 거부했습니다.", organ.getOrgName());
-            notificationService.createNotification(
-                donation.getDonor(),
-                com.rewear.common.enums.NotificationType.DONATION_REJECTED,
-                title,
-                message,
-                donation.getId(),
-                "donation"
-            );
-        } catch (Exception e) {
-            log.warn("알림 생성 실패: {}", e.getMessage());
-        }
-
         return donationRepository.save(donation);
     }
 

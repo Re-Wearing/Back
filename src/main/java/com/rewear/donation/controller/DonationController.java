@@ -14,17 +14,27 @@ import com.rewear.user.service.UserServiceImpl;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 @RequestMapping("/donations")
 @RequiredArgsConstructor
@@ -34,6 +44,9 @@ public class DonationController {
     private final OrganRepository organRepository;
     private final UserServiceImpl userService;
     private final DeliveryService deliveryService;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
 
     // 1단계: 물품 정보 입력
     @GetMapping("/apply/item")
@@ -54,7 +67,25 @@ public class DonationController {
             return "donation/apply-item";
         }
 
+        // 이미지가 있는 경우 즉시 저장 (MultipartFile은 세션에 저장할 수 없음)
+        if (itemForm.getImage() != null && !itemForm.getImage().isEmpty()) {
+            try {
+                String imageUrl = saveImage(itemForm.getImage());
+                itemForm.setImageUrl(imageUrl);
+                // MultipartFile은 세션에 저장할 수 없으므로 null로 설정
+                itemForm.setImage(null);
+                log.info("기부 신청 1단계 - 이미지 저장 완료: {}", imageUrl);
+            } catch (IOException e) {
+                log.error("이미지 저장 실패", e);
+                bindingResult.rejectValue("image", "error.image", "이미지 저장에 실패했습니다.");
+                return "donation/apply-item";
+            }
+        } else {
+            log.info("기부 신청 1단계 - 이미지가 없거나 비어있음");
+        }
+
         // 세션에 물품 정보 저장
+        log.info("기부 신청 1단계 - 세션에 저장할 이미지 URL: {}", itemForm.getImageUrl());
         session.setAttribute("donationItemForm", itemForm);
 
         return "redirect:/donations/apply/method";
@@ -99,6 +130,9 @@ public class DonationController {
             redirectAttributes.addFlashAttribute("error", "물품 정보가 없습니다. 다시 입력해주세요.");
             return "redirect:/donations/apply/item";
         }
+        
+        // 디버깅: 세션에서 가져온 이미지 URL 확인
+        log.info("기부 신청 2단계 - 세션에서 가져온 이미지 URL: {}", itemForm.getImageUrl());
 
         // 직접 매칭인 경우 기관 선택 필수 검증
         if (form.getMatchType() == MatchType.DIRECT && form.getOrganId() == null) {
@@ -149,5 +183,22 @@ public class DonationController {
         
         model.addAttribute("donations", donations);
         return "donation/list";
+    }
+
+    private String saveImage(MultipartFile image) throws IOException {
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        String originalFilename = image.getOriginalFilename();
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : "";
+        String filename = UUID.randomUUID().toString() + extension;
+        Path filePath = uploadPath.resolve(filename);
+
+        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        return filename;
     }
 }

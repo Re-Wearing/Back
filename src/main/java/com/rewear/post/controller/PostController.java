@@ -114,11 +114,27 @@ public class PostController {
 
     // 게시물 상세 조회
     @GetMapping("/{postId}")
-    public String postDetail(@PathVariable Long postId, Model model) {
+    public String postDetail(
+            @PathVariable("postId") Long postId,
+            @AuthenticationPrincipal CustomUserDetails principal,
+            Model model) {
         try {
             log.debug("게시물 상세 조회 요청 - ID: {}", postId);
-            Post post = postService.getPostByIdAndIncrementView(postId);
+            Post post = postService.getPostById(postId);
+            
+            // 작성자 확인 (수정/삭제 버튼 표시용)
+            boolean isAuthor = false;
+            if (principal != null) {
+                if (post.getAuthorUser() != null && principal.getUsername().equals(post.getAuthorUser().getUsername())) {
+                    isAuthor = true;
+                } else if (post.getAuthorOrgan() != null && post.getAuthorOrgan().getUser() != null 
+                        && principal.getUsername().equals(post.getAuthorOrgan().getUser().getUsername())) {
+                    isAuthor = true;
+                }
+            }
+            
             model.addAttribute("post", post);
+            model.addAttribute("isAuthor", isAuthor);
             log.debug("게시물 상세 조회 완료 - ID: {}, 제목: {}", postId, post.getTitle());
             return "post/detail";
         } catch (Exception e) {
@@ -213,6 +229,9 @@ public class PostController {
             if (bindingResult.hasErrors()) {
                 log.warn("게시물 작성 실패 - 유효성 검사 오류, 사용자: {}", principal.getUsername());
                 model.addAttribute("postType", form.getPostType());
+                model.addAttribute("isDonationReview", form.getPostType() == PostType.DONATION_REVIEW);
+                model.addAttribute("isOrganRequest", form.getPostType() == PostType.ORGAN_REQUEST);
+                model.addAttribute("cancelUrl", form.getPostType() == PostType.DONATION_REVIEW ? "/posts/reviews" : "/posts/requests");
                 return "post/new";
             }
 
@@ -234,6 +253,8 @@ public class PostController {
                     principal != null ? principal.getUsername() : "null", e);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             model.addAttribute("postType", form.getPostType());
+            model.addAttribute("isDonationReview", form.getPostType() == PostType.DONATION_REVIEW);
+            model.addAttribute("isOrganRequest", form.getPostType() == PostType.ORGAN_REQUEST);
             return "post/new";
         } catch (IllegalStateException e) {
             log.error("게시물 작성 실패 - 사용자 없음, 사용자명: {}", 
@@ -245,6 +266,9 @@ public class PostController {
                     principal != null ? principal.getUsername() : "null", e);
             redirectAttributes.addFlashAttribute("error", "게시물 작성 중 오류가 발생했습니다: " + e.getMessage());
             model.addAttribute("postType", form.getPostType());
+            model.addAttribute("isDonationReview", form.getPostType() == PostType.DONATION_REVIEW);
+            model.addAttribute("isOrganRequest", form.getPostType() == PostType.ORGAN_REQUEST);
+            model.addAttribute("cancelUrl", form.getPostType() == PostType.DONATION_REVIEW ? "/posts/reviews" : "/posts/requests");
             return "post/new";
         }
     }
@@ -265,7 +289,17 @@ public class PostController {
                     .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
             // 작성자 확인
-            if (!post.getAuthor().getId().equals(user.getId())) {
+            boolean isAuthor = false;
+            if (post.getAuthorUser() != null && post.getAuthorUser().getId().equals(user.getId())) {
+                isAuthor = true;
+            } else if (post.getAuthorOrgan() != null) {
+                // 기관 작성자인 경우, 현재 사용자가 해당 기관의 사용자인지 확인
+                if (post.getAuthorOrgan().getUser().getId().equals(user.getId())) {
+                    isAuthor = true;
+                }
+            }
+            
+            if (!isAuthor) {
                 log.warn("게시물 수정 폼 접근 실패 - 작성자 불일치, 게시물 ID: {}, 사용자: {}", 
                         postId, principal.getUsername());
                 redirectAttributes.addFlashAttribute("error", "본인이 작성한 게시물만 수정할 수 있습니다.");
@@ -276,12 +310,22 @@ public class PostController {
             form.setPostType(post.getPostType());
             form.setTitle(post.getTitle());
             form.setContent(post.getContent());
-            form.setClothType(post.getClothType());
-            form.setQuantity(post.getQuantity());
+            
+            // 타입별 필드 설정
+            if (post.getPostType() == PostType.DONATION_REVIEW) {
+                form.setIsAnonymous(post.getIsAnonymous());
+            } else if (post.getPostType() == PostType.ORGAN_REQUEST) {
+                form.setReqGenderType(post.getReqGenderType());
+                form.setReqMainCategory(post.getReqMainCategory());
+                form.setReqDetailCategory(post.getReqDetailCategory());
+                form.setReqSize(post.getReqSize());
+            }
 
             model.addAttribute("form", form);
             model.addAttribute("post", post);
             model.addAttribute("postType", post.getPostType());
+            model.addAttribute("isDonationReview", post.getPostType() == PostType.DONATION_REVIEW);
+            model.addAttribute("isOrganRequest", post.getPostType() == PostType.ORGAN_REQUEST);
 
             log.debug("게시물 수정 폼 로드 완료 - ID: {}", postId);
             return "post/edit";
@@ -315,6 +359,8 @@ public class PostController {
                 Post post = postService.getPostById(postId);
                 model.addAttribute("post", post);
                 model.addAttribute("postType", form.getPostType());
+                model.addAttribute("isDonationReview", form.getPostType() == PostType.DONATION_REVIEW);
+                model.addAttribute("isOrganRequest", form.getPostType() == PostType.ORGAN_REQUEST);
                 return "post/edit";
             }
 
