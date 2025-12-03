@@ -165,6 +165,7 @@ public class EmailWebController {
             user.setName(form.getName());
             user.setEmail(email);
             user.setPhone(form.getPhone());
+            user.setAddressPostcode(form.getAddressPostcode());
             user.setAddress(form.getAddress());
 
             if (isOrgan) {

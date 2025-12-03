@@ -132,15 +132,45 @@
         }
         .status-form {
             margin-top: 20px;
-            padding: 16px;
+            padding: 20px;
             background: var(--bg);
             border-radius: 8px;
         }
-        .status-form select {
-            padding: 8px;
-            border: 1px solid var(--bd);
-            border-radius: 6px;
-            margin-right: 8px;
+        .status-toggle-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .status-toggle-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--bd);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--txt);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .status-toggle-btn:hover {
+            border-color: var(--ok);
+            background: #f0fdf4;
+        }
+        .status-toggle-btn.active {
+            background: var(--ok);
+            color: #fff;
+            border-color: var(--ok);
+        }
+        .status-toggle-btn input[type="radio"] {
+            display: none;
+        }
+        .status-form-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--txt);
+            font-size: 16px;
         }
     </style>
 </head>
@@ -158,8 +188,15 @@
             <div class="info-grid">
                 <div class="info-label">상태:</div>
                 <div class="info-value">
-                    <span class="status-badge" th:classappend="${'status-' + delivery.status.name().toLowerCase()}" 
-                          th:text="${delivery.status.name()}">상태</span>
+                    <span class="status-badge" 
+                          th:classappend="${delivery.status.name() == 'PENDING' ? 'status-pending' : 
+                                         delivery.status.name() == 'IN_TRANSIT' ? 'status-in_transit' : 
+                                         delivery.status.name() == 'DELIVERED' ? 'status-delivered' : 
+                                         'status-pending'}"
+                          th:text="${delivery.status.name() == 'PENDING' ? '대기' : 
+                                   delivery.status.name() == 'IN_TRANSIT' ? '배송중' : 
+                                   delivery.status.name() == 'DELIVERED' ? '완료' : 
+                                   delivery.status.name()}">상태</span>
                 </div>
             </div>
             <div th:if="${delivery.shippedAt != null}" class="info-grid">
@@ -230,35 +267,39 @@
             </div>
         </div>
 
-        <div class="section">
-            <div class="section-title">기부 정보</div>
-            <div class="info-grid">
-                <div class="info-label">옷의 종류:</div>
-                <div class="info-value" th:text="${delivery.donation.clothType.name()}"></div>
-            </div>
-            <div class="info-grid">
-                <div class="info-label">기관:</div>
-                <div class="info-value" th:text="${delivery.donation.organ != null ? delivery.donation.organ.orgName : '없음'}"></div>
-            </div>
-        </div>
-
         <div class="status-form">
-            <form th:action="@{/admin/deliveries/{id}/status(id=${delivery.id})}" method="post">
-                <label for="status">배송 상태 변경:</label>
-                <select id="status" name="status">
-                    <option th:value="PENDING" th:selected="${delivery.status.name() == 'PENDING'}">배송 대기</option>
-                    <option th:value="PREPARING" th:selected="${delivery.status.name() == 'PREPARING'}">배송 준비 중</option>
-                    <option th:value="IN_TRANSIT" th:selected="${delivery.status.name() == 'IN_TRANSIT'}">배송 중</option>
-                    <option th:value="DELIVERED" th:selected="${delivery.status.name() == 'DELIVERED'}">배송 완료</option>
-                    <option th:value="CANCELLED" th:selected="${delivery.status.name() == 'CANCELLED'}">배송 취소</option>
-                </select>
-                <button type="submit" class="btn btn-primary">상태 업데이트</button>
+            <div class="status-form-title">배송 상태 관리</div>
+            <form th:action="@{/admin/deliveries/{id}/status(id=${delivery.id})}" method="post" id="statusForm">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="status-toggle-group">
+                    <label class="status-toggle-btn" 
+                           th:classappend="${delivery.status.name() == 'PENDING' ? 'active' : ''}">
+                        <input type="radio" name="status" value="PENDING" 
+                               th:checked="${delivery.status.name() == 'PENDING'}"
+                               onchange="document.getElementById('statusForm').submit();">
+                        대기
+                    </label>
+                    <label class="status-toggle-btn" 
+                           th:classappend="${delivery.status.name() == 'IN_TRANSIT' ? 'active' : ''}">
+                        <input type="radio" name="status" value="IN_TRANSIT" 
+                               th:checked="${delivery.status.name() == 'IN_TRANSIT'}"
+                               onchange="document.getElementById('statusForm').submit();">
+                        배송중
+                    </label>
+                    <label class="status-toggle-btn" 
+                           th:classappend="${delivery.status.name() == 'DELIVERED' ? 'active' : ''}">
+                        <input type="radio" name="status" value="DELIVERED" 
+                               th:checked="${delivery.status.name() == 'DELIVERED'}"
+                               onchange="document.getElementById('statusForm').submit();">
+                        완료
+                    </label>
+                </div>
             </form>
         </div>
 
         <div class="btn-group">
             <a th:href="@{/admin/deliveries/{id}/edit(id=${delivery.id})}" class="btn btn-primary">수정하기</a>
-            <a th:href="@{/admin/deliveries}" class="btn btn-secondary">목록으로</a>
+            <a th:href="@{/admin/donations/matched}" class="btn btn-secondary">목록으로</a>
         </div>
     </div>
 </div>

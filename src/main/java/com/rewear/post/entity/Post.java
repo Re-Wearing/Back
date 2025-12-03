@@ -1,7 +1,9 @@
 package com.rewear.post.entity;
 
 import com.rewear.common.enums.ClothType;
+import com.rewear.common.enums.GenderType;
 import com.rewear.common.enums.PostType;
+import com.rewear.common.enums.Size;
 import com.rewear.organ.entity.Organ;
 import com.rewear.user.entity.User;
 import jakarta.persistence.*;
@@ -19,39 +21,49 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_id")
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_user_id", nullable = true)
+    private User authorUser; // 일반 회원 작성자 (기부 후기)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_organ_id", nullable = true)
+    private Organ authorOrgan; // 기관 작성자 (요청 게시물)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "post_type", nullable = false, length = 20)
     private PostType postType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organ_id", nullable = true)
-    private Organ organ; // 기관 게시물인 경우
-
-    @Column(name = "title", nullable = false, length = 200)
+    @Column(name = "title", nullable = false, length = 50)
     private String title;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "content", nullable = false, length = 1000)
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "cloth_type", nullable = true, length = 20)
-    private ClothType clothType; // 기관 요청 게시물인 경우
+    @Column(name = "image_url", length = 255)
+    private String imageUrl;
 
-    @Column(name = "quantity", nullable = true)
-    private Integer quantity; // 기관 요청 게시물인 경우
-
-    @Column(name = "image_path", length = 255)
-    private String imagePath;
-
-    @Column(name = "view_count", nullable = false)
+    @Column(name = "is_anonymous", nullable = false)
     @Builder.Default
-    private Integer viewCount = 0;
+    private Boolean isAnonymous = false; // 기부 후기용
+
+    // 요청 게시물 필드
+    @Enumerated(EnumType.STRING)
+    @Column(name = "req_gender_type", nullable = true, length = 20)
+    private GenderType reqGenderType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "req_main_category", nullable = true, length = 20)
+    private ClothType reqMainCategory;
+
+    @Column(name = "req_detail_category", nullable = true, length = 50)
+    private String reqDetailCategory;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "req_size", nullable = true, length = 10)
+    private Size reqSize;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -69,10 +81,5 @@ public class Post {
     @PreUpdate
     void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // 조회수 증가
-    public void incrementViewCount() {
-        this.viewCount++;
     }
 }
