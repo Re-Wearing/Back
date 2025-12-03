@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -41,4 +42,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 최신순 조회
     @Query("SELECT p FROM Post p WHERE p.postType = :postType ORDER BY p.createdAt DESC")
     List<Post> findByPostTypeOrderByCreatedAtDesc(@Param("postType") PostType postType);
+
+    // 게시물 상세 조회 시 필요한 관계를 함께 로드
+    @Query("SELECT p FROM Post p " +
+           "LEFT JOIN FETCH p.authorUser " +
+           "LEFT JOIN FETCH p.authorOrgan o " +
+           "LEFT JOIN FETCH o.user " +
+           "WHERE p.id = :postId")
+    Optional<Post> findByIdWithAuthors(@Param("postId") Long postId);
 }
