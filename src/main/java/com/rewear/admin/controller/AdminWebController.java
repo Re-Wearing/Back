@@ -16,6 +16,8 @@ import com.rewear.faq.entity.FAQ;
 import com.rewear.faq.service.FAQServiceImpl;
 import com.rewear.organ.entity.Organ;
 import com.rewear.organ.service.OrganService;
+import com.rewear.post.entity.Post;
+import com.rewear.post.service.PostService;
 import com.rewear.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,7 @@ public class AdminWebController {
     private final DeliveryService deliveryService;
     private final com.rewear.delivery.repository.DeliveryRepository deliveryRepo;
     private final OrganService organService;
+    private final PostService postService;
 
     @GetMapping
     public String root() { return "redirect:/admin/dashboard"; }
@@ -420,5 +423,35 @@ public class AdminWebController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/donations/pending";
+    }
+
+    // 게시판 관리
+    @GetMapping("/posts")
+    public String postList(Model model) {
+        List<Post> posts = postService.getAllPosts();
+        // 최신순으로 정렬
+        posts.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+        model.addAttribute("posts", posts);
+        return "admin/posts-list";
+    }
+
+    @GetMapping("/posts/{postId}")
+    public String postDetail(@PathVariable("postId") Long postId, Model model) {
+        Post post = postService.getPostById(postId);
+        model.addAttribute("post", post);
+        return "admin/post-detail";
+    }
+
+    @PostMapping("/posts/{postId}/delete")
+    public String deletePost(
+            @PathVariable("postId") Long postId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            postService.deletePostByAdmin(postId);
+            redirectAttributes.addFlashAttribute("success", "게시물이 삭제되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/posts";
     }
 }

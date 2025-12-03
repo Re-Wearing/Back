@@ -47,7 +47,10 @@ public class DonationItem {
     private String description;
 
     @Column(name = "image_url", length = 255)
-    private String imageUrl;
+    private String imageUrl; // 단일 이미지 (하위 호환성)
+
+    @Column(name = "image_urls", columnDefinition = "TEXT")
+    private String imageUrls; // 여러 이미지 (쉼표로 구분)
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

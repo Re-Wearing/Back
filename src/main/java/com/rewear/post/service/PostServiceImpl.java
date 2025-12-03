@@ -38,11 +38,35 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Post createPost(User author, PostForm form, MultipartFile image) {
-        // 이미지 저장
+        // 여러 이미지 저장
         String imageUrl = null;
-        if (image != null && !image.isEmpty()) {
+        String imageUrls = null;
+        List<String> savedImageUrls = new java.util.ArrayList<>();
+        
+        // 여러 이미지 처리 (우선)
+        if (form.getImages() != null && !form.getImages().isEmpty()) {
+            for (MultipartFile img : form.getImages()) {
+                if (img != null && !img.isEmpty()) {
+                    try {
+                        String savedUrl = saveImage(img);
+                        savedImageUrls.add(savedUrl);
+                    } catch (IOException e) {
+                        log.error("이미지 저장 실패", e);
+                        throw new RuntimeException("이미지 저장에 실패했습니다.", e);
+                    }
+                }
+            }
+            if (!savedImageUrls.isEmpty()) {
+                imageUrls = String.join(",", savedImageUrls);
+                imageUrl = savedImageUrls.get(0); // 첫 번째 이미지를 imageUrl에도 설정 (하위 호환성)
+            }
+        }
+        // 단일 이미지 처리 (하위 호환성)
+        else if (image != null && !image.isEmpty()) {
             try {
                 imageUrl = saveImage(image);
+                savedImageUrls.add(imageUrl);
+                imageUrls = imageUrl;
             } catch (IOException e) {
                 log.error("이미지 저장 실패", e);
                 throw new RuntimeException("이미지 저장에 실패했습니다.", e);
@@ -53,7 +77,8 @@ public class PostServiceImpl implements PostService {
                 .postType(form.getPostType())
                 .title(form.getTitle())
                 .content(form.getContent())
-                .imageUrl(imageUrl);
+                .imageUrl(imageUrl)
+                .imageUrls(imageUrls);
 
         // 게시판 타입에 따라 작성자 설정
         if (form.getPostType() == PostType.DONATION_REVIEW) {
@@ -93,15 +118,56 @@ public class PostServiceImpl implements PostService {
             throw new IllegalStateException("게시물을 수정할 권한이 없습니다.");
         }
 
-        // 이미지 업데이트
-        if (image != null && !image.isEmpty()) {
+        // 여러 이미지 업데이트
+        if (form.getImages() != null && !form.getImages().isEmpty()) {
             // 기존 이미지 삭제
-            if (post.getImageUrl() != null) {
+            if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
+                String[] existingUrls = post.getImageUrls().split(",");
+                for (String url : existingUrls) {
+                    if (url != null && !url.trim().isEmpty()) {
+                        deleteImage(url.trim());
+                    }
+                }
+            } else if (post.getImageUrl() != null) {
+                deleteImage(post.getImageUrl());
+            }
+            
+            // 새 이미지 저장
+            List<String> savedImageUrls = new java.util.ArrayList<>();
+            for (MultipartFile img : form.getImages()) {
+                if (img != null && !img.isEmpty()) {
+                    try {
+                        String savedUrl = saveImage(img);
+                        savedImageUrls.add(savedUrl);
+                    } catch (IOException e) {
+                        log.error("이미지 저장 실패", e);
+                        throw new RuntimeException("이미지 저장에 실패했습니다.", e);
+                    }
+                }
+            }
+            if (!savedImageUrls.isEmpty()) {
+                post.setImageUrls(String.join(",", savedImageUrls));
+                post.setImageUrl(savedImageUrls.get(0)); // 첫 번째 이미지를 imageUrl에도 설정 (하위 호환성)
+            }
+        }
+        // 단일 이미지 업데이트 (하위 호환성)
+        else if (image != null && !image.isEmpty()) {
+            // 기존 이미지 삭제
+            if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
+                String[] existingUrls = post.getImageUrls().split(",");
+                for (String url : existingUrls) {
+                    if (url != null && !url.trim().isEmpty()) {
+                        deleteImage(url.trim());
+                    }
+                }
+            } else if (post.getImageUrl() != null) {
                 deleteImage(post.getImageUrl());
             }
             // 새 이미지 저장
             try {
-                post.setImageUrl(saveImage(image));
+                String savedUrl = saveImage(image);
+                post.setImageUrl(savedUrl);
+                post.setImageUrls(savedUrl);
             } catch (IOException e) {
                 log.error("이미지 저장 실패", e);
                 throw new RuntimeException("이미지 저장에 실패했습니다.", e);
@@ -145,7 +211,34 @@ public class PostServiceImpl implements PostService {
         }
 
         // 이미지 삭제
-        if (post.getImageUrl() != null) {
+        if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
+            String[] imageUrls = post.getImageUrls().split(",");
+            for (String url : imageUrls) {
+                if (url != null && !url.trim().isEmpty()) {
+                    deleteImage(url.trim());
+                }
+            }
+        } else if (post.getImageUrl() != null) {
+            deleteImage(post.getImageUrl());
+        }
+
+        postRepository.delete(post);
+    }
+
+    @Override
+    public void deletePostByAdmin(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+
+        // 이미지 삭제
+        if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
+            String[] imageUrls = post.getImageUrls().split(",");
+            for (String url : imageUrls) {
+                if (url != null && !url.trim().isEmpty()) {
+                    deleteImage(url.trim());
+                }
+            }
+        } else if (post.getImageUrl() != null) {
             deleteImage(post.getImageUrl());
         }
 
@@ -157,6 +250,12 @@ public class PostServiceImpl implements PostService {
     public Post getPostById(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Post> getAllPosts() {
+        return postRepository.findAll();
     }
 
     @Override

@@ -67,10 +67,30 @@ public class DonationController {
             return "donation/apply-item";
         }
 
-        // 이미지가 있는 경우 즉시 저장 (MultipartFile은 세션에 저장할 수 없음)
-        if (itemForm.getImage() != null && !itemForm.getImage().isEmpty()) {
+        // 여러 이미지가 있는 경우 즉시 저장 (MultipartFile은 세션에 저장할 수 없음)
+        List<String> savedImageUrls = new java.util.ArrayList<>();
+        
+        // 여러 이미지 처리 (우선)
+        if (itemForm.getImages() != null && !itemForm.getImages().isEmpty()) {
+            for (MultipartFile image : itemForm.getImages()) {
+                if (image != null && !image.isEmpty()) {
+                    try {
+                        String imageUrl = saveImage(image);
+                        savedImageUrls.add(imageUrl);
+                        log.info("기부 신청 1단계 - 이미지 저장 완료: {}", imageUrl);
+                    } catch (IOException e) {
+                        log.error("이미지 저장 실패", e);
+                        bindingResult.rejectValue("images", "error.image", "이미지 저장에 실패했습니다.");
+                        return "donation/apply-item";
+                    }
+                }
+            }
+        }
+        // 단일 이미지 처리 (하위 호환성)
+        else if (itemForm.getImage() != null && !itemForm.getImage().isEmpty()) {
             try {
                 String imageUrl = saveImage(itemForm.getImage());
+                savedImageUrls.add(imageUrl);
                 itemForm.setImageUrl(imageUrl);
                 // MultipartFile은 세션에 저장할 수 없으므로 null로 설정
                 itemForm.setImage(null);
@@ -80,6 +100,18 @@ public class DonationController {
                 bindingResult.rejectValue("image", "error.image", "이미지 저장에 실패했습니다.");
                 return "donation/apply-item";
             }
+        }
+        
+        // 저장된 이미지 URL을 Form에 설정
+        if (!savedImageUrls.isEmpty()) {
+            itemForm.setImageUrls(savedImageUrls);
+            // 첫 번째 이미지를 imageUrl에도 설정 (하위 호환성)
+            if (itemForm.getImageUrl() == null) {
+                itemForm.setImageUrl(savedImageUrls.get(0));
+            }
+            // MultipartFile은 세션에 저장할 수 없으므로 null로 설정
+            itemForm.setImages(null);
+            itemForm.setImage(null);
         } else {
             log.info("기부 신청 1단계 - 이미지가 없거나 비어있음");
         }
