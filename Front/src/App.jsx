@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import IntroLanding from './pages/IntroLanding'
 import SignupPage from './pages/SignupPage'
 import LoginPage from './pages/LoginPage'
@@ -488,6 +488,23 @@ export default function App() {
     return INITIAL_PENDING_ORGANIZATIONS
   })
   const [matchingInvites, setMatchingInvites] = useState(INITIAL_MATCHING_INVITES)
+  const [approvedOrganizations, setApprovedOrganizations] = useState([])
+
+  const fetchApprovedOrganizations = useCallback(async () => {
+    try {
+      const response = await fetch('/api/organs/approved', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        throw new Error('Failed to load organizations')
+      }
+      const data = await response.json()
+      setApprovedOrganizations(Array.isArray(data?.organs) ? data.organs : [])
+    } catch (error) {
+      console.error('Approved organization fetch error:', error)
+    }
+  }, [])
 
   const organizationOptions = useMemo(
     () =>
@@ -512,6 +529,10 @@ export default function App() {
       ),
     [donations, accounts, profiles]
   )
+
+  useEffect(() => {
+    fetchApprovedOrganizations()
+  }, [fetchApprovedOrganizations])
 
   const findOrganizationUsernameByName = name => {
     if (!name) return null
@@ -2549,7 +2570,7 @@ export default function App() {
           onRequireLogin={goToLogin}
           onAddDonation={handleAddDonation}
           onGoToDonationStatus={goToDonationStatus}
-          availableOrganizations={organizationOptions}
+          availableOrganizations={approvedOrganizations}
         />
       ) : (
         <ExperienceLanding

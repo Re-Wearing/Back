@@ -23,8 +23,71 @@ const ITEM_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'FREE', '기타 사이즈']
 const ITEM_CONDITIONS = ['새상품', '사용감 적음', '사용감 보통', '사용감 많음']
 
 const DONATION_METHODS = ['자동 매칭', '직접 매칭']
-const DEFAULT_DIRECT_ORGANIZATIONS = ['임당초등학교', '임당중학교']
 const DELIVERY_METHODS = ['직접 배송', '택배 배송']
+
+const GENDER_MAP = {
+  '남성 의류': 'MALE',
+  '여성 의류': 'FEMALE',
+  '아동 의류': 'CHILD',
+  '공용 의류': 'UNISEX',
+  '액세서리리': 'UNISEX'
+}
+
+const DETAIL_TO_CLOTH_MAP = {
+  '남성 의류': 'ETC',
+  '여성 의류': 'ETC',
+  '아동 의류': 'ETC',
+  '공용 의류': 'ETC',
+  '액세서리리': 'ACCESSORY',
+  상의: 'TOP',
+  하의: 'BOTTOM',
+  아우터: 'OUTERWEAR',
+  '한 벌 옷': 'ETC',
+  '기타 의류': 'ETC',
+  신발: 'SHOES',
+  시계: 'ACCESSORY',
+  가방: 'ACCESSORY',
+  모자: 'ACCESSORY',
+  장갑: 'ACCESSORY',
+  스카프: 'ACCESSORY',
+  '기타 액세서리': 'ACCESSORY'
+}
+
+const SIZE_MAP = {
+  S: 'S',
+  M: 'M',
+  L: 'L',
+  XL: 'XL',
+  XXL: 'XXL',
+  FREE: 'F',
+  '기타 사이즈': 'F'
+}
+
+const MATCH_TYPE_MAP = {
+  '자동 매칭': 'INDIRECT',
+  '직접 매칭': 'DIRECT'
+}
+
+const DELIVERY_METHOD_MAP = {
+  '직접 배송': 'DIRECT_DELIVERY',
+  '택배 배송': 'PARCEL_DELIVERY'
+}
+
+const mapGenderType = (itemType) => GENDER_MAP[itemType] || 'UNISEX'
+
+const mapClothType = (detail, fallback) => {
+  if (detail && DETAIL_TO_CLOTH_MAP[detail]) {
+    return DETAIL_TO_CLOTH_MAP[detail]
+  }
+  if (fallback && DETAIL_TO_CLOTH_MAP[fallback]) {
+    return DETAIL_TO_CLOTH_MAP[fallback]
+  }
+  return 'ETC'
+}
+
+const mapSizeType = (size) => SIZE_MAP[size] || 'F'
+const mapMatchType = (method) => MATCH_TYPE_MAP[method] || null
+const mapDeliveryMethod = (method) => DELIVERY_METHOD_MAP[method] || null
 
 export default function DonationPage({
   onNavigateHome,
@@ -62,6 +125,8 @@ export default function DonationPage({
   const [desiredDate, setDesiredDate] = useState(today)
   const [memo, setMemo] = useState('')
   const [applicationErrors, setApplicationErrors] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [serverError, setServerError] = useState('')
   const applicantName = currentProfile?.fullName || currentUser?.name || currentUser?.username || '신청자'
 
   const fileToDataURL = file =>
@@ -81,20 +146,27 @@ export default function DonationPage({
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
     try {
-      const dataUrls = await Promise.all(files.map(file => fileToDataURL(file)))
-      const newImages = dataUrls.map(dataUrl => ({
-        id: Date.now() + Math.random(),
-        type,
-        dataUrl
-      }))
-      setImages(prev => [...prev, ...newImages])
+      const items = await Promise.all(
+        files.map(async file => ({
+          id: `${Date.now()}-${Math.random()}`,
+          type,
+          dataUrl: await fileToDataURL(file),
+          file
+        }))
+      )
+      setImages(prev => [...prev, ...items])
+      setServerError('')
     } catch (error) {
       console.error('Failed to read files', error)
+    } finally {
+      if (e.target) {
+        e.target.value = ''
+      }
     }
   }
 
   const handleRemoveImage = (id) => {
-    setImages(images.filter(img => img.id !== id))
+    setImages(prev => prev.filter(img => img.id !== id))
   }
 
   const validateForm = () => {
@@ -124,7 +196,7 @@ export default function DonationPage({
       newErrors.quantity = '수량은 1개 이상이어야 합니다.'
     }
 
-    if (images.length === 0) {
+    if (images.length === 0 || images.every(img => !img.file)) {
       newErrors.images = '사진을 최소 1개 이상 업로드해주세요.'
     }
 
@@ -146,12 +218,21 @@ export default function DonationPage({
       return
     }
 
-    // TODO: 실제 물품 등록 로직 구현
-    // 기부 신청 단계로 이동
+    setServerError('')
+    setApplicationErrors({})
     setStep('application')
   }
 
   const requiresShippingFields = donationMethod === '자동 매칭' || donationMethod === '직접 매칭'
+
+  useEffect(() => {
+    if (!contact && (currentProfile?.phone || currentUser?.phone)) {
+      const fallbackPhone = currentProfile?.phone || currentUser?.phone || ''
+      if (fallbackPhone) {
+        setContact(formatPhoneNumber(fallbackPhone))
+      }
+    }
+  }, [contact, currentProfile, currentUser])
 
   const validateApplicationForm = () => {
     const newErrors = {}
@@ -183,41 +264,19 @@ export default function DonationPage({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleApplicationSubmit = (e) => {
-    e.preventDefault()
-    
-    if (!validateApplicationForm()) {
-      return
-    }
+  const buildDonationDescription = () => {
+    const summary = [
+      itemDescription && `상세 정보: ${itemDescription.trim()}`,
+      itemCondition && `물품 상태: ${itemCondition}`,
+      quantity && `수량: ${quantity}`,
+      contact && `연락처: ${formatPhoneNumber(stripPhoneNumber(contact))}`,
+      desiredDate && `희망일: ${desiredDate}`,
+      memo && memo.trim() && `메모: ${memo.trim()}`
+    ].filter(Boolean)
+    return summary.join('\n')
+  }
 
-    // 기부 내역 추가
-    if (onAddDonation) {
-      const formattedContact = formatPhoneNumber(contact)
-      onAddDonation({
-        itemType,
-        itemDetail,
-        itemSize,
-        itemCondition,
-        itemDescription,
-        donationMethod,
-        donationOrganizationId: donationMethod === '직접 매칭' ? donationOrganization : null,
-        donationOrganizationName:
-          donationMethod === '직접 매칭'
-            ? donationOrganizationLabel || donationOrganization
-            : null,
-        deliveryMethod,
-        isAnonymous,
-        contact: formattedContact,
-        desiredDate,
-        memo,
-        images
-      })
-    }
-
-    // TODO: 실제 기부 신청 로직 구현
-    alert('기부 신청이 완료되었습니다! 감사합니다.')
-    
-    // 초기화 및 기부 현황 조회로 이동
+  const resetForms = () => {
     setStep('item')
     setItemType('')
     setItemDetail('')
@@ -234,25 +293,138 @@ export default function DonationPage({
     setContact('')
     setDesiredDate(today)
     setMemo('')
+    setApplicationErrors({})
+    setErrors({})
+    setServerError('')
+  }
     
-    if (onGoToDonationStatus) {
-      onGoToDonationStatus()
-    } else {
-      onNavigateHome()
+  const handleApplicationSubmit = async (e) => {
+    e.preventDefault()
+    setServerError('')
+    
+    if (!validateApplicationForm()) {
+      return
+    }
+
+    const genderTypeEnum = mapGenderType(itemType)
+    const clothTypeEnum = mapClothType(itemDetail, itemType)
+    const sizeEnum = mapSizeType(itemSize)
+    const matchTypeEnum = mapMatchType(donationMethod)
+    const deliveryMethodEnum = mapDeliveryMethod(deliveryMethod)
+
+    if (!matchTypeEnum) {
+      setServerError('기부 방법을 다시 선택해주세요.')
+      return
+    }
+
+    if (!deliveryMethodEnum) {
+      setServerError('배송 방법을 다시 선택해주세요.')
+      return
+    }
+
+    let organIdValue = null
+    if (matchTypeEnum === 'DIRECT') {
+      organIdValue = Number(donationOrganization)
+      if (!organIdValue) {
+        setApplicationErrors(prev => ({
+          ...prev,
+          donationOrganization: '기관 목록을 다시 확인해주세요.'
+        }))
+        setServerError('기관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+        return
+      }
+    }
+
+    if (images.length === 0 || images.every(image => !image.file)) {
+      setServerError('이미지를 다시 업로드해주세요.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('genderType', genderTypeEnum)
+    formData.append('mainCategory', clothTypeEnum)
+    if (itemDetail) {
+      formData.append('detailCategory', itemDetail)
+    }
+    formData.append('size', sizeEnum)
+    formData.append('description', buildDonationDescription())
+    formData.append('matchType', matchTypeEnum)
+    formData.append('deliveryMethod', deliveryMethodEnum)
+    formData.append('isAnonymous', String(isAnonymous))
+    if (organIdValue) {
+      formData.append('organId', organIdValue)
+    }
+    images.forEach(image => {
+      if (image.file) {
+        formData.append('images', image.file)
+      }
+    })
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/donations', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      let data = null
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        data = null
+      }
+
+      if (!response.ok || (data && data.ok === false)) {
+        throw new Error(data?.message || '기부 신청에 실패했습니다.')
+      }
+
+      if (onAddDonation) {
+        const formattedContact = formatPhoneNumber(stripPhoneNumber(contact))
+        onAddDonation({
+          itemType,
+          itemDetail,
+          itemSize,
+          itemCondition,
+          itemDescription,
+          donationMethod,
+          donationOrganizationId: organIdValue,
+          donationOrganizationName: organIdValue ? donationOrganizationLabel : null,
+          deliveryMethod,
+          isAnonymous,
+          contact: formattedContact,
+          desiredDate,
+          memo,
+          images
+        })
+      }
+
+      alert('기부 신청이 완료되었습니다! 감사합니다.')
+      resetForms()
+
+      if (onGoToDonationStatus) {
+        onGoToDonationStatus()
+      } else {
+        onNavigateHome()
+      }
+    } catch (error) {
+      setServerError(error.message || '기부 신청 중 오류가 발생했습니다.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const directMatchOptions =
-    availableOrganizations.length > 0
-      ? availableOrganizations.map(org =>
-          typeof org === 'string'
-            ? { label: org, value: org }
-            : {
-                label: org.name || org.label || org.value,
-                value: org.username || org.value || org.label || org.name
-              }
-        )
-      : DEFAULT_DIRECT_ORGANIZATIONS.map(name => ({ label: name, value: name }))
+  const directMatchOptions = Array.isArray(availableOrganizations)
+    ? availableOrganizations
+        .map(org => ({
+          label: org.name || org.orgName || org.label || org.value,
+          value:
+            org.id !== undefined
+              ? String(org.id)
+              : org.username || org.value || org.label || org.name || ''
+        }))
+        .filter(option => option.value)
+    : []
 
   const renderShippingFields = () => (
     <>
@@ -267,7 +439,10 @@ export default function DonationPage({
           <select
             id="deliveryMethod"
             value={deliveryMethod}
-            onChange={(e) => setDeliveryMethod(e.target.value)}
+            onChange={(e) => {
+              setDeliveryMethod(e.target.value)
+              setServerError('')
+            }}
             className={applicationErrors.deliveryMethod ? 'error' : ''}
           >
             <option value="">선택하세요</option>
@@ -281,7 +456,10 @@ export default function DonationPage({
               <button
                 type="button"
                 className="btn-clear"
-                onClick={() => setDeliveryMethod('')}
+                onClick={() => {
+                  setDeliveryMethod('')
+                  setServerError('')
+                }}
                 aria-label="선택 취소"
               >
                 ×
@@ -306,7 +484,10 @@ export default function DonationPage({
                 type="date"
                 min={today}
                 value={desiredDate}
-                onChange={(e) => setDesiredDate(e.target.value)}
+                onChange={(e) => {
+                  setDesiredDate(e.target.value)
+                  setServerError('')
+                }}
                 className={applicationErrors.desiredDate ? 'error' : ''}
               />
             </div>
@@ -317,7 +498,10 @@ export default function DonationPage({
             <textarea
               id="memo"
               value={memo}
-              onChange={(e) => setMemo(e.target.value)}
+              onChange={(e) => {
+                setMemo(e.target.value)
+                setServerError('')
+              }}
               placeholder="추가로 전달하고 싶은 내용이 있으면 입력하세요"
               rows={4}
             />
@@ -348,7 +532,10 @@ export default function DonationPage({
               <button
                 type="button"
                 className="btn-back"
-                onClick={() => setStep('item')}
+                onClick={() => {
+                  setServerError('')
+                  setStep('item')
+                }}
                 aria-label="뒤로 가기"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -376,6 +563,7 @@ export default function DonationPage({
                       setDonationOrganization('')
                       setDonationOrganizationLabel('')
                       setDeliveryMethod('')
+                      setServerError('')
                     }}
                     className={applicationErrors.donationMethod ? 'error' : ''}
                   >
@@ -395,6 +583,7 @@ export default function DonationPage({
                           setDonationOrganization('')
                           setDonationOrganizationLabel('')
                           setDeliveryMethod('')
+                          setServerError('')
                         }}
                         aria-label="선택 취소"
                       >
@@ -424,8 +613,10 @@ export default function DonationPage({
                           const option = e.target.selectedOptions[0]
                           setDonationOrganization(e.target.value)
                           setDonationOrganizationLabel(option?.dataset?.label || option?.textContent || '')
+                          setServerError('')
                         }}
                         className={applicationErrors.donationOrganization ? 'error' : ''}
+                        disabled={directMatchOptions.length === 0}
                       >
                         <option value="">선택하세요</option>
                         {directMatchOptions.map(org => (
@@ -443,6 +634,7 @@ export default function DonationPage({
                             onClick={() => {
                               setDonationOrganization('')
                               setDonationOrganizationLabel('')
+                              setServerError('')
                             }}
                             aria-label="선택 취소"
                           >
@@ -451,6 +643,11 @@ export default function DonationPage({
                         </>
                       )}
                     </div>
+                    {directMatchOptions.length === 0 && (
+                      <p className="input-hint">
+                        승인된 기관 목록을 불러오는 중입니다. 잠시 후 다시 시도하거나 자동 매칭을 이용해주세요.
+                      </p>
+                    )}
                   </div>
 
                 </>
@@ -489,7 +686,10 @@ export default function DonationPage({
                       id="contact"
                       type="tel"
                       value={contact}
-                      onChange={(e) => setContact(stripPhoneNumber(e.target.value))}
+                      onChange={(e) => {
+                        setContact(stripPhoneNumber(e.target.value))
+                        setServerError('')
+                      }}
                       placeholder="숫자만 입력 (예: 01012345678)"
                       className={applicationErrors.contact ? 'error' : ''}
                       inputMode="numeric"
@@ -503,8 +703,9 @@ export default function DonationPage({
               {/* 제출 버튼 */}
               {((donationMethod === '자동 매칭') || (donationMethod === '직접 매칭' && deliveryMethod)) && (
                 <div className="donation-actions">
-                  <button type="submit" className="btn-submit">
-                    기부 신청하기
+                  {serverError && <p className="error-message">{serverError}</p>}
+                  <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                    {isSubmitting ? '신청 중...' : '기부 신청하기'}
                   </button>
                 </div>
               )}

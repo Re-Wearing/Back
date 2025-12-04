@@ -5,6 +5,7 @@ import com.rewear.delivery.service.DeliveryService;
 import com.rewear.donation.DonationForm;
 import com.rewear.donation.DonationItemForm;
 import com.rewear.donation.entity.Donation;
+import com.rewear.donation.util.DonationImageHelper;
 import com.rewear.donation.service.DonationService;
 import com.rewear.organ.entity.Organ;
 import com.rewear.organ.repository.OrganRepository;
@@ -22,16 +23,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -67,51 +62,15 @@ public class DonationController {
             return "donation/apply-item";
         }
 
-        // 여러 이미지가 있는 경우 즉시 저장 (MultipartFile은 세션에 저장할 수 없음)
-        List<String> savedImageUrls = new java.util.ArrayList<>();
-        
-        // 여러 이미지 처리 (우선)
-        if (itemForm.getImages() != null && !itemForm.getImages().isEmpty()) {
-            for (MultipartFile image : itemForm.getImages()) {
-                if (image != null && !image.isEmpty()) {
-                    try {
-                        String imageUrl = saveImage(image);
-                        savedImageUrls.add(imageUrl);
-                        log.info("기부 신청 1단계 - 이미지 저장 완료: {}", imageUrl);
-                    } catch (IOException e) {
-                        log.error("이미지 저장 실패", e);
-                        bindingResult.rejectValue("images", "error.image", "이미지 저장에 실패했습니다.");
-                        return "donation/apply-item";
-                    }
-                }
-            }
+        try {
+            DonationImageHelper.persistUploadedImages(itemForm, uploadDir);
+        } catch (IOException e) {
+            log.error("이미지 저장 실패", e);
+            bindingResult.rejectValue("images", "error.image", "이미지 저장에 실패했습니다.");
+            return "donation/apply-item";
         }
-        // 단일 이미지 처리 (하위 호환성)
-        else if (itemForm.getImage() != null && !itemForm.getImage().isEmpty()) {
-            try {
-                String imageUrl = saveImage(itemForm.getImage());
-                savedImageUrls.add(imageUrl);
-                itemForm.setImageUrl(imageUrl);
-                // MultipartFile은 세션에 저장할 수 없으므로 null로 설정
-                itemForm.setImage(null);
-                log.info("기부 신청 1단계 - 이미지 저장 완료: {}", imageUrl);
-            } catch (IOException e) {
-                log.error("이미지 저장 실패", e);
-                bindingResult.rejectValue("image", "error.image", "이미지 저장에 실패했습니다.");
-                return "donation/apply-item";
-            }
-        }
-        
-        // 저장된 이미지 URL을 Form에 설정
-        if (!savedImageUrls.isEmpty()) {
-            itemForm.setImageUrls(savedImageUrls);
-            // 첫 번째 이미지를 imageUrl에도 설정 (하위 호환성)
-            if (itemForm.getImageUrl() == null) {
-                itemForm.setImageUrl(savedImageUrls.get(0));
-            }
-            // MultipartFile은 세션에 저장할 수 없으므로 null로 설정
-            itemForm.setImages(null);
-            itemForm.setImage(null);
+        if (itemForm.getImageUrl() != null) {
+            log.info("기부 신청 1단계 - 이미지 저장 완료: {}", itemForm.getImageUrl());
         } else {
             log.info("기부 신청 1단계 - 이미지가 없거나 비어있음");
         }
@@ -217,20 +176,4 @@ public class DonationController {
         return "donation/list";
     }
 
-    private String saveImage(MultipartFile image) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = image.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        return filename;
-    }
 }
