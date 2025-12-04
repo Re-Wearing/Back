@@ -1,0 +1,245 @@
+.board-write-page {
+  min-height: 100vh;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  background: url('../assets/board.jpg')
+      center/cover fixed,
+    linear-gradient(120deg, rgba(244, 235, 222, 0.85), rgba(238, 220, 198, 0.95));
+}
+
+.board-write-topbar {
+  max-width: 1200px;
+  margin: 0 auto 1.5rem;
+}
+
+.board-write-topbar .header_landing {
+  border-radius: 24px;
+}
+
+.board-write-shell {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.board-write-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(215, 199, 178, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+  color: #2f261c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #c9b596;
+}
+
+.board-write-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #2f261c;
+}
+
+.board-write-form {
+  padding: 2rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 40px rgba(28, 22, 18, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group-header label {
+  font-weight: 600;
+  color: #2f261c;
+  font-size: 1rem;
+}
+
+.required-text {
+  color: #d32f2f;
+  font-size: 0.9rem;
+}
+
+.board-type-select {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(215, 199, 178, 0.7);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #6e5a45;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.type-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #c9b596;
+}
+
+.type-btn.active {
+  background: #987653;
+  color: #fff;
+  border-color: #987653;
+}
+
+.type-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.board-type-hint {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: rgba(47, 38, 28, 0.7);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(215, 199, 178, 0.7);
+  border-radius: 10px;
+  background: #fff;
+  color: #2f261c;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #987653;
+  box-shadow: 0 0 0 3px rgba(152, 118, 83, 0.1);
+}
+
+.form-input.error {
+  border-color: #d32f2f;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid rgba(215, 199, 178, 0.7);
+  border-radius: 10px;
+  background: #fff;
+  color: #2f261c;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 300px;
+  line-height: 1.6;
+  transition: all 0.2s ease;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #987653;
+  box-shadow: 0 0 0 3px rgba(152, 118, 83, 0.1);
+}
+
+.form-textarea.error {
+  border-color: #d32f2f;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 0.875rem;
+  margin-top: -0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(215, 199, 178, 0.5);
+}
+
+.btn-cancel {
+  padding: 0.85rem 2rem;
+  border: 1px solid rgba(215, 199, 178, 0.7);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #6e5a45;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #c9b596;
+}
+
+.btn-submit {
+  padding: 0.85rem 2rem;
+  border: none;
+  border-radius: 10px;
+  background: #987653;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(152, 118, 83, 0.3);
+}
+
+.btn-submit:hover {
+  background: #866543;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(152, 118, 83, 0.4);
+}
+
+@media (max-width: 768px) {
+  .board-write-form {
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+  }
+}
+

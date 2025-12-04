@@ -1,0 +1,77 @@
+/* --- 배송 조회 페이지 전체 레이아웃 --- */
+.delivery-check-page {
+    background: #f7f1e6;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  
+  .delivery-check-content {
+    background: #fff;
+    max-width: 1200px;
+    margin: 2rem auto 0;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  
+  /* --- 테이블 스타일 --- */
+  .delivery-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .delivery-table th {
+    text-align: left;
+    padding: 1rem;
+    color: #7a6b55;
+    font-weight: 600;
+    border-bottom: 1px solid #e0d3c0;
+  }
+  
+  .delivery-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee4d4;
+    color: #3a2f22;
+  }
+  
+  /* --- 상태 배지 --- */
+  .status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  .status-complete {
+    background: #d3f3d1;
+    color: #207a42;
+  }
+  
+  .status-progress {
+    background: #fce5b4;
+    color: #c27800;
+  }
+  
+  .status-wait {
+    background: #f7d4d4;
+    color: #b33a3a;
+  }
+  
+  /* --- 상세 조회 버튼 --- */
+  .delivery-link {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #c2a98b;
+    background: #fff;
+    color: #5a4834;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .delivery-link:hover {
+    background: #f7f0e6;
+  }
+  
