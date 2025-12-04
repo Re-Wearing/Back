@@ -1,0 +1,55 @@
+/* Business 페이지 전체 톤 */
+.business-hero {
+    background-color: #d8c6a1;
+  }
+  
+  
+
+.business-page {
+    padding-top: 2rem;
+  }
+  
+  /* Hero 배경 이미지 */
+  .business-photo {
+    background-image: url("https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80");
+    background-size: cover;
+    background-position: center;
+  }
+  
+  /* Mission 패널 */
+  .business-mission {
+    margin-top: 3rem;
+    background: #5a3f2b !important;
+  color: #fff;
+  }
+  
+  /* Hero 개선 */
+  .business-hero h2 {
+    font-size: clamp(2.8rem, 7vw, 4rem);
+    margin-bottom: 1rem;
+    font-weight: 800;  /* 글씨 더 두껍게 */
+    color: #8a4b20 !important; /* 브릭 오렌지 */
+  }
+  
+  
+  /* Section title */
+  .process-section .section-header h3,
+  .value-grid h4 {
+    color: #2b2218;
+  }
+
+  .hero-section.business-hero {
+    min-height: 60vh; /* 홈보다 조금 낮게 */
+  }
+  
+  .business-photo {
+    position: relative;
+  }
+  
+  .business-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  
