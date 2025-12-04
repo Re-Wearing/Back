@@ -13,8 +13,12 @@ import java.util.List;
 
 @Repository
 public interface DonationRepository extends JpaRepository<Donation, Long> {
-    @EntityGraph(attributePaths = {"donationItem", "organ"})
-    List<Donation> findByDonor(User donor);
+    @Query("SELECT DISTINCT d FROM Donation d " +
+           "LEFT JOIN FETCH d.donationItem " +
+           "LEFT JOIN FETCH d.organ " +
+           "LEFT JOIN FETCH d.donor " +
+           "WHERE d.donor = :donor")
+    List<Donation> findByDonor(@Param("donor") User donor);
     
     @EntityGraph(attributePaths = {"donationItem", "organ", "donor"})
     List<Donation> findByStatus(DonationStatus status);

@@ -25,6 +25,7 @@ public interface FAQService {
     FAQ updateFAQ(Long id, FAQForm form);
     FAQ answerFAQ(Long id, String answer); // FAQ에 답변 작성 (아직 등록되지 않음)
     FAQ registerFAQ(Long id); // 답변이 작성된 FAQ를 FAQ에 등록 (활성화)
+    FAQ publishFAQ(Long id); // FAQ를 공개 FAQ로 변환 (author를 null로 설정)
     void deleteFAQ(Long id);
     void toggleActive(Long id);
 }

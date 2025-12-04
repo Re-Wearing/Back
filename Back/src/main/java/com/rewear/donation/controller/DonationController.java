@@ -4,8 +4,12 @@ import com.rewear.common.enums.MatchType;
 import com.rewear.delivery.service.DeliveryService;
 import com.rewear.donation.DonationForm;
 import com.rewear.donation.DonationItemForm;
+import com.rewear.donation.dto.DonationRequestDto;
+import com.rewear.donation.dto.DonationStatusResponseDto;
 import com.rewear.donation.entity.Donation;
 import com.rewear.donation.service.DonationService;
+import com.rewear.donation.util.DonationConverter;
+import com.rewear.donation.util.DonationStatusConverter;
 import com.rewear.organ.entity.Organ;
 import com.rewear.organ.repository.OrganRepository;
 import com.rewear.user.details.CustomUserDetails;
@@ -16,6 +20,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -30,7 +36,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,6 +48,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/donations")
 @RequiredArgsConstructor
 public class DonationController {
+    
+    // REST API 엔드포인트는 별도로 처리
 
     private final DonationService donationService;
     private final OrganRepository organRepository;
@@ -233,4 +244,6 @@ public class DonationController {
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         return filename;
     }
+
+    // REST API 엔드포인트는 DonationApiController로 이동됨
 }

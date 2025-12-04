@@ -59,6 +59,11 @@ public class SecurityConfig {
                         .requestMatchers("/notifications/**").authenticated()
                         .requestMatchers("/mypage", "/mypage/**").authenticated()
                         .requestMatchers("/api/users/me", "/api/users/me/**").authenticated()
+                        .requestMatchers("/api/donations/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers("/api/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/faq", "/api/faq/**").permitAll()
+                        .requestMatchers("/api/faq/question", "/api/faq/my-questions").authenticated()
                         .anyRequest().authenticated()
                 )
 

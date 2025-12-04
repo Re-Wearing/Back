@@ -24,20 +24,42 @@ public class FAQServiceImpl implements FAQService {
     public List<FAQ> getAllActiveFAQs() {
         // 공개 FAQ만 반환: 관리자가 작성한 FAQ (author == null) 중 isActive=true인 것만
         List<FAQ> allFAQs = faqRepository.findAll();
-        return allFAQs.stream()
+        log.info("전체 FAQ 개수: {}", allFAQs.size());
+        
+        // 각 FAQ의 상태를 로깅
+        for (FAQ faq : allFAQs) {
+            log.info("FAQ ID: {}, 질문: {}, author: {}, isActive: {}, displayOrder: {}", 
+                    faq.getId(), 
+                    faq.getQuestion(), 
+                    faq.getAuthor() != null ? faq.getAuthor().getUsername() : "null (관리자)",
+                    faq.getIsActive(),
+                    faq.getDisplayOrder());
+        }
+        
+        List<FAQ> activeFAQs = allFAQs.stream()
                 .filter(faq -> {
                     // 관리자가 작성한 FAQ만 (author == null)
                     if (faq.getAuthor() != null) {
+                        log.info("FAQ ID: {} - 사용자 질문으로 필터링됨 (author: {})", 
+                                faq.getId(), faq.getAuthor().getUsername());
                         return false;
                     }
                     // 활성화된 것만
-                    return faq.getIsActive();
+                    if (!faq.getIsActive()) {
+                        log.info("FAQ ID: {} - 비활성화되어 필터링됨 (isActive: false)", faq.getId());
+                        return false;
+                    }
+                    log.info("FAQ ID: {} - 공개 FAQ로 포함됨 (question: {})", faq.getId(), faq.getQuestion());
+                    return true;
                 })
                 .sorted((f1, f2) -> {
                     // displayOrder로 정렬
                     return Integer.compare(f1.getDisplayOrder(), f2.getDisplayOrder());
                 })
                 .toList();
+        
+        log.info("공개 FAQ 조회 완료 - 전체: {}, 공개: {}", allFAQs.size(), activeFAQs.size());
+        return activeFAQs;
     }
 
     @Override
@@ -169,9 +191,30 @@ public class FAQServiceImpl implements FAQService {
             throw new IllegalStateException("이미 FAQ에 등록된 항목입니다.");
         }
         
+        // FAQ에 등록할 때 author를 null로 설정하여 공개 FAQ로 만듦
+        faq.setAuthor(null);
         faq.setIsActive(true);
+        
         FAQ savedFaq = faqRepository.save(faq);
-        log.info("FAQ 등록 완료 - ID: {}, 작성자: {}", savedFaq.getId(), faq.getAuthor().getUsername());
+        log.info("FAQ 등록 완료 - ID: {}, 질문: {} (공개 FAQ로 변환됨)", savedFaq.getId(), savedFaq.getQuestion());
+        return savedFaq;
+    }
+
+    @Override
+    public FAQ publishFAQ(Long id) {
+        FAQ faq = getFAQById(id);
+        
+        // 답변이 없는 경우 공개 불가
+        if (faq.getAnswer() == null || faq.getAnswer().trim().isEmpty()) {
+            throw new IllegalStateException("답변이 작성되지 않은 FAQ는 공개할 수 없습니다.");
+        }
+        
+        // author를 null로 설정하여 관리자 FAQ로 만듦
+        faq.setAuthor(null);
+        faq.setIsActive(true);
+        
+        FAQ savedFaq = faqRepository.save(faq);
+        log.info("FAQ 공개 완료 - ID: {}, 질문: {}", savedFaq.getId(), savedFaq.getQuestion());
         return savedFaq;
     }
 

@@ -6537,3 +6537,640 @@ List of constraint violations:[
 2025-12-04T14:45:09.697+09:00 DEBUG 25728 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true}]
 2025-12-04T14:45:09.698+09:00 DEBUG 25728 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
 2025-12-04T14:45:09.698+09:00 DEBUG 25728 --- [RE-WEAR] [http-nio-8080-exec-9] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@3539041b, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_ADMIN]]]
+2025-12-04T22:43:00.515+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Starting ReWearApplication using Java 21.0.8 with PID 14192 (C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\Back\build\classes\java\main started by User in C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back)
+2025-12-04T22:43:00.631+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : No active profile set, falling back to 1 default profile: "default"
+2025-12-04T22:43:06.274+09:00  INFO 14192 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-04T22:43:06.916+09:00  INFO 14192 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 601 ms. Found 10 JPA repository interfaces.
+2025-12-04T22:43:10.368+09:00  INFO 14192 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-04T22:43:10.406+09:00  INFO 14192 --- [RE-WEAR] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-04T22:43:10.409+09:00  INFO 14192 --- [RE-WEAR] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.24]
+2025-12-04T22:43:10.660+09:00  INFO 14192 --- [RE-WEAR] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-04T22:43:10.662+09:00  INFO 14192 --- [RE-WEAR] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 9621 ms
+2025-12-04T22:43:16.689+09:00  INFO 14192 --- [RE-WEAR] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-04T22:43:16.963+09:00  INFO 14192 --- [RE-WEAR] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2025-12-04T22:43:17.096+09:00  INFO 14192 --- [RE-WEAR] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-12-04T22:43:18.074+09:00  INFO 14192 --- [RE-WEAR] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-04T22:43:18.183+09:00  INFO 14192 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-04T22:43:18.809+09:00  INFO 14192 --- [RE-WEAR] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2c815fdc
+2025-12-04T22:43:18.816+09:00  INFO 14192 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-04T22:43:23.541+09:00  INFO 14192 --- [RE-WEAR] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-04T22:43:24.774+09:00  INFO 14192 --- [RE-WEAR] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04T22:43:26.324+09:00  INFO 14192 --- [RE-WEAR] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-04T22:43:29.059+09:00  INFO 14192 --- [RE-WEAR] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-12-04T22:43:29.163+09:00  WARN 14192 --- [RE-WEAR] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-04T22:43:29.854+09:00 DEBUG 14192 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 98 mappings in 'requestMappingHandlerMapping'
+2025-12-04T22:43:30.218+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 업로드 디렉토리 생성: C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\uploads
+2025-12-04T22:43:30.222+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 이미지 리소스 핸들러 설정: /uploads/** -> file:///C:/Users/User/OneDrive/바탕 화면/RE-WEAR/Back/uploads/
+2025-12-04T22:43:30.224+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 업로드 디렉토리 절대 경로: C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\uploads
+2025-12-04T22:43:30.249+09:00 DEBUG 14192 --- [RE-WEAR] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**] in 'resourceHandlerMapping'
+2025-12-04T22:43:30.425+09:00  INFO 14192 --- [RE-WEAR] [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@399ef33f, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@39b752f4, org.springframework.security.web.context.SecurityContextHolderFilter@1000303a, org.springframework.security.web.header.HeaderWriterFilter@626967a0, org.springframework.web.filter.CorsFilter@1990afa2, org.springframework.security.web.authentication.logout.LogoutFilter@472d201, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@39a809db, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6b0796d4, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@173039b5, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@57be28d1, org.springframework.security.web.session.SessionManagementFilter@5080c40e, org.springframework.security.web.access.ExceptionTranslationFilter@3bad0efd, org.springframework.security.web.access.intercept.AuthorizationFilter@35d128fd]
+2025-12-04T22:43:30.893+09:00 DEBUG 14192 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-12-04T22:43:31.189+09:00 DEBUG 14192 --- [RE-WEAR] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-12-04T22:43:32.140+09:00  INFO 14192 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-12-04T22:43:32.315+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Started ReWearApplication in 35.573 seconds (process running for 39.141)
+2025-12-04T22:43:32.807+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.config.AdminConfig            : Admin user 'admin' already up-to-date
+2025-12-04T22:43:32.854+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.config.UserConfig             : User 'user01' already up-to-date
+2025-12-04T22:43:32.882+09:00  INFO 14192 --- [RE-WEAR] [main] com.rewear.config.OrganConfig            : Organ for user 'organ01' already exists with status: APPROVED
+2025-12-04T22:43:48.960+09:00  INFO 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-04T22:43:48.960+09:00  INFO 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-12-04T22:43:48.960+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-12-04T22:43:48.960+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-12-04T22:43:48.960+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-12-04T22:43:48.960+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@dd3d0a6
+2025-12-04T22:43:48.960+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@43ee585f
+2025-12-04T22:43:48.960+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-12-04T22:43:48.960+09:00  INFO 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2025-12-04T22:43:49.006+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T22:43:49.037+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T22:43:49.037+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 22C27E4C00BD6D3C5DCBBB1FACC3225B
+2025-12-04T22:43:49.041+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T22:43:49.045+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T22:43:49.048+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T22:43:49.095+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=user01, password=user01}]
+2025-12-04T22:43:49.122+09:00  INFO 14192 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 로그인 시도: username=user01
+2025-12-04T22:43:49.347+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T22:43:49.347+09:00  INFO 14192 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 인증 성공: username=user01
+2025-12-04T22:43:49.373+09:00  INFO 14192 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 로그인 성공: username=user01, role=USER
+2025-12-04T22:43:49.386+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:43:49.386+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{role=USER, user=com.rewear.user.entity.User@7020d75d, ok=true}]
+2025-12-04T22:43:49.476+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:43:49.487+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:43:49.490+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:43:49.492+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:43:49.507+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:43:49.509+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:43:49.531+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:43:49.532+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:43:49.546+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:43:49.566+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:43:49.571+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:43:49.575+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:43:49.576+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:43:49.583+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:43:49.631+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:43:49.636+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:43:49.639+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:43:49.658+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:43:49.666+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:43:49.667+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:43:49.669+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:43:49.670+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:43:49.690+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:43:49.697+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:43:49.699+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:43:49.708+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:43:49.714+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:43:49.716+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:43:49.716+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:43:49.717+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:43:49.739+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:43:49.739+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:43:49.743+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:44:51.829+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:44:51.832+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:44:51.833+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:44:51.834+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:44:51.835+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:44:51.857+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:44:51.864+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:44:51.868+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:44:51.941+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:44:51.946+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:44:51.946+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:44:51.947+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:44:51.947+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:44:51.961+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:44:51.963+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:44:51.983+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:44:51.996+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:44:51.998+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:44:52.000+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:44:52.000+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:44:52.001+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:44:52.028+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:44:52.028+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:44:52.032+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:44:52.042+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:44:52.044+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:44:52.049+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:44:52.051+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:44:52.052+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:44:52.066+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:44:52.066+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:44:52.071+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:44:52.082+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:44:52.085+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:44:52.100+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:44:52.100+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:44:52.101+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:44:52.114+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:44:52.116+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:44:52.117+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:44:52.127+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:44:52.128+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28278c81, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:44:52.129+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:44:52.129+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:44:52.129+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:44:52.138+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:44:52.140+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=user, email=user@example.com,  (truncated)...]
+2025-12-04T22:44:52.144+09:00 DEBUG 14192 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:47:52.161+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Starting ReWearApplication using Java 21.0.8 with PID 18120 (C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\Back\build\classes\java\main started by User in C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back)
+2025-12-04T22:47:52.226+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : No active profile set, falling back to 1 default profile: "default"
+2025-12-04T22:47:56.684+09:00  INFO 18120 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-04T22:47:57.036+09:00  INFO 18120 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 332 ms. Found 10 JPA repository interfaces.
+2025-12-04T22:47:59.066+09:00  INFO 18120 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-04T22:47:59.192+09:00  INFO 18120 --- [RE-WEAR] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-04T22:47:59.201+09:00  INFO 18120 --- [RE-WEAR] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.24]
+2025-12-04T22:47:59.408+09:00  INFO 18120 --- [RE-WEAR] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-04T22:47:59.411+09:00  INFO 18120 --- [RE-WEAR] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6992 ms
+2025-12-04T22:47:59.958+09:00  INFO 18120 --- [RE-WEAR] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-04T22:48:00.147+09:00  INFO 18120 --- [RE-WEAR] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2025-12-04T22:48:00.275+09:00  INFO 18120 --- [RE-WEAR] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-12-04T22:48:00.969+09:00  INFO 18120 --- [RE-WEAR] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-04T22:48:01.071+09:00  INFO 18120 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-04T22:48:01.427+09:00  INFO 18120 --- [RE-WEAR] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3eec8583
+2025-12-04T22:48:01.427+09:00  INFO 18120 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-04T22:48:03.589+09:00  INFO 18120 --- [RE-WEAR] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-04T22:48:04.358+09:00  INFO 18120 --- [RE-WEAR] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04T22:48:05.033+09:00  INFO 18120 --- [RE-WEAR] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-04T22:48:06.607+09:00  INFO 18120 --- [RE-WEAR] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-12-04T22:48:06.681+09:00  WARN 18120 --- [RE-WEAR] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-04T22:48:07.235+09:00 DEBUG 18120 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 98 mappings in 'requestMappingHandlerMapping'
+2025-12-04T22:48:07.418+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 이미지 리소스 핸들러 설정: /uploads/** -> file:///C:/Users/User/OneDrive/바탕 화면/RE-WEAR/Back/uploads/
+2025-12-04T22:48:07.418+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 업로드 디렉토리 절대 경로: C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\uploads
+2025-12-04T22:48:07.428+09:00 DEBUG 18120 --- [RE-WEAR] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**] in 'resourceHandlerMapping'
+2025-12-04T22:48:07.587+09:00  INFO 18120 --- [RE-WEAR] [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@44d5a0a8, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@35d128fd, org.springframework.security.web.context.SecurityContextHolderFilter@68f9a4f4, org.springframework.security.web.header.HeaderWriterFilter@6142b9dd, org.springframework.web.filter.CorsFilter@39a809db, org.springframework.security.web.authentication.logout.LogoutFilter@4f8186a5, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@27d6ff8c, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@309e874, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@75fb04ee, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1512a767, org.springframework.security.web.session.SessionManagementFilter@5ffaac1f, org.springframework.security.web.access.ExceptionTranslationFilter@747e0a31, org.springframework.security.web.access.intercept.AuthorizationFilter@35852b6]
+2025-12-04T22:48:07.779+09:00 DEBUG 18120 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-12-04T22:48:07.854+09:00 DEBUG 18120 --- [RE-WEAR] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-12-04T22:48:08.169+09:00  INFO 18120 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-12-04T22:48:08.191+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Started ReWearApplication in 17.679 seconds (process running for 19.322)
+2025-12-04T22:48:08.394+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.config.AdminConfig            : Admin user 'admin' already up-to-date
+2025-12-04T22:48:08.412+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.config.UserConfig             : User 'user01' already up-to-date
+2025-12-04T22:48:08.431+09:00  INFO 18120 --- [RE-WEAR] [main] com.rewear.config.OrganConfig            : Organ for user 'organ01' already exists with status: APPROVED
+2025-12-04T22:48:29.504+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-04T22:48:29.505+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-12-04T22:48:29.506+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-12-04T22:48:29.507+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-12-04T22:48:29.508+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-12-04T22:48:29.542+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@5f2788f2
+2025-12-04T22:48:29.555+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@30f74965
+2025-12-04T22:48:29.558+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-12-04T22:48:29.559+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 53 ms
+2025-12-04T22:48:29.618+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:29.641+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T22:48:29.641+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 1E1D8FB8399C919F8009F4F7435D5C55
+2025-12-04T22:48:29.679+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T22:48:29.693+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:29.695+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T22:48:29.697+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 1E1D8FB8399C919F8009F4F7435D5C55
+2025-12-04T22:48:29.704+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T22:48:29.712+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:29.720+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T22:48:29.723+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 1E1D8FB8399C919F8009F4F7435D5C55
+2025-12-04T22:48:29.726+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T22:48:29.740+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:29.742+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T22:48:29.742+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 1E1D8FB8399C919F8009F4F7435D5C55
+2025-12-04T22:48:29.745+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T22:48:33.560+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T22:48:33.576+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T22:48:33.578+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T22:48:33.588+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T22:48:33.592+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T22:48:33.650+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=user01, password=user01}]
+2025-12-04T22:48:33.658+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 로그인 시도: username=user01
+2025-12-04T22:48:33.871+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T22:48:33.878+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 인증 성공: username=user01
+2025-12-04T22:48:33.887+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 로그인 성공: username=user01, role=USER
+2025-12-04T22:48:33.909+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:48:33.909+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{role=USER, ok=true, user=com.rewear.user.entity.User@718e8dc6}]
+2025-12-04T22:48:34.072+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:48:34.096+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:34.108+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@1d20b6e8, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:48:34.109+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:48:34.112+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:48:34.118+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:48:34.135+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:48:34.138+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:48:34.142+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:48:34.163+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:34.167+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@1d20b6e8, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:48:34.167+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:48:34.168+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:48:34.168+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:48:34.176+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:48:34.177+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:48:34.179+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:48:34.202+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:34.204+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@1d20b6e8, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:48:34.205+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:48:34.206+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:48:34.206+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:48:34.218+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:48:34.223+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:48:34.226+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:48:34.237+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:48:34.240+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@1d20b6e8, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:48:34.241+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:48:34.242+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:48:34.244+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:48:34.260+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:48:34.261+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:48:34.262+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:10.431+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T22:49:10.436+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T22:49:10.436+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T22:49:10.437+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T22:49:10.440+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=vinn81, password=rkqls810@@}]
+2025-12-04T22:49:10.443+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-10] c.rewear.user.controller.UserController  : 로그인 시도: username=vinn81
+2025-12-04T22:49:10.551+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T22:49:10.551+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-10] c.rewear.user.controller.UserController  : 인증 성공: username=vinn81
+2025-12-04T22:49:10.556+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-10] c.rewear.user.controller.UserController  : 로그인 성공: username=vinn81, role=USER
+2025-12-04T22:49:10.556+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:10.556+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{role=USER, ok=true, user=com.rewear.user.entity.User@e2e92b2}]
+2025-12-04T22:49:10.562+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:10.581+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:10.597+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@68e7d4ed, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:10.598+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:10.602+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:10.603+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:10.615+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:10.615+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=4, name=김가빈, email=gabin5556@naver.com, nickname=vinn81, phone=01089423248, address=대구 북구  (truncated)...]
+2025-12-04T22:49:10.618+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:10.627+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:10.630+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@68e7d4ed, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:10.631+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:10.631+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:10.637+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:10.649+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:10.653+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=4, name=김가빈, email=gabin5556@naver.com, nickname=vinn81, phone=01089423248, address=대구 북구  (truncated)...]
+2025-12-04T22:49:10.655+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:10.663+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:10.670+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@68e7d4ed, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:10.671+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:10.673+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:10.674+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:10.694+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:10.698+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=4, name=김가빈, email=gabin5556@naver.com, nickname=vinn81, phone=01089423248, address=대구 북구  (truncated)...]
+2025-12-04T22:49:10.705+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:10.719+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:10.720+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@68e7d4ed, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:10.721+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:10.721+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:10.721+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:10.729+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:10.731+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=4, name=김가빈, email=gabin5556@naver.com, nickname=vinn81, phone=01089423248, address=대구 북구  (truncated)...]
+2025-12-04T22:49:10.736+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:29.993+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T22:49:29.996+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T22:49:29.997+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T22:49:29.997+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T22:49:29.999+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=user01, password=user01}]
+2025-12-04T22:49:30.000+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 로그인 시도: username=user01
+2025-12-04T22:49:30.111+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T22:49:30.111+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 인증 성공: username=user01
+2025-12-04T22:49:30.119+09:00  INFO 18120 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 로그인 성공: username=user01, role=USER
+2025-12-04T22:49:30.119+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:30.119+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{role=USER, ok=true, user=com.rewear.user.entity.User@2bbdacfd}]
+2025-12-04T22:49:30.119+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:30.151+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:30.152+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28300874, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:30.153+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:30.154+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:30.155+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:30.167+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:30.167+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:49:30.170+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:30.183+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:30.188+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28300874, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:30.188+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:30.188+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:30.189+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:30.201+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:30.203+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:49:30.204+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:30.213+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:30.215+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28300874, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:30.216+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:30.216+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:30.217+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:30.227+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:30.228+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:49:30.231+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T22:49:30.236+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T22:49:30.237+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@28300874, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T22:49:30.237+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T22:49:30.237+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T22:49:30.239+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T22:49:30.249+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T22:49:30.249+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={id=2, name=일반 사용자, email=user@example.com, nickname=user, phone=01012345678, address=서울시 강남구  (truncated)...]
+2025-12-04T22:49:30.250+09:00 DEBUG 18120 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:01:54.089+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Starting ReWearApplication using Java 21.0.8 with PID 4732 (C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\Back\build\classes\java\main started by User in C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back)
+2025-12-04T23:01:54.096+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : No active profile set, falling back to 1 default profile: "default"
+2025-12-04T23:01:56.573+09:00  INFO 4732 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-04T23:01:56.820+09:00  INFO 4732 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 234 ms. Found 10 JPA repository interfaces.
+2025-12-04T23:01:58.217+09:00  INFO 4732 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-04T23:01:58.244+09:00  INFO 4732 --- [RE-WEAR] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-04T23:01:58.250+09:00  INFO 4732 --- [RE-WEAR] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.24]
+2025-12-04T23:01:58.403+09:00  INFO 4732 --- [RE-WEAR] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-04T23:01:58.404+09:00  INFO 4732 --- [RE-WEAR] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4161 ms
+2025-12-04T23:01:58.760+09:00  INFO 4732 --- [RE-WEAR] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-04T23:01:58.894+09:00  INFO 4732 --- [RE-WEAR] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2025-12-04T23:01:58.969+09:00  INFO 4732 --- [RE-WEAR] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-12-04T23:01:59.585+09:00  INFO 4732 --- [RE-WEAR] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-04T23:01:59.672+09:00  INFO 4732 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-04T23:01:59.930+09:00  INFO 4732 --- [RE-WEAR] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@425b5fe2
+2025-12-04T23:01:59.930+09:00  INFO 4732 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-04T23:02:01.964+09:00  INFO 4732 --- [RE-WEAR] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-04T23:02:02.527+09:00  INFO 4732 --- [RE-WEAR] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04T23:02:03.151+09:00  INFO 4732 --- [RE-WEAR] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-04T23:02:04.637+09:00  INFO 4732 --- [RE-WEAR] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-12-04T23:02:04.708+09:00  WARN 4732 --- [RE-WEAR] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-04T23:02:05.078+09:00 DEBUG 4732 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 98 mappings in 'requestMappingHandlerMapping'
+2025-12-04T23:02:05.377+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 이미지 리소스 핸들러 설정: /uploads/** -> file:///C:/Users/User/OneDrive/바탕 화면/RE-WEAR/Back/uploads/
+2025-12-04T23:02:05.381+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 업로드 디렉토리 절대 경로: C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\uploads
+2025-12-04T23:02:05.412+09:00 DEBUG 4732 --- [RE-WEAR] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**] in 'resourceHandlerMapping'
+2025-12-04T23:02:05.589+09:00  INFO 4732 --- [RE-WEAR] [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@156322ce, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@546f0f36, org.springframework.security.web.context.SecurityContextHolderFilter@4f55da9b, org.springframework.security.web.header.HeaderWriterFilter@747e0a31, org.springframework.web.filter.CorsFilter@44d5a0a8, org.springframework.security.web.authentication.logout.LogoutFilter@4f143176, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@4c02f50, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@68f9a4f4, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@309e874, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@35d128fd, org.springframework.security.web.session.SessionManagementFilter@6142b9dd, org.springframework.security.web.access.ExceptionTranslationFilter@737e4a7b, org.springframework.security.web.access.intercept.AuthorizationFilter@33e09baf]
+2025-12-04T23:02:05.850+09:00 DEBUG 4732 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-12-04T23:02:06.179+09:00 DEBUG 4732 --- [RE-WEAR] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-12-04T23:02:06.488+09:00  INFO 4732 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-12-04T23:02:06.504+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Started ReWearApplication in 13.642 seconds (process running for 14.519)
+2025-12-04T23:02:06.743+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.config.AdminConfig            : Admin user 'admin' already up-to-date
+2025-12-04T23:02:06.772+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.config.UserConfig             : User 'user01' already up-to-date
+2025-12-04T23:02:06.788+09:00  INFO 4732 --- [RE-WEAR] [main] com.rewear.config.OrganConfig            : Organ for user 'organ01' already exists with status: APPROVED
+2025-12-04T23:03:40.057+09:00  INFO 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-04T23:03:40.059+09:00  INFO 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-12-04T23:03:40.060+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-12-04T23:03:40.061+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-12-04T23:03:40.062+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-12-04T23:03:40.085+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@5b8e2ea7
+2025-12-04T23:03:40.090+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@40b2aae9
+2025-12-04T23:03:40.099+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-12-04T23:03:40.107+09:00  INFO 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 45 ms
+2025-12-04T23:03:40.158+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:40.171+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:03:40.172+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 66F76E3F0EAFE40DBAADA65DD9668E75
+2025-12-04T23:03:40.213+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T23:03:40.245+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:40.247+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:03:40.249+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 66F76E3F0EAFE40DBAADA65DD9668E75
+2025-12-04T23:03:40.252+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T23:03:40.263+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:40.281+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:03:40.289+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 66F76E3F0EAFE40DBAADA65DD9668E75
+2025-12-04T23:03:40.293+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T23:03:40.341+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:40.369+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:03:40.373+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 66F76E3F0EAFE40DBAADA65DD9668E75
+2025-12-04T23:03:40.378+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.s.w.s.HttpSessionRequestCache        : Saved request http://localhost:8080/api/users/me?continue to session
+2025-12-04T23:03:51.070+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T23:03:51.087+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:03:51.089+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T23:03:51.092+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T23:03:51.096+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T23:03:51.154+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=user01, password=user01}]
+2025-12-04T23:03:51.162+09:00  INFO 4732 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 로그인 시도: username=user01
+2025-12-04T23:03:51.346+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T23:03:51.346+09:00  INFO 4732 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 인증 성공: username=user01
+2025-12-04T23:03:51.361+09:00  INFO 4732 --- [RE-WEAR] [http-nio-8080-exec-5] c.rewear.user.controller.UserController  : 로그인 성공: username=user01, role=USER
+2025-12-04T23:03:51.375+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:03:51.377+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user=com.rewear.user.entity.User@67fd3af9, ok=true, role=USER}]
+2025-12-04T23:03:51.454+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:03:51.482+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:51.493+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@215075d1, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:03:51.495+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:03:51.496+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:03:51.498+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:03:51.512+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:03:51.521+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={role=일반 회원, username=user01, address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=u (truncated)...]
+2025-12-04T23:03:51.532+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:03:51.559+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:51.562+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@215075d1, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:03:51.562+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:03:51.564+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:03:51.566+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:03:51.581+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:03:51.585+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={role=일반 회원, username=user01, address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=u (truncated)...]
+2025-12-04T23:03:51.591+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:03:51.603+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:51.603+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@215075d1, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:03:51.606+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:03:51.607+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:03:51.608+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:03:51.617+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:03:51.618+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={role=일반 회원, username=user01, address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=u (truncated)...]
+2025-12-04T23:03:51.620+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:03:51.631+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:03:51.634+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@215075d1, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:03:51.634+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:03:51.635+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:03:51.636+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:03:51.645+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:03:51.647+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user={role=일반 회원, username=user01, address=서울시 강남구 테헤란로 123, phone=01012345678, nickname=u (truncated)...]
+2025-12-04T23:03:51.650+09:00 DEBUG 4732 --- [RE-WEAR] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:08:19.568+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Starting ReWearApplication using Java 21.0.8 with PID 8028 (C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\Back\build\classes\java\main started by User in C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back)
+2025-12-04T23:08:19.578+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : No active profile set, falling back to 1 default profile: "default"
+2025-12-04T23:08:22.299+09:00  INFO 8028 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-04T23:08:22.492+09:00  INFO 8028 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 180 ms. Found 10 JPA repository interfaces.
+2025-12-04T23:08:23.891+09:00  INFO 8028 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-04T23:08:23.927+09:00  INFO 8028 --- [RE-WEAR] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-04T23:08:23.939+09:00  INFO 8028 --- [RE-WEAR] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.24]
+2025-12-04T23:08:24.085+09:00  INFO 8028 --- [RE-WEAR] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-04T23:08:24.086+09:00  INFO 8028 --- [RE-WEAR] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4197 ms
+2025-12-04T23:08:24.491+09:00  INFO 8028 --- [RE-WEAR] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-04T23:08:24.621+09:00  INFO 8028 --- [RE-WEAR] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2025-12-04T23:08:24.744+09:00  INFO 8028 --- [RE-WEAR] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-12-04T23:08:25.348+09:00  INFO 8028 --- [RE-WEAR] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-04T23:08:25.416+09:00  INFO 8028 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-04T23:08:25.765+09:00  INFO 8028 --- [RE-WEAR] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2c815fdc
+2025-12-04T23:08:25.769+09:00  INFO 8028 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-04T23:08:27.856+09:00  INFO 8028 --- [RE-WEAR] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-04T23:08:28.348+09:00  INFO 8028 --- [RE-WEAR] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04T23:08:28.946+09:00  INFO 8028 --- [RE-WEAR] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-04T23:08:30.229+09:00  INFO 8028 --- [RE-WEAR] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-12-04T23:08:30.290+09:00  WARN 8028 --- [RE-WEAR] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-04T23:08:30.611+09:00 DEBUG 8028 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 98 mappings in 'requestMappingHandlerMapping'
+2025-12-04T23:08:30.899+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 이미지 리소스 핸들러 설정: /uploads/** -> file:///C:/Users/User/OneDrive/바탕 화면/RE-WEAR/Back/uploads/
+2025-12-04T23:08:30.901+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 업로드 디렉토리 절대 경로: C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\uploads
+2025-12-04T23:08:30.943+09:00 DEBUG 8028 --- [RE-WEAR] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**] in 'resourceHandlerMapping'
+2025-12-04T23:08:31.103+09:00  INFO 8028 --- [RE-WEAR] [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@4001dc35, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@399ef33f, org.springframework.security.web.context.SecurityContextHolderFilter@5c863996, org.springframework.security.web.header.HeaderWriterFilter@68f9a4f4, org.springframework.web.filter.CorsFilter@39b752f4, org.springframework.security.web.authentication.logout.LogoutFilter@211ffbd0, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@35d128fd, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@46763680, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@62048ab, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1990afa2, org.springframework.security.web.session.SessionManagementFilter@309e874, org.springframework.security.web.access.ExceptionTranslationFilter@4f55da9b, org.springframework.security.web.access.intercept.AuthorizationFilter@44d5a0a8]
+2025-12-04T23:08:31.412+09:00 DEBUG 8028 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-12-04T23:08:31.531+09:00 DEBUG 8028 --- [RE-WEAR] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-12-04T23:08:31.781+09:00  INFO 8028 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-12-04T23:08:31.793+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Started ReWearApplication in 13.939 seconds (process running for 14.535)
+2025-12-04T23:08:32.157+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.config.AdminConfig            : Admin user 'admin' already up-to-date
+2025-12-04T23:08:32.175+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.config.UserConfig             : User 'user01' already up-to-date
+2025-12-04T23:08:32.185+09:00  INFO 8028 --- [RE-WEAR] [main] com.rewear.config.OrganConfig            : Organ for user 'organ01' already exists with status: APPROVED
+2025-12-04T23:08:42.057+09:00  INFO 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-04T23:08:42.059+09:00  INFO 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-12-04T23:08:42.059+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-12-04T23:08:42.059+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-12-04T23:08:42.059+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-12-04T23:08:42.059+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@785aeba9
+2025-12-04T23:08:42.065+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@49588c70
+2025-12-04T23:08:42.071+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-12-04T23:08:42.087+09:00  INFO 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 28 ms
+2025-12-04T23:08:42.148+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T23:08:42.178+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:08:42.181+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id F44C546F26DD2B02CA13429742864E4D
+2025-12-04T23:08:42.185+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T23:08:42.185+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T23:08:42.194+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T23:08:42.278+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=user01, password=user01}]
+2025-12-04T23:08:42.289+09:00  INFO 8028 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 로그인 시도: username=user01
+2025-12-04T23:08:42.544+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T23:08:42.546+09:00  INFO 8028 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 인증 성공: username=user01
+2025-12-04T23:08:42.578+09:00  INFO 8028 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 로그인 성공: username=user01, role=USER
+2025-12-04T23:08:42.589+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:08:42.591+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{role=USER, user=com.rewear.user.entity.User@5c4a2a7a, ok=true}]
+2025-12-04T23:08:42.664+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:08:42.674+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:08:42.692+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@721fae0b, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:08:42.702+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:08:42.705+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:08:42.706+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:08:42.740+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:08:42.743+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={phone=01012345678, nickname=user, email=user@example.com, name=일반 사용자, id=2, role=일반 회원, user (truncated)...]
+2025-12-04T23:08:42.752+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:08:42.784+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:08:42.792+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@721fae0b, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:08:42.793+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:08:42.794+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:08:42.795+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:08:42.807+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:08:42.809+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={phone=01012345678, nickname=user, email=user@example.com, name=일반 사용자, id=2, role=일반 회원, user (truncated)...]
+2025-12-04T23:08:42.811+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:08:42.821+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:08:42.822+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@721fae0b, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:08:42.825+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:08:42.826+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:08:42.827+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:08:42.843+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:08:42.844+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={phone=01012345678, nickname=user, email=user@example.com, name=일반 사용자, id=2, role=일반 회원, user (truncated)...]
+2025-12-04T23:08:42.847+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:08:42.856+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:08:42.858+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@721fae0b, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:08:42.860+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:08:42.860+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:08:42.861+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:08:42.870+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:08:42.870+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={phone=01012345678, nickname=user, email=user@example.com, name=일반 사용자, id=2, role=일반 회원, user (truncated)...]
+2025-12-04T23:08:42.871+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:16:56.172+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/donations/status
+2025-12-04T23:16:56.181+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@721fae0b, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:16:56.185+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/donations/status
+2025-12-04T23:16:56.186+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/donations/status", parameters={}
+2025-12-04T23:16:56.192+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2025-12-04T23:16:56.205+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2025-12-04T23:16:56.230+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] .m.m.a.ExceptionHandlerExceptionResolver : Using @ExceptionHandler com.rewear.config.GlobalExceptionHandler#handleNoResourceFoundException(NoResourceFoundException, HttpServletRequest)
+2025-12-04T23:16:56.241+09:00  WARN 8028 --- [RE-WEAR] [http-nio-8080-exec-6] c.rewear.config.GlobalExceptionHandler   : 리소스를 찾을 수 없음 - URI: /api/donations/status
+2025-12-04T23:16:56.244+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/donations/status.]
+2025-12-04T23:16:56.250+09:00 DEBUG 8028 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:12.889+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Starting ReWearApplication using Java 21.0.8 with PID 17108 (C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\Back\build\classes\java\main started by User in C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back)
+2025-12-04T23:17:12.896+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : No active profile set, falling back to 1 default profile: "default"
+2025-12-04T23:17:14.444+09:00  INFO 17108 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-04T23:17:14.643+09:00  INFO 17108 --- [RE-WEAR] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 182 ms. Found 10 JPA repository interfaces.
+2025-12-04T23:17:15.937+09:00  INFO 17108 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-04T23:17:15.968+09:00  INFO 17108 --- [RE-WEAR] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-04T23:17:15.968+09:00  INFO 17108 --- [RE-WEAR] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.24]
+2025-12-04T23:17:16.102+09:00  INFO 17108 --- [RE-WEAR] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-04T23:17:16.104+09:00  INFO 17108 --- [RE-WEAR] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3102 ms
+2025-12-04T23:17:16.516+09:00  INFO 17108 --- [RE-WEAR] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-04T23:17:16.698+09:00  INFO 17108 --- [RE-WEAR] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2025-12-04T23:17:16.828+09:00  INFO 17108 --- [RE-WEAR] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-12-04T23:17:17.539+09:00  INFO 17108 --- [RE-WEAR] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-04T23:17:17.606+09:00  INFO 17108 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-04T23:17:17.863+09:00  INFO 17108 --- [RE-WEAR] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@425b5fe2
+2025-12-04T23:17:17.863+09:00  INFO 17108 --- [RE-WEAR] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-04T23:17:19.759+09:00  INFO 17108 --- [RE-WEAR] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-04T23:17:20.502+09:00  INFO 17108 --- [RE-WEAR] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-04T23:17:22.023+09:00  INFO 17108 --- [RE-WEAR] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-04T23:17:24.465+09:00  INFO 17108 --- [RE-WEAR] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-12-04T23:17:24.535+09:00  WARN 17108 --- [RE-WEAR] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-04T23:17:24.953+09:00 DEBUG 17108 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 98 mappings in 'requestMappingHandlerMapping'
+2025-12-04T23:17:25.145+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 이미지 리소스 핸들러 설정: /uploads/** -> file:///C:/Users/User/OneDrive/바탕 화면/RE-WEAR/Back/uploads/
+2025-12-04T23:17:25.145+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.config.WebConfig              : 업로드 디렉토리 절대 경로: C:\Users\User\OneDrive\바탕 화면\RE-WEAR\Back\uploads
+2025-12-04T23:17:25.153+09:00 DEBUG 17108 --- [RE-WEAR] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**] in 'resourceHandlerMapping'
+2025-12-04T23:17:25.284+09:00  INFO 17108 --- [RE-WEAR] [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@156322ce, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@546f0f36, org.springframework.security.web.context.SecurityContextHolderFilter@4f55da9b, org.springframework.security.web.header.HeaderWriterFilter@747e0a31, org.springframework.web.filter.CorsFilter@44d5a0a8, org.springframework.security.web.authentication.logout.LogoutFilter@4f143176, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@4c02f50, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@68f9a4f4, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@309e874, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@35d128fd, org.springframework.security.web.session.SessionManagementFilter@6142b9dd, org.springframework.security.web.access.ExceptionTranslationFilter@737e4a7b, org.springframework.security.web.access.intercept.AuthorizationFilter@33e09baf]
+2025-12-04T23:17:25.447+09:00 DEBUG 17108 --- [RE-WEAR] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-12-04T23:17:25.511+09:00 DEBUG 17108 --- [RE-WEAR] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-12-04T23:17:25.755+09:00  INFO 17108 --- [RE-WEAR] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-12-04T23:17:25.772+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.ReWearApplication             : Started ReWearApplication in 13.589 seconds (process running for 14.712)
+2025-12-04T23:17:26.062+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.config.AdminConfig            : Admin user 'admin' already up-to-date
+2025-12-04T23:17:26.101+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.config.UserConfig             : User 'user01' already up-to-date
+2025-12-04T23:17:26.117+09:00  INFO 17108 --- [RE-WEAR] [main] com.rewear.config.OrganConfig            : Organ for user 'organ01' already exists with status: APPROVED
+2025-12-04T23:17:36.693+09:00  INFO 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-04T23:17:36.696+09:00  INFO 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-12-04T23:17:36.704+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-12-04T23:17:36.707+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-12-04T23:17:36.708+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-12-04T23:17:36.711+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@5b8e2ea7
+2025-12-04T23:17:36.712+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@40b2aae9
+2025-12-04T23:17:36.712+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-12-04T23:17:36.718+09:00  INFO 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 13 ms
+2025-12-04T23:17:36.817+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/users/login
+2025-12-04T23:17:36.856+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-12-04T23:17:36.859+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.w.session.SessionManagementFilter  : Request requested invalid session id 2C02C19A067E22B935D67C810769C1B6
+2025-12-04T23:17:36.868+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured POST /api/users/login
+2025-12-04T23:17:36.872+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/users/login", parameters={}
+2025-12-04T23:17:36.876+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#login(Map, HttpServletRequest)
+2025-12-04T23:17:36.994+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{username=user01, password=user01}]
+2025-12-04T23:17:37.039+09:00  INFO 17108 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 로그인 시도: username=user01
+2025-12-04T23:17:37.409+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-12-04T23:17:37.410+09:00  INFO 17108 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 인증 성공: username=user01
+2025-12-04T23:17:37.457+09:00  INFO 17108 --- [RE-WEAR] [http-nio-8080-exec-1] c.rewear.user.controller.UserController  : 로그인 성공: username=user01, role=USER
+2025-12-04T23:17:37.473+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:17:37.475+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{ok=true, user=com.rewear.user.entity.User@5596160c, role=USER}]
+2025-12-04T23:17:37.579+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:37.617+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:17:37.629+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@42ea05b0, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:17:37.634+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:17:37.635+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:17:37.635+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:17:37.648+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:17:37.654+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={address=서울시 강남구 테헤란로 123, username=user01, role=일반 회원, id=2, name=일반 사용자, email=user@example. (truncated)...]
+2025-12-04T23:17:37.658+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:37.698+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:17:37.727+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@42ea05b0, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:17:37.728+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:17:37.734+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:17:37.736+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:17:37.745+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:17:37.746+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={address=서울시 강남구 테헤란로 123, username=user01, role=일반 회원, id=2, name=일반 사용자, email=user@example. (truncated)...]
+2025-12-04T23:17:37.749+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:37.760+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:17:37.779+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@42ea05b0, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:17:37.782+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:17:37.783+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:17:37.784+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:17:37.794+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:17:37.795+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={address=서울시 강남구 테헤란로 123, username=user01, role=일반 회원, id=2, name=일반 사용자, email=user@example. (truncated)...]
+2025-12-04T23:17:37.797+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:37.806+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /api/users/me
+2025-12-04T23:17:37.807+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@42ea05b0, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:17:37.808+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /api/users/me
+2025-12-04T23:17:37.810+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/users/me", parameters={}
+2025-12-04T23:17:37.810+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.rewear.user.controller.UserController#getCurrentUser(Principal)
+2025-12-04T23:17:37.822+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-12-04T23:17:37.822+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{user={address=서울시 강남구 테헤란로 123, username=user01, role=일반 회원, id=2, name=일반 사용자, email=user@example. (truncated)...]
+2025-12-04T23:17:37.828+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:40.577+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/donations/status
+2025-12-04T23:17:40.578+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@42ea05b0, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:17:40.578+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/donations/status
+2025-12-04T23:17:40.580+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/donations/status", parameters={}
+2025-12-04T23:17:40.584+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2025-12-04T23:17:40.588+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2025-12-04T23:17:40.593+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] .m.m.a.ExceptionHandlerExceptionResolver : Using @ExceptionHandler com.rewear.config.GlobalExceptionHandler#handleNoResourceFoundException(NoResourceFoundException, HttpServletRequest)
+2025-12-04T23:17:40.595+09:00  WARN 17108 --- [RE-WEAR] [http-nio-8080-exec-6] c.rewear.config.GlobalExceptionHandler   : 리소스를 찾을 수 없음 - URI: /api/donations/status
+2025-12-04T23:17:40.606+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/donations/status.]
+2025-12-04T23:17:40.608+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-12-04T23:17:40.627+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/donations/status
+2025-12-04T23:17:40.638+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=com.rewear.user.details.CustomUserDetails@42ea05b0, Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2025-12-04T23:17:40.638+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/donations/status
+2025-12-04T23:17:40.640+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/donations/status", parameters={}
+2025-12-04T23:17:40.641+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2025-12-04T23:17:40.643+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2025-12-04T23:17:40.644+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] .m.m.a.ExceptionHandlerExceptionResolver : Using @ExceptionHandler com.rewear.config.GlobalExceptionHandler#handleNoResourceFoundException(NoResourceFoundException, HttpServletRequest)
+2025-12-04T23:17:40.644+09:00  WARN 17108 --- [RE-WEAR] [http-nio-8080-exec-7] c.rewear.config.GlobalExceptionHandler   : 리소스를 찾을 수 없음 - URI: /api/donations/status
+2025-12-04T23:17:40.644+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/donations/status.]
+2025-12-04T23:17:40.644+09:00 DEBUG 17108 --- [RE-WEAR] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK

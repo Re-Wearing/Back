@@ -183,62 +183,113 @@ export default function DonationPage({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleApplicationSubmit = (e) => {
+  const handleApplicationSubmit = async (e) => {
     e.preventDefault()
     
     if (!validateApplicationForm()) {
       return
     }
 
-    // 기부 내역 추가
-    if (onAddDonation) {
+    if (!isLoggedIn || !currentUser) {
+      if (onRequireLogin) {
+        onRequireLogin()
+      }
+      return
+    }
+
+    try {
       const formattedContact = formatPhoneNumber(contact)
-      onAddDonation({
+      
+      // images 배열에서 base64 dataUrl만 추출
+      const imageDataUrls = images.map(img => img.dataUrl || img)
+      
+      // 기부 신청 데이터 준비
+      const requestData = {
         itemType,
         itemDetail,
         itemSize,
         itemCondition,
         itemDescription,
         donationMethod,
-        donationOrganizationId: donationMethod === '직접 매칭' ? donationOrganization : null,
-        donationOrganizationName:
-          donationMethod === '직접 매칭'
-            ? donationOrganizationLabel || donationOrganization
-            : null,
+        donationOrganizationId: donationMethod === '직접 매칭' ? (donationOrganization ? parseInt(donationOrganization) : null) : null,
+        donationOrganizationName: donationMethod === '직접 매칭' 
+          ? (donationOrganizationLabel || donationOrganization) 
+          : null,
         deliveryMethod,
         isAnonymous,
         contact: formattedContact,
-        desiredDate,
-        memo,
-        images
-      })
-    }
+        desiredDate: deliveryMethod && deliveryMethod !== '직접 배송' ? desiredDate : null,
+        memo: memo || null,
+        images: imageDataUrls
+      }
 
-    // TODO: 실제 기부 신청 로직 구현
-    alert('기부 신청이 완료되었습니다! 감사합니다.')
-    
-    // 초기화 및 기부 현황 조회로 이동
-    setStep('item')
-    setItemType('')
-    setItemDetail('')
-    setItemSize('')
-    setItemCondition('')
-    setItemDescription('')
-    setQuantity(1)
-    setImages([])
-    setDonationMethod('')
-    setDonationOrganization('')
-    setDonationOrganizationLabel('')
-    setDeliveryMethod('')
-    setIsAnonymous(false)
-    setContact('')
-    setDesiredDate(today)
-    setMemo('')
-    
-    if (onGoToDonationStatus) {
-      onGoToDonationStatus()
-    } else {
-      onNavigateHome()
+      // REST API 호출
+      const response = await fetch('/api/donations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // 세션 쿠키 포함
+        body: JSON.stringify(requestData)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || '기부 신청에 실패했습니다.')
+      }
+
+      // 성공 시 기존 콜백 호출 (하위 호환성)
+      if (onAddDonation) {
+        onAddDonation({
+          itemType,
+          itemDetail,
+          itemSize,
+          itemCondition,
+          itemDescription,
+          donationMethod,
+          donationOrganizationId: donationMethod === '직접 매칭' ? donationOrganization : null,
+          donationOrganizationName:
+            donationMethod === '직접 매칭'
+              ? donationOrganizationLabel || donationOrganization
+              : null,
+          deliveryMethod,
+          isAnonymous,
+          contact: formattedContact,
+          desiredDate,
+          memo,
+          images
+        })
+      }
+
+      alert(result.message || '기부 신청이 완료되었습니다! 감사합니다.')
+      
+      // 초기화 및 기부 현황 조회로 이동
+      setStep('item')
+      setItemType('')
+      setItemDetail('')
+      setItemSize('')
+      setItemCondition('')
+      setItemDescription('')
+      setQuantity(1)
+      setImages([])
+      setDonationMethod('')
+      setDonationOrganization('')
+      setDonationOrganizationLabel('')
+      setDeliveryMethod('')
+      setIsAnonymous(false)
+      setContact('')
+      setDesiredDate(today)
+      setMemo('')
+      
+      if (onGoToDonationStatus) {
+        onGoToDonationStatus()
+      } else {
+        onNavigateHome()
+      }
+    } catch (error) {
+      console.error('기부 신청 오류:', error)
+      alert(error.message || '기부 신청 중 오류가 발생했습니다.')
     }
   }
 

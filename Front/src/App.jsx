@@ -565,6 +565,7 @@ export default function App() {
   const [selectedBoardType, setSelectedBoardType] = useState('all')
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [selectedPostType, setSelectedPostType] = useState('review')
+  const [boardRefreshKey, setBoardRefreshKey] = useState(0) // 게시판 목록 새로고침용
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(BOARD_POSTS_KEY, JSON.stringify(boardPosts))
@@ -678,6 +679,8 @@ export default function App() {
     const { push = true, replace = false } = options
     setShowLanding(false)
     setActivePage('board')
+    // 게시판으로 이동할 때마다 목록 새로고침
+    setBoardRefreshKey(prev => prev + 1)
     if (push) updatePath('/board', { replace })
     else if (replace) updatePath('/board', { replace: true })
   }
@@ -792,14 +795,12 @@ export default function App() {
 
   const goToFaq = (options = {}) => {
     const { push = true, replace = false } = options
-    if (!currentUser) {
-      goToLogin(options)
-      return
-    }
-    if (currentUser.role === '관리자 회원') {
+    // 관리자는 관리자 FAQ 페이지로 이동
+    if (currentUser && currentUser.role === '관리자 회원') {
       goToAdminFaq(options, currentUser)
       return
     }
+    // 일반 사용자와 비로그인 사용자는 모두 FAQ 페이지 접근 가능
     setShowLanding(false)
     setActivePage('faq')
     if (push) updatePath('/faq', { replace })
@@ -808,6 +809,11 @@ export default function App() {
 
   const goToInquiry = (options = {}) => {
     const { push = true, replace = false } = options
+    // 로그인 체크
+    if (!currentUser) {
+      goToLogin(options)
+      return
+    }
     setShowLanding(false)
     setActivePage('inquiry')
     if (push) updatePath('/inquiry', { replace })
@@ -2255,6 +2261,7 @@ export default function App() {
         />
       ) : activePage === 'board' ? (
         <BoardPage
+          key={boardRefreshKey}
           onNavigateHome={goToMain}
           onLogin={goToLogin}
           onNavLink={handleNavRedirection}

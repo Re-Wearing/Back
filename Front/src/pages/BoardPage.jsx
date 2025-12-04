@@ -30,23 +30,113 @@ export default function BoardPage({
   const [searchQuery, setSearchQuery] = useState('') 
   const [searchScope, setSearchScope] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [apiPosts, setApiPosts] = useState({ review: [], request: [] })
+  const [loading, setLoading] = useState(true) // 초기값을 true로 설정하여 로딩 상태로 시작
+  const [refreshKey, setRefreshKey] = useState(0)
   const POSTS_PER_PAGE = 10
+
+  // API에서 게시글 목록 가져오기
+  const fetchPosts = async () => {
+    setLoading(true)
+    try {
+      // 기부 후기 목록
+      const reviewResponse = await fetch('http://localhost:8080/api/posts?type=DONATION_REVIEW&page=0&size=100')
+      if (reviewResponse.ok) {
+        const reviewData = await reviewResponse.json()
+          const reviewPosts = (reviewData.content || []).map(post => ({
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            writer: post.writer,
+            views: post.viewCount || 0,
+            date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).replace(/\s/g, '.') : '',
+            createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
+            boardType: 'review'
+          }))
+        setApiPosts(prev => ({ ...prev, review: reviewPosts })) // 완전 교체
+      }
+
+      // 요청 게시판 목록 (로그인한 경우만)
+      if (isLoggedIn) {
+        const requestResponse = await fetch('http://localhost:8080/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
+          credentials: 'include'
+        })
+        if (requestResponse.ok) {
+          const requestData = await requestResponse.json()
+            const requestPosts = (requestData.content || []).map(post => ({
+              id: post.id,
+              title: post.title,
+              content: post.content,
+              writer: post.writer,
+              views: post.viewCount || 0,
+              date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              }).replace(/\s/g, '.') : '',
+              createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
+              boardType: 'request'
+            }))
+          setApiPosts(prev => ({ ...prev, request: requestPosts })) // 완전 교체
+        }
+      }
+    } catch (error) {
+      console.error('게시글 목록 조회 실패:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPosts()
+  }, [isLoggedIn, refreshKey])
+
+  // 페이지 포커스 시 목록 새로고침 (게시글 작성 후 돌아올 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      setRefreshKey(prev => prev + 1)
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setRefreshKey(prev => prev + 1)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
   
   const parseDate = (dateString) => {
     if (!dateString) return new Date(0)
-    const parts = dateString.split('.').map(Number)
-    if (parts.length === 3) {
+    
+    // ISO 형식 (2025-12-05T10:30:00) 또는 날짜 문자열
+    if (dateString.includes('T') || dateString.includes('-')) {
+      return new Date(dateString)
+    }
+    
+    // 한국 형식 (2025.12.05. 또는 2025.12.05)
+    const parts = dateString.split('.').filter(p => p.trim() !== '').map(Number)
+    if (parts.length >= 3) {
       return new Date(parts[0], parts[1] - 1, parts[2])
     }
+    
     return new Date(dateString)
   }
 
   const filteredAndSortedPosts = useMemo(() => {
     let posts = []
     
-    // 기본 상수 데이터와 작성된 게시글 합치기
-    const reviewPostsWithNew = [...(boardPosts.review || []), ...reviewPosts]
-    const requestPostsWithNew = [...(boardPosts.request || []), ...requestPosts]
+    // API에서 가져온 게시글만 사용 (로컬 상태는 사용하지 않음)
+    // 게시글 작성은 API로만 처리하므로 API 데이터가 항상 최신 상태
+    const reviewPostsWithNew = apiPosts.review || []
+    const requestPostsWithNew = apiPosts.request || []
     
     if (selectedBoardType === 'all') {
       posts = [...reviewPostsWithNew, ...requestPostsWithNew]
@@ -83,11 +173,26 @@ export default function BoardPage({
     posts.sort((a, b) => {
       switch (selectedSort) {
         case 'latest':
-          return parseDate(b.date) - parseDate(a.date)
+          // 최신순: 날짜 내림차순 (최신이 먼저)
+          // createdAt이 있으면 사용, 없으면 date 파싱
+          if (a.createdAt && b.createdAt) {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          }
+          const dateB = parseDate(b.date)
+          const dateA = parseDate(a.date)
+          return dateB.getTime() - dateA.getTime()
         case 'popular':
-          return b.views - a.views
+          // 인기순: 조회수 내림차순
+          return (b.views || 0) - (a.views || 0)
         case 'oldest':
-          return parseDate(a.date) - parseDate(b.date)
+          // 오래된순: 날짜 오름차순 (오래된 것이 먼저)
+          // createdAt이 있으면 사용, 없으면 date 파싱
+          if (a.createdAt && b.createdAt) {
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          }
+          const dateAOld = parseDate(a.date)
+          const dateBOld = parseDate(b.date)
+          return dateAOld.getTime() - dateBOld.getTime()
         default:
           return 0
       }
@@ -287,7 +392,11 @@ export default function BoardPage({
             </div>
           ))}
 
-          {filteredAndSortedPosts.length === 0 ? (
+          {loading ? (
+            <div className="board-empty">
+              <p>게시글을 불러오는 중...</p>
+            </div>
+          ) : filteredAndSortedPosts.length === 0 ? (
             <div className="board-empty">
               <p>{searchQuery.trim() ? '검색 결과가 없습니다.' : '게시글이 없습니다.'}</p>
             </div>
