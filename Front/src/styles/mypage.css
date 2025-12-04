@@ -1,0 +1,290 @@
+.mypage-page {
+  min-height: 100vh;
+  background: #f6f6f4;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.mypage-header {
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.mypage-logo {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.mypage-logo:hover {
+  opacity: 0.8;
+}
+
+.mypage-logo:active {
+  opacity: 0.6;
+}
+
+.mypage-layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+}
+
+.mypage-profile-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.mypage-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.mypage-role {
+  display: inline-flex;
+  align-self: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: #edf2ff;
+  color: #2f5de0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.mypage-realname {
+  font-size: 1.4rem;
+  color: #222;
+}
+
+.mypage-nickname {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.mypage-meta {
+  width: 100%;
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0.8rem 0 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+.mypage-meta li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #4a4a4a;
+}
+
+.mypage-meta li + li {
+  margin-top: 0.4rem;
+}
+
+.mypage-meta span {
+  color: #8a8a8a;
+}
+
+.mypage-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  background: #ececec;
+  display: grid;
+  place-items: center;
+  font-size: 2.5rem;
+}
+
+.mypage-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mypage-actions button {
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.mypage-actions .danger {
+  border-color: #f26363;
+  color: #f26363;
+  background: #fff5f5;
+}
+
+.mypage-withdraw-info {
+  width: 100%;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.mypage-withdraw-info code {
+  display: block;
+  background: #f1f1f1;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  margin: 0.4rem 0;
+  font-size: 0.85rem;
+}
+
+.mypage-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mypage-form {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.8rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mypage-form.secondary {
+  padding-top: 1.2rem;
+}
+
+.mypage-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  gap: 0.3rem;
+}
+
+.mypage-form .input-hint {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.mypage-form input {
+  border-radius: 10px;
+  border: 1px solid #d5d5d5;
+  padding: 0.75rem;
+}
+
+.mypage-form input[readonly] {
+  background: #f8f8f8;
+  color: #666;
+}
+
+.mypage-form .checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.mypage-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.btn.primary {
+  background: #2f6ef7;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.8rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn.ghost {
+  background: #f1f1f1;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+}
+
+.helper {
+  font-size: 0.85rem;
+  color: #6b6b6b;
+}
+
+.helper.danger {
+  color: #c75151;
+}
+
+/* Admin manage */
+.admin-manage-page {
+  min-height: 100vh;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: #f9f9f9;
+}
+
+.admin-manage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-manage-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-table-wrapper {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.admin-table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table-wrapper th,
+.admin-table-wrapper td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #efefef;
+  text-align: left;
+}
+
+.admin-table-wrapper button {
+  margin-right: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #c7c7c7;
+  background: #fff;
+}
+
+.admin-table-wrapper button.danger {
+  border-color: #f16464;
+  color: #f16464;
+  background: #fff5f5;
+}
+
+@media (max-width: 900px) {
+  .mypage-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
