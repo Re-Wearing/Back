@@ -529,8 +529,15 @@
 
 .admin-card-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+}
+
+/* 작은 화면에서는 1개씩 표시 */
+@media (max-width: 768px) {
+  .admin-card-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .admin-card {
@@ -541,6 +548,7 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
 
+/* 기관 승인 카드 헤더 */
 .admin-card-header {
   display: flex;
   justify-content: space-between;
@@ -550,6 +558,43 @@
 
 .admin-card-header strong {
   font-size: 1.05rem;
+}
+
+/* 기관 승인 카드 - 기관명과 사업자번호 강조 */
+.org-main-info {
+  flex: 1;
+}
+
+.org-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.org-name {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.business-no-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #f0f7ff;
+  border: 1px solid #2196f3;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1976d2;
+  margin-top: 0.25rem;
+}
+
+.contact-name {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0.25rem 0 0 0;
 }
 
 .admin-card-meta {

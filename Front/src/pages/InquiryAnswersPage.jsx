@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
 
 export default function InquiryAnswersPage({
@@ -12,7 +13,59 @@ export default function InquiryAnswersPage({
   onMenu = () => {},
   currentUser = null
 }) {
-  const ordered = [...inquiries].sort((a, b) => (a.submittedAt > b.submittedAt ? -1 : 1))
+  const [myQuestions, setMyQuestions] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // API에서 내 질문 목록 가져오기
+  useEffect(() => {
+    const fetchMyQuestions = async () => {
+      if (!isLoggedIn) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      try {
+        const response = await fetch('http://localhost:8080/api/faq/my-questions', {
+          credentials: 'include'
+        })
+        
+        if (response.ok) {
+          const questionData = await response.json()
+          const questionList = questionData.map(q => ({
+            id: q.id,
+            question: q.question,
+            answer: q.answer,
+            submittedAt: q.createdAt ? new Date(q.createdAt).toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).replace(/\s/g, '.') : '',
+            status: q.answer ? 'answered' : 'pending',
+            requester: q.authorName || currentUser?.username || '사용자'
+          }))
+          setMyQuestions(questionList)
+        } else {
+          // API 실패 시 기존 inquiries 사용
+          setMyQuestions(inquiries)
+        }
+      } catch (error) {
+        console.error('내 질문 목록 조회 실패:', error)
+        // 에러 발생 시 기존 inquiries 사용
+        setMyQuestions(inquiries)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMyQuestions()
+  }, [isLoggedIn, currentUser])
+
+  const ordered = [...myQuestions].sort((a, b) => {
+    const dateA = a.submittedAt || ''
+    const dateB = b.submittedAt || ''
+    return dateB.localeCompare(dateA)
+  })
 
   return (
     <section className="main-page faq-page">
@@ -35,7 +88,9 @@ export default function InquiryAnswersPage({
             <p>답변이 등록되면 알림을 받고 여기에서 내용을 확인하실 수 있습니다.</p>
           </div>
 
-          {ordered.length === 0 ? (
+          {loading ? (
+            <p className="admin-empty">질문 목록을 불러오는 중...</p>
+          ) : ordered.length === 0 ? (
             <p className="admin-empty">아직 등록한 문의가 없어요.</p>
           ) : (
             <div className="answer-list">
@@ -50,8 +105,8 @@ export default function InquiryAnswersPage({
                         {isAnswered ? '답변 완료' : '답변 대기중.'}
                       </span>
                   </div>
-                    <h3>{inquiry.title || inquiry.question}</h3>
-                    <p className="answer-request">{inquiry.message || inquiry.description}</p>
+                    <h3>{inquiry.question}</h3>
+                    <p className="answer-request">{inquiry.question}</p>
                     <div className={`answer-body${isAnswered ? '' : ' pending'}`}>
                       <strong>{isAnswered ? '답변' : '담당자 확인 중'}</strong>
                       <p>{isAnswered ? inquiry.answer : '관리자가 확인 후 순차적으로 답변됩니다.'}</p>

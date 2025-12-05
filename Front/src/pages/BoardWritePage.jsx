@@ -18,6 +18,8 @@ export default function BoardWritePage({
 }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [images, setImages] = useState([]) // 선택한 이미지 파일들
+  const [imagePreviews, setImagePreviews] = useState([]) // 이미지 미리보기 URL들
   const [errors, setErrors] = useState({})
   
   // 사용자 역할에 따라 게시판 타입 제한
@@ -54,7 +56,7 @@ export default function BoardWritePage({
     setSelectedBoardType(type)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     const newErrors = {}
@@ -80,21 +82,48 @@ export default function BoardWritePage({
       return
     }
 
-    const result = onSubmit({
-      title: title.trim(),
-      content: content.trim(),
-      boardType: selectedBoardType,
-      writer: currentUser?.username || '익명',
-      date: new Date().toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\s/g, '.'),
-      views: 0
-    })
+    try {
+      const postType = selectedBoardType === 'review' ? 'DONATION_REVIEW' : 'ORGAN_REQUEST'
+      
+      // 이미지 파일 업로드
+      let imageUrls = []
+      if (images.length > 0) {
+        try {
+          const uploadedFiles = await uploadImages(images)
+          imageUrls = uploadedFiles.map(file => file.url || file.dataUrl)
+        } catch (uploadError) {
+          // 업로드 실패 시 Base64로 폴백 (하위 호환성)
+          console.warn('이미지 업로드 실패, Base64로 전환:', uploadError)
+          imageUrls = await convertImagesToBase64()
+        }
+      }
+      
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          postType: postType,
+          title: title.trim(),
+          content: content.trim(),
+          isAnonymous: false,
+          images: imageUrls
+        })
+      })
 
-    if (result?.success !== false) {
-      onGoBack()
+      if (response.ok) {
+        // API로 게시글이 저장되었으므로, 로컬 상태에는 추가하지 않음
+        // 목록 페이지로 돌아가면 API에서 최신 목록을 가져옴
+        onGoBack()
+      } else {
+        const errorData = await response.json()
+        window.alert(errorData.error || '게시글 작성에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('게시글 작성 실패:', error)
+      window.alert('게시글 작성 중 오류가 발생했습니다.')
     }
   }
 
@@ -102,6 +131,104 @@ export default function BoardWritePage({
     if (window.confirm('작성 중인 내용이 사라집니다. 정말 나가시겠습니까?')) {
       onGoBack()
     }
+  }
+
+  // 이미지 파일 선택 핸들러
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+
+    // 최대 5개까지 제한
+    const remainingSlots = 5 - images.length
+    if (files.length > remainingSlots) {
+      window.alert(`이미지는 최대 5개까지 업로드할 수 있습니다. (현재 ${images.length}개)`)
+      e.target.value = '' // input 초기화
+      return
+    }
+
+    const newImages = []
+    const newPreviews = []
+
+    for (const file of files) {
+      // 이미지 파일만 허용
+      if (!file.type.startsWith('image/')) {
+        window.alert(`${file.name}은(는) 이미지 파일이 아닙니다.`)
+        continue
+      }
+
+      // 파일 크기 제한 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        window.alert(`${file.name}의 크기가 너무 큽니다. (최대 5MB)`)
+        continue
+      }
+
+      newImages.push(file)
+      
+      // 미리보기 URL 생성
+      const preview = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      newPreviews.push(preview)
+    }
+
+    if (newImages.length > 0) {
+      setImages(prev => [...prev, ...newImages])
+      setImagePreviews(prev => [...prev, ...newPreviews])
+    }
+    
+    // input 초기화 (같은 파일을 다시 선택할 수 있도록)
+    e.target.value = ''
+  }
+
+  // 이미지 삭제 핸들러
+  const handleRemoveImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // 이미지 파일 업로드 API 호출
+  const uploadImages = async (files) => {
+    try {
+      const formData = new FormData()
+      files.forEach(file => {
+        formData.append('files', file)
+      })
+
+      const response = await fetch('/api/upload/multiple', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || '이미지 업로드에 실패했습니다.')
+      }
+
+      const result = await response.json()
+      return result.files || []
+    } catch (error) {
+      console.error('이미지 업로드 실패:', error)
+      throw error
+    }
+  }
+
+  // 이미지를 Base64로 변환 (하위 호환성용)
+  const convertImagesToBase64 = async () => {
+    const base64Images = []
+    for (const image of images) {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(image)
+      })
+      base64Images.push(base64)
+    }
+    return base64Images
   }
 
   return (
@@ -194,6 +321,56 @@ export default function BoardWritePage({
               }}
             />
             {errors.content && <span className="error-message">{errors.content}</span>}
+          </div>
+
+          <div className="form-group">
+            <div className="form-group-header">
+              <label htmlFor="images">이미지</label>
+              <span className="image-count">({images.length}/5)</span>
+            </div>
+            <div className="image-upload-section">
+              <input
+                id="images"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+                disabled={images.length >= 5}
+              />
+              <label
+                htmlFor="images"
+                className={`image-upload-button ${images.length >= 5 ? 'disabled' : ''}`}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                이미지 추가
+              </label>
+              {images.length >= 5 && (
+                <p className="image-limit-hint">이미지는 최대 5개까지 업로드할 수 있습니다.</p>
+              )}
+            </div>
+            
+            {imagePreviews.length > 0 && (
+              <div className="image-preview-container">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="image-preview-item">
+                    <img src={preview} alt={`미리보기 ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="image-remove-button"
+                      onClick={() => handleRemoveImage(index)}
+                      aria-label="이미지 삭제"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="form-actions">

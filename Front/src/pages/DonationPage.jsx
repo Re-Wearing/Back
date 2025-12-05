@@ -49,6 +49,7 @@ export default function DonationPage({
   const [itemDescription, setItemDescription] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [images, setImages] = useState([])
+  const [imageFiles, setImageFiles] = useState([]) // 원본 파일 저장
   const [errors, setErrors] = useState({})
   const [step, setStep] = useState('item') // 'item' or 'application'
   
@@ -62,7 +63,45 @@ export default function DonationPage({
   const [desiredDate, setDesiredDate] = useState(today)
   const [memo, setMemo] = useState('')
   const [applicationErrors, setApplicationErrors] = useState({})
+  const [apiOrganizations, setApiOrganizations] = useState([])
   const applicantName = currentProfile?.fullName || currentUser?.name || currentUser?.username || '신청자'
+
+  // API에서 승인된 기관 목록 조회
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const response = await fetch('/api/organs', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        })
+
+        if (!response.ok) {
+          throw new Error('기관 목록 조회에 실패했습니다.')
+        }
+
+        const data = await response.json()
+        const orgs = (data.organs || []).map(org => ({
+          id: org.id,
+          name: org.name || org.orgName,
+          username: org.username,
+          label: org.name || org.orgName,
+          value: org.id ? org.id.toString() : (org.username || '')
+        }))
+        
+        console.log('API에서 가져온 기관 목록:', orgs)
+        
+        setApiOrganizations(orgs)
+      } catch (err) {
+        console.error('기관 목록 조회 오류:', err)
+        setApiOrganizations([])
+      }
+    }
+
+    fetchOrganizations()
+  }, [])
 
   const fileToDataURL = file =>
     new Promise((resolve, reject) => {
@@ -80,21 +119,71 @@ export default function DonationPage({
   const handleImageUpload = async (e, type) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
+    
     try {
-      const dataUrls = await Promise.all(files.map(file => fileToDataURL(file)))
-      const newImages = dataUrls.map(dataUrl => ({
-        id: Date.now() + Math.random(),
+      // 이미지 파일만 필터링
+      const imageFiles = files.filter(file => file.type.startsWith('image/'))
+      
+      // 파일 크기 제한 (10MB)
+      const validFiles = imageFiles.filter(file => {
+        if (file.size > 10 * 1024 * 1024) {
+          window.alert(`${file.name}의 크기가 너무 큽니다. (최대 10MB)`)
+          return false
+        }
+        return true
+      })
+
+      if (validFiles.length === 0) return
+
+      // 미리보기를 위해 DataURL 생성
+      const dataUrls = await Promise.all(validFiles.map(file => fileToDataURL(file)))
+      const newImages = dataUrls.map((dataUrl, index) => ({
+        id: Date.now() + Math.random() + index,
         type,
-        dataUrl
+        dataUrl,
+        file: validFiles[index] // 원본 파일 저장
       }))
+      
       setImages(prev => [...prev, ...newImages])
+      setImageFiles(prev => [...prev, ...validFiles])
     } catch (error) {
       console.error('Failed to read files', error)
     }
   }
 
   const handleRemoveImage = (id) => {
+    const index = images.findIndex(img => img.id === id)
     setImages(images.filter(img => img.id !== id))
+    if (index >= 0) {
+      setImageFiles(prev => prev.filter((_, i) => i !== index))
+    }
+  }
+
+  // 이미지 파일 업로드 API 호출
+  const uploadImages = async (files) => {
+    try {
+      const formData = new FormData()
+      files.forEach(file => {
+        formData.append('files', file)
+      })
+
+      const response = await fetch('/api/upload/multiple', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || '이미지 업로드에 실패했습니다.')
+      }
+
+      const result = await response.json()
+      return result.files || []
+    } catch (error) {
+      console.error('이미지 업로드 실패:', error)
+      throw error
+    }
   }
 
   const validateForm = () => {
@@ -183,67 +272,160 @@ export default function DonationPage({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleApplicationSubmit = (e) => {
+  const handleApplicationSubmit = async (e) => {
     e.preventDefault()
     
     if (!validateApplicationForm()) {
       return
     }
 
-    // 기부 내역 추가
-    if (onAddDonation) {
+    if (!isLoggedIn || !currentUser) {
+      if (onRequireLogin) {
+        onRequireLogin()
+      }
+      return
+    }
+
+    try {
       const formattedContact = formatPhoneNumber(contact)
-      onAddDonation({
+      
+      // 이미지 파일 업로드
+      let imageUrls = []
+      const filesToUpload = images
+        .map(img => img.file)
+        .filter(file => file != null)
+      
+      if (filesToUpload.length > 0) {
+        const uploadedFiles = await uploadImages(filesToUpload)
+        imageUrls = uploadedFiles.map(file => file.url || file.dataUrl)
+      } else {
+        // 파일이 없으면 기존 Base64 방식 사용 (하위 호환성)
+        imageUrls = images.map(img => img.dataUrl || img)
+      }
+      
+      // 기부 신청 데이터 준비
+      // 디버깅: donationOrganization 값 확인
+      console.log('기부 신청 데이터 준비:', {
+        donationMethod,
+        donationOrganization,
+        donationOrganizationLabel,
+        donationOrganizationType: typeof donationOrganization
+      })
+      
+      // donationOrganizationId 계산
+      let donationOrganizationId = null
+      if (donationMethod === '직접 매칭') {
+        if (donationOrganization) {
+          const parsed = parseInt(donationOrganization, 10)
+          if (!isNaN(parsed)) {
+            donationOrganizationId = parsed
+          } else {
+            console.error('donationOrganization을 숫자로 변환할 수 없습니다:', donationOrganization)
+          }
+        } else {
+          console.warn('직접 매칭이 선택되었지만 donationOrganization이 비어있습니다')
+        }
+      }
+      
+      const requestData = {
         itemType,
         itemDetail,
         itemSize,
         itemCondition,
         itemDescription,
         donationMethod,
-        donationOrganizationId: donationMethod === '직접 매칭' ? donationOrganization : null,
-        donationOrganizationName:
-          donationMethod === '직접 매칭'
-            ? donationOrganizationLabel || donationOrganization
-            : null,
+        donationOrganizationId,
+        donationOrganizationName: donationMethod === '직접 매칭' 
+          ? (donationOrganizationLabel || donationOrganization) 
+          : null,
         deliveryMethod,
         isAnonymous,
         contact: formattedContact,
-        desiredDate,
-        memo,
-        images
-      })
-    }
+        desiredDate: deliveryMethod && deliveryMethod !== '직접 배송' ? desiredDate : null,
+        memo: memo || null,
+        images: imageUrls
+      }
+      
+      console.log('전송할 requestData:', requestData)
 
-    // TODO: 실제 기부 신청 로직 구현
-    alert('기부 신청이 완료되었습니다! 감사합니다.')
-    
-    // 초기화 및 기부 현황 조회로 이동
-    setStep('item')
-    setItemType('')
-    setItemDetail('')
-    setItemSize('')
-    setItemCondition('')
-    setItemDescription('')
-    setQuantity(1)
-    setImages([])
-    setDonationMethod('')
-    setDonationOrganization('')
-    setDonationOrganizationLabel('')
-    setDeliveryMethod('')
-    setIsAnonymous(false)
-    setContact('')
-    setDesiredDate(today)
-    setMemo('')
-    
-    if (onGoToDonationStatus) {
-      onGoToDonationStatus()
-    } else {
-      onNavigateHome()
+      // REST API 호출
+      const response = await fetch('/api/donations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // 세션 쿠키 포함
+        body: JSON.stringify(requestData)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || '기부 신청에 실패했습니다.')
+      }
+
+      // 성공 시 기존 콜백 호출 (하위 호환성)
+      if (onAddDonation) {
+        onAddDonation({
+          itemType,
+          itemDetail,
+          itemSize,
+          itemCondition,
+          itemDescription,
+          donationMethod,
+          donationOrganizationId: donationMethod === '직접 매칭' ? donationOrganization : null,
+          donationOrganizationName:
+            donationMethod === '직접 매칭'
+              ? donationOrganizationLabel || donationOrganization
+              : null,
+          deliveryMethod,
+          isAnonymous,
+          contact: formattedContact,
+          desiredDate,
+          memo,
+          images
+        })
+      }
+
+      alert(result.message || '기부 신청이 완료되었습니다! 감사합니다.')
+      
+      // 초기화 및 기부 현황 조회로 이동
+      setStep('item')
+      setItemType('')
+      setItemDetail('')
+      setItemSize('')
+      setItemCondition('')
+      setItemDescription('')
+      setQuantity(1)
+      setImages([])
+      setDonationMethod('')
+      setDonationOrganization('')
+      setDonationOrganizationLabel('')
+      setDeliveryMethod('')
+      setIsAnonymous(false)
+      setContact('')
+      setDesiredDate(today)
+      setMemo('')
+      
+      if (onGoToDonationStatus) {
+        onGoToDonationStatus()
+      } else {
+        onNavigateHome()
+      }
+    } catch (error) {
+      console.error('기부 신청 오류:', error)
+      alert(error.message || '기부 신청 중 오류가 발생했습니다.')
     }
   }
 
+  // API에서 가져온 기관 목록을 우선 사용, 없으면 props로 받은 목록 사용, 둘 다 없으면 기본값 사용
   const directMatchOptions =
-    availableOrganizations.length > 0
+    apiOrganizations.length > 0
+      ? apiOrganizations.map(org => ({
+          label: org.label || org.name,
+          value: org.value || org.username || org.id.toString()
+        }))
+      : availableOrganizations.length > 0
       ? availableOrganizations.map(org =>
           typeof org === 'string'
             ? { label: org, value: org }
