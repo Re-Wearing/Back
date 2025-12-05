@@ -235,10 +235,15 @@
 .donation-table tbody tr {
   border-bottom: 1px solid rgba(201, 181, 150, 0.2);
   transition: background 0.2s ease;
+  cursor: pointer;
 }
 
 .donation-table tbody tr:hover {
   background: #fbfaf8;
+}
+
+.approval-table tbody tr {
+  cursor: pointer;
 }
 
 .donation-table td {

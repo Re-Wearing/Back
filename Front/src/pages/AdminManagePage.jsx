@@ -20,6 +20,13 @@ export default function AdminManagePage({
   initialPanel = 'members',
   onPanelChange
 }) {
+  // API 데이터 상태
+  const [apiDonationItems, setApiDonationItems] = useState([]);
+  const [apiOrganizations, setApiOrganizations] = useState([]);
+  const [apiPosts, setApiPosts] = useState([]);
+  const [apiUsers, setApiUsers] = useState([]); // API에서 가져온 사용자 목록
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   // 디버깅: props 확인 (개발 환경에서만)
   if (process.env.NODE_ENV === 'development') {
     console.log('🔍 AdminManagePage - shipments prop:', shipments);
@@ -46,6 +53,211 @@ const [showModal, setShowModal] = useState(false);
   const [imageModal, setImageModal] = useState(null);
   const [reasonModal, setReasonModal] = useState(null);
   const [reasonText, setReasonText] = useState('');
+  const [viewingPost, setViewingPost] = useState(null);
+
+  // API에서 기부 목록 조회
+  useEffect(() => {
+    const fetchDonationData = async () => {
+      if (activePanel !== 'items' && activePanel !== 'matching') return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 승인 대기 목록 조회
+        const pendingResponse = await fetch('/api/admin/donations/pending', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (!pendingResponse.ok) {
+          throw new Error('기부 목록 조회에 실패했습니다.');
+        }
+        
+        const pendingData = await pendingResponse.json();
+        const pendingItems = (pendingData.donations || []).map(item => ({
+          ...item,
+          owner: item.owner || 'unknown'
+        }));
+        
+        // 자동 매칭 대기 목록 조회
+        const autoMatchResponse = await fetch('/api/admin/donations/auto-match', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (!autoMatchResponse.ok) {
+          throw new Error('자동 매칭 목록 조회에 실패했습니다.');
+        }
+        
+        const autoMatchData = await autoMatchResponse.json();
+        const autoMatchItems = (autoMatchData.donations || []).map(item => ({
+          ...item,
+          owner: item.owner || 'unknown'
+        }));
+        
+        // 두 목록 합치기 (중복 제거)
+        const allItems = [...pendingItems, ...autoMatchItems];
+        const uniqueItems = allItems.filter((item, index, self) =>
+          index === self.findIndex(t => t.id === item.id)
+        );
+        
+        setApiDonationItems(uniqueItems);
+        
+        // 기관 목록 조회
+        const organsResponse = await fetch('/api/admin/donations/organs', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (organsResponse.ok) {
+          const organsData = await organsResponse.json();
+          setApiOrganizations(organsData.organs || []);
+        }
+      } catch (err) {
+        console.error('기부 데이터 조회 오류:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDonationData();
+  }, [activePanel]);
+
+  // API에서 사용자 목록 및 통계 정보 조회
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (activePanel !== 'members') return;
+      
+      try {
+        setLoading(true);
+        const response = await fetch('/api/admin/users/with-stats', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('사용자 목록 조회에 실패했습니다.');
+        }
+        
+        const data = await response.json();
+        const users = data.data || data || []; // ApiResponse 구조에 따라 조정
+        setApiUsers(users);
+      } catch (err) {
+        console.error('사용자 목록 조회 오류:', err);
+        setError(err.message);
+        setApiUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, [activePanel]);
+
+  // API에서 게시물 목록 조회
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (activePanel !== 'posts') return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 모든 게시물 조회 (타입 필터 없이)
+        const response = await fetch('/api/posts?page=0&size=100', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('게시물 목록 조회에 실패했습니다.');
+        }
+        
+        const data = await response.json();
+        console.log('게시물 목록 조회 성공:', data);
+        const posts = data.content || [];
+        console.log('게시물 개수:', posts.length);
+        setApiPosts(posts);
+      } catch (err) {
+        console.error('게시물 목록 조회 오류:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPosts();
+  }, [activePanel]);
+
+  // 게시물 상세 조회
+  const handleViewPost = async (postId) => {
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('게시물 조회에 실패했습니다.');
+      }
+      
+      const post = await response.json();
+      setViewingPost(post);
+    } catch (err) {
+      console.error('게시물 조회 오류:', err);
+      showToast(err.message || '게시물 조회에 실패했습니다.');
+    }
+  };
+
+  // 게시물 삭제 핸들러
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('정말 이 게시물을 삭제하시겠습니까?')) return;
+    
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '게시물 삭제에 실패했습니다.');
+      }
+      
+      showToast('게시물이 삭제되었습니다.');
+      
+      // 목록에서 제거
+      setApiPosts(prev => prev.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('게시물 삭제 오류:', err);
+      showToast(err.message || '게시물 삭제에 실패했습니다.');
+    }
+  };
+
+
   useEffect(() => {
     if (initialPanel && initialPanel !== activePanel) {
       setActivePanel(initialPanel);
@@ -81,92 +293,23 @@ const [showModal, setShowModal] = useState(false);
     }
   }
 
-  // 🔍 검색 + 필터 적용된 rows
+  // 🔍 검색 + 필터 적용된 rows (API 데이터 기반)
   const rows = useMemo(() => {
-    // shipments가 배열인지 확인하고, 아니면 빈 배열로 처리
-    const shipmentsArray = Array.isArray(shipments) ? shipments : [];
-    
-    // 디버깅: shipments 데이터 확인
-    if (shipmentsArray.length > 0) {
-      console.log('🔍 AdminManagePage - shipments:', shipmentsArray);
-    } else {
-      console.warn('⚠️ AdminManagePage - shipments가 비어있거나 배열이 아님:', shipments);
+    // API에서 가져온 사용자 데이터 사용
+    if (apiUsers.length === 0) {
+      return [];
     }
     
-    // 디버깅: 모든 accounts 확인
-    console.log('🔍 모든 accounts:', Object.keys(accounts));
-    console.log('🔍 accounts[user]:', accounts['user']);
-    
-    return Object.entries(accounts)
-    .map(([username, acc]) => {
-      const nickname = profiles[username]?.nickname || acc.name;
-      
-      // 디버깅: user 계정 정보
-      if (username === 'user') {
-        console.log('🔍 user 계정 발견!', { username, role: acc.role, name: acc.name, nickname });
-      }
-    
-      // ⭐ 일반/기관 기부 횟수 계산
-      let donationCount = 0;
-    
-      if (acc.role === "일반 회원") {
-        // 모든 shipments의 sender와 비교 가능한 값들을 확인
-        const accountName = String(acc.name || '').trim();
-        const accountNickname = String(nickname || '').trim();
-        const accountUsername = String(username || '').trim();
-        
-        donationCount = shipmentsArray.filter((s) => {
-          if (!s || !s.sender) return false;
-          
-          const sender = String(s.sender || '').trim();
-          
-          // username이 'user'인 경우, sender가 '권석현'이면 매칭
-          if (username === 'user' && sender === '권석현') {
-            console.log(`✅ user 계정 매칭 성공! sender: "${sender}"`);
-            return true;
-          }
-          
-          // 일반적인 비교 로직
-          const matches = sender === accountName || 
-                         sender === accountNickname || 
-                         sender === accountUsername;
-          
-          if (username === 'user') {
-            console.log(`🔍 비교: sender="${sender}" vs name="${accountName}" nickname="${accountNickname}" username="${accountUsername}" → ${matches}`);
-          }
-          
-          return matches;
-        }).length;
-        
-        if (username === 'user') {
-          console.log(`📊 최종 기부횟수: ${donationCount}회`);
-        }
-      }
-    
-      if (acc.role === "기관 회원") {
-        donationCount = shipmentsArray.filter(
-          (s) => {
-            if (!s || !s.receiver) return false;
-            const receiver = String(s.receiver || '').trim();
-            const accountName = String(acc.name || '').trim();
-            const accountNickname = String(nickname || '').trim();
-            
-            return receiver === accountName || 
-                   receiver === accountNickname;
-          }
-        ).length;
-      }
-    
-      return {
-        username,
-        role: acc.role,
-        email: acc.email,
-        nickname,
-        unread: (notifications[username] || []).filter((n) => !n.read).length,
-        donationCount   // ⭐ 새로 추가됨
-      };
-    })
-    
+    return apiUsers
+      .map(user => ({
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname || user.username,
+        role: user.role,
+        email: user.email,
+        unread: user.unreadNotificationCount || 0,
+        donationCount: user.donationCount || 0
+      }))
       .filter((row) => {
         const text = searchText.toLowerCase();
         const match =
@@ -178,7 +321,7 @@ const [showModal, setShowModal] = useState(false);
         const roleMatch = roleFilter === '전체' || roleFilter === row.role;
         return match && roleMatch;
       });
-  }, [accounts, profiles, notifications, searchText, roleFilter, shipments]);
+  }, [apiUsers, searchText, roleFilter]);
 
   // 🔽 정렬 기능 적용
   const sortedRows = useMemo(() => {
@@ -200,13 +343,33 @@ const [showModal, setShowModal] = useState(false);
 
   const orgRequests = Array.isArray(pendingOrganizations) ? pendingOrganizations : [];
   const allowedAdminStatuses = new Set(['승인대기', '매칭대기', '매칭됨', '거절됨']);
-  const donationQueue = Array.isArray(donationItems)
-    ? donationItems.filter(item => item.status && allowedAdminStatuses.has(item.status))
-    : [];
+  
+  // API 데이터와 기존 prop 데이터 병합
+  const mergedDonationItems = useMemo(() => {
+    if (apiDonationItems.length > 0) {
+      return apiDonationItems;
+    }
+    return Array.isArray(donationItems)
+      ? donationItems.filter(item => item.status && allowedAdminStatuses.has(item.status))
+      : [];
+  }, [apiDonationItems, donationItems, allowedAdminStatuses]);
+  
+  const donationQueue = mergedDonationItems;
   const autoMatchingQueue = donationQueue.filter(
     item => item.donationMethod === '자동 매칭' && item.status === '매칭대기' && !item.pendingOrganization
   );
   const pendingInviteList = Array.isArray(matchingInvites) ? matchingInvites : [];
+  
+  // 기관 옵션 병합
+  const mergedOrganizationOptions = useMemo(() => {
+    if (apiOrganizations.length > 0) {
+      return apiOrganizations.map(org => ({
+        username: org.username || org.id.toString(),
+        name: org.name || org.username
+      }));
+    }
+    return organizationOptions;
+  }, [apiOrganizations, organizationOptions]);
 
   const getMatchingMemoText = item => {
     if (item?.rejectionReason) return `거절: ${item.rejectionReason}`;
@@ -232,17 +395,108 @@ const [showModal, setShowModal] = useState(false);
     }
   };
 
-  const handleReset = (username) => {
-    const result = onResetPassword(username, 'rewear123!');
-    if (result.success) showToast(`${username} 비밀번호 초기화 완료!`);
-    else showToast(`오류: ${result.message}`);
+  const handleReset = async (username) => {
+    if (!window.confirm(`${username} 계정의 비밀번호를 초기화하시겠습니까?`)) return;
+    
+    // API에서 가져온 사용자 목록에서 ID 찾기
+    const user = apiUsers.find(u => u.username === username);
+    if (!user || !user.id) {
+      showToast('사용자 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}/reset-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '비밀번호 초기화에 실패했습니다.');
+      }
+
+      showToast(result.message || `${username} 비밀번호 초기화 완료!`);
+      
+      // 사용자 목록 새로고침
+      const refreshResponse = await fetch('/api/admin/users/with-stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        const refreshedUsers = refreshData.data || refreshData || [];
+        setApiUsers(refreshedUsers);
+      }
+      
+      // 기존 콜백도 호출 (하위 호환성)
+      if (typeof onResetPassword === 'function') {
+        onResetPassword(username, 'rewear123!');
+      }
+    } catch (err) {
+      console.error('비밀번호 초기화 오류:', err);
+      showToast(err.message || '비밀번호 초기화에 실패했습니다.');
+    }
   };
 
-  const handleDelete = (username) => {
+  const handleDelete = async (username) => {
     if (!window.confirm(`${username} 계정을 삭제하시겠습니까?`)) return;
-    const result = onDeleteUser(username);
-    if (result.success) showToast(`${username} 계정 삭제됨`);
-    else showToast(`실패: ${result.message}`);
+    
+    // API에서 가져온 사용자 목록에서 ID 찾기
+    const user = apiUsers.find(u => u.username === username);
+    if (!user || !user.id) {
+      showToast('사용자 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '사용자 삭제에 실패했습니다.');
+      }
+
+      showToast(result.message || `${username} 계정 삭제됨`);
+      
+      // 사용자 목록 새로고침
+      const refreshResponse = await fetch('/api/admin/users/with-stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        const refreshedUsers = refreshData.data || refreshData || [];
+        setApiUsers(refreshedUsers);
+      }
+      
+      // 기존 콜백도 호출 (하위 호환성)
+      if (typeof onDeleteUser === 'function') {
+        onDeleteUser(username);
+      }
+    } catch (err) {
+      console.error('사용자 삭제 오류:', err);
+      showToast(err.message || '사용자 삭제에 실패했습니다.');
+    }
   };
 
   const handleApproveOrg = requestId => {
@@ -261,10 +515,74 @@ const [showModal, setShowModal] = useState(false);
     openReasonModal({ type: 'org', requestId, title: '기관 가입 거절 사유', placeholder: '거절 사유를 입력해주세요.' });
   };
 
-  const handleDonationAction = (item, nextStatus, options = {}) => {
-    if (typeof onUpdateDonationStatus !== 'function') return;
-    onUpdateDonationStatus(item.owner, item.id, nextStatus, options);
-    showToast('물품 상태가 업데이트되었습니다.');
+  const handleDonationAction = async (item, nextStatus, options = {}) => {
+    try {
+      if (nextStatus === '매칭대기') {
+        // 승인 API 호출
+        const response = await fetch(`/api/admin/donations/${item.id}/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || '기부 승인에 실패했습니다.');
+        }
+        
+        showToast(result.message || '기부가 승인되었습니다.');
+        
+        // 즉시 로컬 상태 업데이트 (매칭대기로 변경)
+        setApiDonationItems(prev => prev.map(i => {
+          if (i.id === item.id) {
+            return {
+              ...i,
+              status: '매칭대기',
+              matchingInfo: options.matchingInfo || '기관 매칭을 기다리는 중입니다.',
+              pendingOrganization: options.pendingOrganization || i.pendingOrganization,
+              matchedOrganization: null
+            };
+          }
+          return i;
+        }));
+        
+        // API 데이터 새로고침 (백그라운드)
+        const refreshResponse = await fetch('/api/admin/donations/pending', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          const refreshedItems = (refreshData.donations || []).map(i => ({
+            ...i,
+            owner: i.owner || 'unknown'
+          }));
+          setApiDonationItems(prev => {
+            // 기존 항목 제거하고 새로고침된 데이터로 교체
+            const filtered = prev.filter(i => i.id !== item.id);
+            return [...filtered, ...refreshedItems];
+          });
+        }
+        
+        // 기존 콜백도 호출 (하위 호환성)
+        if (typeof onUpdateDonationStatus === 'function') {
+          onUpdateDonationStatus(item.owner, item.id, nextStatus, options);
+        }
+      } else if (nextStatus === '거절됨') {
+        // 반려는 handleReasonConfirm에서 처리
+        return;
+      }
+    } catch (err) {
+      console.error('기부 상태 변경 오류:', err);
+      showToast(err.message || '기부 상태 변경에 실패했습니다.');
+    }
   };
 
   const handleRejectItem = item => {
@@ -276,16 +594,100 @@ const [showModal, setShowModal] = useState(false);
     });
   };
 
-  const handleSendInvite = item => {
-    if (typeof onSendMatchingInvite !== 'function') return;
+  // 배송 상태 업데이트 함수
+  const handleUpdateDeliveryStatus = async (deliveryId, status) => {
+    try {
+      const response = await fetch(`/api/admin/deliveries/${deliveryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || '배송 상태 업데이트에 실패했습니다.');
+      }
+
+      showToast(result.message || '배송 상태가 업데이트되었습니다.');
+      return { success: true, delivery: result.delivery };
+    } catch (err) {
+      console.error('배송 상태 업데이트 오류:', err);
+      showToast(err.message || '배송 상태 업데이트에 실패했습니다.');
+      return { success: false, error: err.message };
+    }
+  };
+
+  const handleSendInvite = async item => {
     const selectedOrg = matchSelections[item.id];
     if (!selectedOrg) {
       window.alert('매칭할 기관을 선택해주세요.');
       return;
     }
-    onSendMatchingInvite(item.owner, item.id, selectedOrg);
-    setMatchSelections(prev => ({ ...prev, [item.id]: '' }));
-    showToast('기관에 매칭 제안을 보냈습니다.');
+    
+    try {
+      // 기관 ID 찾기
+      const selectedOrgan = apiOrganizations.find(org => 
+        org.username === selectedOrg || org.name === selectedOrg || org.id.toString() === selectedOrg
+      );
+      
+      if (!selectedOrgan) {
+        throw new Error('선택한 기관을 찾을 수 없습니다.');
+      }
+      
+      // 기관 할당 API 호출
+      const response = await fetch(`/api/admin/donations/${item.id}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          organId: selectedOrgan.id
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '기관 할당에 실패했습니다.');
+      }
+      
+      showToast(result.message || '기관에 할당되었습니다.');
+      setMatchSelections(prev => ({ ...prev, [item.id]: '' }));
+      
+      // API 데이터 새로고침
+      const refreshResponse = await fetch('/api/admin/donations/auto-match', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        const refreshedItems = (refreshData.donations || []).map(i => ({
+          ...i,
+          owner: i.owner || 'unknown'
+        }));
+        setApiDonationItems(prev => {
+          const filtered = prev.filter(i => i.id !== item.id);
+          return [...filtered, ...refreshedItems];
+        });
+      }
+      
+      // 기존 콜백도 호출 (하위 호환성)
+      if (typeof onSendMatchingInvite === 'function') {
+        onSendMatchingInvite(item.owner, item.id, selectedOrg);
+      }
+    } catch (err) {
+      console.error('기관 할당 오류:', err);
+      showToast(err.message || '기관 할당에 실패했습니다.');
+    }
   };
 
   const queueItemUpdate = (item, nextStatus, options = {}, label) => {
@@ -317,7 +719,7 @@ const [showModal, setShowModal] = useState(false);
     setImageModal({ title, images, description, memo, deliveryMethod, desiredDate, contact, owner });
   };
 
-  const handleReasonConfirm = () => {
+  const handleReasonConfirm = async () => {
     if (!reasonModal) return;
     const trimmed = reasonText.trim();
     if (!trimmed) return;
@@ -326,72 +728,86 @@ const [showModal, setShowModal] = useState(false);
       onRejectOrganization(reasonModal.requestId, trimmed);
       showToast('기관 가입을 거절했습니다.');
     } else if (reasonModal.type === 'item') {
-      queueItemUpdate(
-        reasonModal.item,
-        '거절됨',
-        {
-          rejectionReason: trimmed,
-          matchingInfo: `거절 사유: ${trimmed}`,
-          pendingOrganization: null,
-          matchedOrganization: null
-        },
-        '거절'
-      );
+      try {
+        // 기부 반려 API 호출
+        const response = await fetch(`/api/admin/donations/${reasonModal.item.id}/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            reason: trimmed
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || '기부 반려에 실패했습니다.');
+        }
+        
+        showToast(result.message || '기부가 반려되었습니다.');
+        
+        // 즉시 로컬 상태 업데이트 (거절됨으로 변경)
+        setApiDonationItems(prev => prev.map(i => {
+          if (i.id === reasonModal.item.id) {
+            return {
+              ...i,
+              status: '거절됨',
+              rejectionReason: trimmed,
+              matchingInfo: `거절 사유: ${trimmed}`,
+              pendingOrganization: null,
+              matchedOrganization: null
+            };
+          }
+          return i;
+        }));
+        
+        // API 데이터 새로고침 (백그라운드)
+        const refreshResponse = await fetch('/api/admin/donations/pending', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          const refreshedItems = (refreshData.donations || []).map(i => ({
+            ...i,
+            owner: i.owner || 'unknown'
+          }));
+          setApiDonationItems(prev => {
+            // 기존 항목 제거하고 새로고침된 데이터로 교체
+            const filtered = prev.filter(i => i.id !== reasonModal.item.id);
+            return [...filtered, ...refreshedItems];
+          });
+        }
+        
+        // 기존 콜백도 호출 (하위 호환성)
+        queueItemUpdate(
+          reasonModal.item,
+          '거절됨',
+          {
+            rejectionReason: trimmed,
+            matchingInfo: `거절 사유: ${trimmed}`,
+            pendingOrganization: null,
+            matchedOrganization: null
+          },
+          '거절'
+        );
+      } catch (err) {
+        console.error('기부 반려 오류:', err);
+        showToast(err.message || '기부 반려에 실패했습니다.');
+      }
     }
 
     setReasonModal(null);
     setReasonText('');
   };
 
-  // ⭐ 회원 기부/수혜 내역 계산 함수
-  const getUserDonationStats = (user) => {
-    if (!user || !shipments || !Array.isArray(shipments)) return { count: 0, recent: [] };
-    
-    // accounts에서 실제 계정 정보 가져오기
-    const account = accounts[user.username];
-    if (!account) return { count: 0, recent: [] };
-
-    // 1) 일반 회원: sender(보낸 사람) 기준
-    if (user.role === "일반 회원") {
-      const sent = shipments.filter(s => {
-        if (!s || !s.sender) return false;
-        const sender = String(s.sender || '').trim();
-        
-        // username이 'user'인 경우, sender가 '권석현'이면 매칭
-        if (user.username === 'user' && sender === '권석현') {
-          return true;
-        }
-        
-        // 일반적인 비교 로직
-        const accountName = String(account.name || '').trim();
-        const userNickname = String(user.nickname || '').trim();
-        const userUsername = String(user.username || '').trim();
-        
-        return sender === accountName ||
-               sender === userNickname ||
-               sender === userUsername;
-      });
-      return {
-        count: sent.length,
-        recent: sent.slice(0, 3)
-      };
-    }
-
-    // 2) 기관 회원: receiver(받은 기관) 기준
-    if (user.role === "기관 회원") {
-      const received = shipments.filter(s =>
-        s?.receiver === account.name ||
-        s?.receiver === user.nickname
-      );
-      return {
-        count: received.length,
-        recent: received.slice(0, 3)
-      };
-    }
-
-    // 3) 관리자 회원 → 기부/수혜 통계 없음
-    return { count: 0, recent: [] };
-  };
 
 
   return (
@@ -399,29 +815,12 @@ const [showModal, setShowModal] = useState(false);
       {toast && <div className="toast">{toast}</div>}
 
       <div className="admin-manage-header">
-        <h1>운영 도구</h1>
+        <h1>회원 관리</h1>
         <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
-          메인으로
+메인으로
         </button>
       </div>
 
-      <div className="admin-tabs">
-        <button type="button" className={activePanel === 'members' ? 'active' : ''} onClick={() => handlePanelChange('members')}>
-          회원 관리
-        </button>
-        <button type="button" className={activePanel === 'orgs' ? 'active' : ''} onClick={() => handlePanelChange('orgs')}>
-          기관 가입 승인
-        </button>
-        <button type="button" className={activePanel === 'items' ? 'active' : ''} onClick={() => handlePanelChange('items')}>
-          물품 승인
-        </button>
-        <button type="button" className={activePanel === 'matching' ? 'active' : ''} onClick={() => handlePanelChange('matching')}>
-          자동 매칭
-        </button>
-      </div>
-
-      {activePanel === 'members' && (
-        <>
       <div className="admin-controls">
         <input
           type="text"
@@ -446,6 +845,9 @@ const [showModal, setShowModal] = useState(false);
         </select>
       </div>
 
+      {loading && <div className="loading">로딩 중...</div>}
+      {error && <div className="error">오류: {error}</div>}
+      
       <div className="admin-table-wrapper">
         <table>
           <thead>
@@ -460,7 +862,14 @@ const [showModal, setShowModal] = useState(false);
             </tr>
           </thead>
           <tbody>
-            {paginatedRows.map((row) => (
+            {paginatedRows.length === 0 && !loading ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                  회원이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              paginatedRows.map((row) => (
               <tr 
               key={row.username}
               className="user-row"
@@ -506,7 +915,8 @@ const [showModal, setShowModal] = useState(false);
                   )}
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -520,292 +930,10 @@ const [showModal, setShowModal] = useState(false);
               다음
             </button>
           </div>
-        </>
-      )}
 
-      {activePanel === 'orgs' && (
-        <section className="admin-panel">
-          {orgRequests.length === 0 ? (
-            <p className="empty-hint">대기 중인 기관 가입 요청이 없습니다.</p>
-          ) : (
-            <div className="admin-card-list">
-              {orgRequests.map((request) => (
-                <article key={request.id} className="admin-card">
-                  <div className="admin-card-header">
-                    <div>
-                      <strong>{request.organizationName}</strong>
-                      <p>{request.contactName}</p>
-                    </div>
-                    <span className={`status-chip status-${request.status}`}>{request.status}</span>
-                  </div>
-                  <ul className="admin-card-meta">
-                    <li>아이디 : {request.username}</li>
-                    <li>연락처 : {request.phone}</li>
-                    <li>이메일 : {request.email}</li>
-                    <li>신청일 : {request.submittedAt}</li>
-                    {request.address && <li>주소 : {request.address}</li>}
-                  </ul>
-                  {request.memo && <p className="admin-card-memo">{request.memo}</p>}
-                  {request.status === 'pending' ? (
-                    <div className="admin-card-actions">
-                      <button type="button" className="small-btn primary" onClick={() => handleApproveOrg(request.id)}>
-                        승인
-                      </button>
-                      <button type="button" className="small-btn danger" onClick={() => handleRejectOrg(request.id)}>
-                        거절
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="admin-card-result">
-                      {request.status === 'approved'
-                        ? '승인 완료'
-                        : `거절 사유: ${request.rejectionReason || '미입력'}`}
-                    </p>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      {/* Other panels (orgs, items, matching, posts) have been moved to separate pages */}
 
-      {activePanel === 'items' && (
-        <section className="admin-panel">
-          {donationQueue.length === 0 ? (
-            <p className="empty-hint">등록된 기부 물품이 없습니다.</p>
-          ) : (
-            <div className="admin-table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>이미지</th>
-                    <th>물품</th>
-                    <th>신청자</th>
-                    <th>기부 방법</th>
-                    <th>현재 상태</th>
-                    <th>최근 메모</th>
-                    <th>조치</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {donationQueue.map((item) => {
-                    const pendingUpdate = pendingItemUpdates[item.id]
-                    return (
-                      <tr key={item.id}>
-                        <td className="item-image-cell">
-                          {item.images?.length ? (
-                            <button
-                              type="button"
-                              className="image-large-button"
-                              onClick={() =>
-                                openImageModal({
-                                  title: item.name || '기부 물품',
-                                  images: item.images,
-                                  description: item.itemDescription,
-                                  memo: item.memo,
-                                  deliveryMethod: item.deliveryMethod,
-                                  desiredDate: item.desiredDate,
-                                  contact: item.contact,
-                                  owner: item.ownerName || item.owner
-                                })
-                              }
-                            >
-                              <img
-                                className="item-image-large"
-                                src={item.images[0].dataUrl || item.images[0].url || item.images[0]}
-                                alt="기부 물품"
-                              />
-                              <span className="image-zoom-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                  <circle cx="11" cy="11" r="6" />
-                                  <line x1="16" y1="16" x2="22" y2="22" />
-                                </svg>
-                              </span>
-                            </button>
-                          ) : (
-                            <span className="text-muted">이미지 없음</span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="text-strong">{item.items || item.name}</div>
-                          {item.itemDescription && <p className="item-detail">{item.itemDescription}</p>}
-                          <div className="item-meta">
-                            {item.deliveryMethod && <span>배송: {item.deliveryMethod}</span>}
-                            {item.desiredDate && <span>희망일: {item.desiredDate}</span>}
-                            {item.memo && <span>메모: {item.memo}</span>}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="text-strong">{item.ownerName || item.owner}</div>
-                          {item.isAnonymous && <span className="anon-chip">익명 요청</span>}
-                        </td>
-                        <td>{item.donationMethod || '자동 매칭'}</td>
-                        <td>{item.status}</td>
-                        <td>
-                          <div className="text-muted">{getMatchingMemoText(item)}</div>
-                        </td>
-                        <td>
-                          {pendingUpdate ? (
-                            <>
-                              <div className="pending-note">
-                                변경 예정: {pendingUpdate.label || formatStatusLabel(pendingUpdate.nextStatus)}
-                              </div>
-                              <div className="admin-card-actions">
-                                <button
-                                  type="button"
-                                  className="small-btn primary"
-                                  onClick={() => applyPendingUpdate(item.id)}
-                                >
-                                  저장
-                                </button>
-                                <button
-                                  type="button"
-                                  className="small-btn"
-                                  onClick={() => clearPendingUpdate(item.id)}
-                                >
-                                  취소
-                                </button>
-                              </div>
-                            </>
-                          ) : item.status === '매칭됨' || item.pendingOrganization ? (
-                            <div className="text-muted">
-                              {item.status === '매칭됨' ? '매칭 완료' : '기관 확인 중입니다.'}
-                            </div>
-                          ) : (
-                            <div className="admin-card-actions">
-                              {(() => {
-                                const isDirectMatch =
-                                  item.donationMethod === '직접 매칭' &&
-                                  (item.donationOrganizationId || item.donationOrganization)
-                                const orgName = item.donationOrganization || item.organization || item.pendingOrganization
-                                const approvalOptions = {
-                                  matchingInfo: isDirectMatch && orgName
-                                    ? `${orgName} 기관 확인 중입니다.`
-                                    : '기관 매칭을 기다리는 중입니다.',
-                                  rejectionReason: '',
-                                  pendingOrganization: isDirectMatch ? orgName : null,
-                                  matchedOrganization: null,
-                                  directMatchOrganization: isDirectMatch ? orgName : null,
-                                  directMatchOrganizationId: isDirectMatch ? item.donationOrganizationId || null : null
-                                }
-                                return (
-                                  <button
-                                    type="button"
-                                    className="small-btn"
-                                    onClick={() => queueItemUpdate(item, '매칭대기', approvalOptions, '승인')}
-                                  >
-                                    승인
-                                  </button>
-                                )
-                              })()}
-                              <button type="button" className="small-btn warning" onClick={() => handleRejectItem(item)}>
-                                거절
-                              </button>
-                              <button
-                                type="button"
-                                className="small-btn secondary"
-                                onClick={() =>
-                                  queueItemUpdate(
-                                    item,
-                                    '승인대기',
-                                    {
-                                      matchingInfo: '관리자 검토 중입니다.',
-                                      rejectionReason: '',
-                                      pendingOrganization: null,
-                                      matchedOrganization: null
-                                    },
-                                    '승인대기'
-                                  )
-                                }
-                              >
-                                승인대기
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
-
-      {activePanel === 'matching' && (
-        <section className="admin-panel">
-          <h2>자동 매칭 대기 물품</h2>
-          {autoMatchingQueue.length === 0 ? (
-            <p className="empty-hint">자동 매칭이 필요한 물품이 없습니다.</p>
-          ) : (
-            <div className="admin-card-list">
-              {autoMatchingQueue.map((item) => (
-                <article key={item.id} className="admin-card">
-                  <div className="admin-card-header">
-                    <div>
-                      <strong>{item.name}</strong>
-                      <p>{item.ownerName || item.owner}</p>
-                    </div>
-                    <span className="status-chip status-pending">대기</span>
-                  </div>
-                  <p className="admin-card-memo">{item.items}</p>
-                  <div className="match-select">
-                    <select
-                      value={matchSelections[item.id] || ''}
-                      onChange={(event) =>
-                        setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
-                      }
-                    >
-                      <option value="">기관 선택</option>
-                      {organizationOptions.map((org) => (
-                        <option key={org.username} value={org.username}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button type="button" className="small-btn primary" onClick={() => handleSendInvite(item)}>
-                      매칭 제안
-        </button>
-      </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          <h2>기관 응답 현황</h2>
-          {pendingInviteList.length === 0 ? (
-            <p className="empty-hint">최근 매칭 제안 내역이 없습니다.</p>
-          ) : (
-            <div className="admin-table-wrapper mini">
-              <table>
-                <thead>
-                  <tr>
-                    <th>물품</th>
-                    <th>기관</th>
-                    <th>상태</th>
-                    <th>비고</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingInviteList.map((invite) => (
-                    <tr key={invite.id}>
-                      <td>
-                        {invite.donorName} / {invite.itemName || invite.itemId}
-                      </td>
-                      <td>{invite.organizationName}</td>
-                      <td>{invite.status}</td>
-                      <td>{invite.responseReason || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
-
-{showModal && selectedUser && (
+      {showModal && selectedUser && (
   <div className="modal-overlay" onClick={() => setShowModal(false)}>
     <div className="modal" onClick={(e) => e.stopPropagation()}>
       <h2>회원 상세 정보</h2>
@@ -833,20 +961,7 @@ const [showModal, setShowModal] = useState(false);
             <p>{selectedUser.donationCount || 0} 회</p>
 
             <h4>📌 최근 내역</h4>
-            {(() => {
-              const stats = getUserDonationStats(selectedUser);
-              return stats.recent.length === 0 ? (
-                <p>최근 내역이 없습니다.</p>
-              ) : (
-                <ul>
-                  {stats.recent.map((item, i) => (
-                    <li key={i}>
-                      {item.startDate || item.date} — {item.product || item.items} → {item.receiver}
-                    </li>
-                  ))}
-                </ul>
-              );
-            })()}
+            <p className="text-muted">상세 내역은 개별 조회 기능을 이용해주세요.</p>
           </>
         )}
       </div>
@@ -918,14 +1033,154 @@ const [showModal, setShowModal] = useState(false);
           <div className="modal image-modal" onClick={e => e.stopPropagation()}>
             <h2>{imageModal.title || '기부 물품 이미지'}</h2>
             {imageModal.images?.length ? (
-              imageModal.images.map((img, index) => (
-                <img key={img.id || index} src={img.dataUrl || img.url || img} alt="기부 물품" />
-              ))
+              imageModal.images.map((img, index) => {
+                const imageUrl = img.dataUrl || img.url || img;
+                return (
+                  <img 
+                    key={img.id || index} 
+                    src={imageUrl} 
+                    alt="기부 물품" 
+                    onError={(e) => {
+                      console.error('이미지 로드 실패:', imageUrl);
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                );
+              })
             ) : (
               <p className="text-muted">등록된 이미지가 없습니다.</p>
             )}
             <div className="modal-buttons">
               <button className="small-btn" onClick={() => setImageModal(null)}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingPost && (
+        <div className="modal-overlay" onClick={() => setViewingPost(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2>게시물 상세보기</h2>
+            
+            <div className="modal-content" style={{ padding: '1rem 0' }}>
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <label style={{ fontWeight: '600' }}>게시물 타입:</label>
+                <span className={`type-badge ${viewingPost.postType === 'DONATION_REVIEW' ? 'review' : 'request'}`}>
+                  {viewingPost.postType === 'DONATION_REVIEW' ? '기부 후기' : '요청 게시물'}
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>제목</label>
+                <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                  {viewingPost.title}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>내용</label>
+                <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd', minHeight: '150px', whiteSpace: 'pre-wrap' }}>
+                  {viewingPost.content}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>작성자</label>
+                <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                  {viewingPost.writer || '익명'}
+                  {viewingPost.writerType && (
+                    <span className="anon-chip" style={{ marginLeft: '0.5rem' }}>
+                      {viewingPost.writerType === 'user' ? '일반 회원' : '기관 회원'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>조회수</label>
+                  <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                    {viewingPost.viewCount || 0}
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>작성일</label>
+                  <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                    {viewingPost.createdAt 
+                      ? new Date(viewingPost.createdAt).toLocaleString('ko-KR', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : '-'}
+                  </div>
+                </div>
+              </div>
+
+              {viewingPost.images && viewingPost.images.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>이미지</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
+                    {viewingPost.images.map((img, index) => {
+                      const imageUrl = img.url || img.dataUrl || img;
+                      const fullUrl = imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')
+                        ? `http://localhost:8080${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`
+                        : imageUrl;
+                      return (
+                        <div key={index} style={{ position: 'relative' }}>
+                          <img
+                            src={fullUrl}
+                            alt={`게시물 이미지 ${index + 1}`}
+                            style={{ 
+                              width: '100%', 
+                              height: '150px', 
+                              objectFit: 'cover', 
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              border: '1px solid #ddd'
+                            }}
+                            onClick={() => {
+                              setImageModal({
+                                title: viewingPost.title,
+                                images: viewingPost.images.map(i => ({
+                                  url: i.url || i.dataUrl || i,
+                                  dataUrl: i.dataUrl || i.url || i
+                                }))
+                              });
+                            }}
+                            onError={(e) => {
+                              console.error('이미지 로드 실패:', fullUrl);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-buttons">
+              <button
+                className="small-btn danger"
+                onClick={async () => {
+                  if (window.confirm('정말 이 게시물을 삭제하시겠습니까?')) {
+                    await handleDeletePost(viewingPost.id);
+                    setViewingPost(null);
+                  }
+                }}
+              >
+                삭제
+              </button>
+              <button
+                className="small-btn"
+                onClick={() => setViewingPost(null)}
+              >
                 닫기
               </button>
             </div>

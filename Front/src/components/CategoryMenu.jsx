@@ -2,29 +2,34 @@ const getMenuCategories = role => {
   if (role === '관리자 회원') {
     return [
       {
-        title: '승인 관리',
+        title: '회원 관리',
         items: [
-          { label: '기관 계정 승인', href: '/admin/organization-approval' },
-          { label: '기부 승인 대기', href: '/admin/donation-approval' }
+          { label: '회원 관리', href: '/admin/manage/members' }
         ]
       },
       {
-        title: '회원 관리',
+        title: '승인 관리',
         items: [
-          { label: '회원 목록', href: '/admin/manage' }
+          { label: '기관 가입 승인', href: '/admin/manage/orgs' },
+          { label: '물품 승인', href: '/admin/manage/items' }
+        ]
+      },
+      {
+        title: '기부 관리',
+        items: [
+          { label: '자동 매칭', href: '/admin/manage/matching' }
+        ]
+      },
+      {
+        title: '게시물 관리',
+        items: [
+          { label: '게시물 관리', href: '/admin/manage/posts' }
         ]
       },
       {
         title: 'FAQ',
         items: [
           { label: 'FAQ 관리', href: '/admin/faq' }
-        ]
-      },
-      {
-        title: '기부 관리',
-        items: [
-          { label: '매칭된 기부 관리', href: '/admin/matched-donations' },
-          { label: '배송 관리', href: '/admin/delivery' }
         ]
       }
     ]

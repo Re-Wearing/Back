@@ -13,6 +13,10 @@ import VerificationPage from './pages/VerificationPage'
 import NotificationPage from './pages/NotificationPage'
 import MyPage from './pages/MyPage'
 import AdminManagePage from './pages/AdminManagePage'
+import AdminOrgApprovalPage from './pages/AdminOrgApprovalPage'
+import AdminItemApprovalPage from './pages/AdminItemApprovalPage'
+import AdminMatchingPage from './pages/AdminMatchingPage'
+import AdminPostManagePage from './pages/AdminPostManagePage'
 import AdminFaqPage from './pages/AdminFaqPage'
 import FaqPage from './pages/FaqPage'
 import InquiryPage from './pages/InquiryPage'
@@ -20,6 +24,8 @@ import InquiryAnswerPage from './pages/InquiryAnswerPage'
 import DonationStatusPage from './pages/DonationStatusPage'
 import OrganizationDonationStatusPage from './pages/OrganizationDonationStatusPage'
 import CategoryMenu from './components/CategoryMenu'
+import HeaderLanding from './components/HeaderLanding'
+import { getNavLinksForRole } from './constants/landingData'
 import DeliveryCheckPage from './pages/DeliveryCheckPage'
 import "./styles/delivery-check.css";
 import BusinessIntroPage from './pages/BusinessIntroPage';
@@ -437,6 +443,7 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState('/main')
   const [recoveryContext, setRecoveryContext] = useState(null)
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS)
   const [profiles, setProfiles] = useState(INITIAL_PROFILES)
   const getUserDisplayName = username => {
@@ -565,6 +572,7 @@ export default function App() {
   const [selectedBoardType, setSelectedBoardType] = useState('all')
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [selectedPostType, setSelectedPostType] = useState('review')
+  const [boardRefreshKey, setBoardRefreshKey] = useState(0) // 게시판 목록 새로고침용
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(BOARD_POSTS_KEY, JSON.stringify(boardPosts))
@@ -677,9 +685,18 @@ export default function App() {
   const goToBoard = (options = {}) => {
     const { push = true, replace = false } = options
     setShowLanding(false)
-    setActivePage('board')
-    if (push) updatePath('/board', { replace })
-    else if (replace) updatePath('/board', { replace: true })
+    // 관리자일 때는 관리자 전용 게시판으로 이동
+    if (currentUser?.role === '관리자 회원') {
+      setActivePage('adminPostManage')
+      if (push) updatePath('/admin/manage/posts', { replace })
+      else if (replace) updatePath('/admin/manage/posts', { replace: true })
+    } else {
+      setActivePage('board')
+      // 게시판으로 이동할 때마다 목록 새로고침
+      setBoardRefreshKey(prev => prev + 1)
+      if (push) updatePath('/board', { replace })
+      else if (replace) updatePath('/board', { replace: true })
+    }
   }
 
   const goToBoardWrite = (options = {}) => {
@@ -792,14 +809,12 @@ export default function App() {
 
   const goToFaq = (options = {}) => {
     const { push = true, replace = false } = options
-    if (!currentUser) {
-      goToLogin(options)
-      return
-    }
-    if (currentUser.role === '관리자 회원') {
+    // 관리자는 관리자 FAQ 페이지로 이동
+    if (currentUser && currentUser.role === '관리자 회원') {
       goToAdminFaq(options, currentUser)
       return
     }
+    // 일반 사용자와 비로그인 사용자는 모두 FAQ 페이지 접근 가능
     setShowLanding(false)
     setActivePage('faq')
     if (push) updatePath('/faq', { replace })
@@ -808,6 +823,11 @@ export default function App() {
 
   const goToInquiry = (options = {}) => {
     const { push = true, replace = false } = options
+    // 로그인 체크
+    if (!currentUser) {
+      goToLogin(options)
+      return
+    }
     setShowLanding(false)
     setActivePage('inquiry')
     if (push) updatePath('/inquiry', { replace })
@@ -867,6 +887,37 @@ export default function App() {
   
   
 
+  // 읽지 않은 알림 개수 조회
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await fetch('/api/notifications/unread-count', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          // 로그인되지 않은 경우
+          setUnreadCount(0)
+          return 0
+        }
+        return 0
+      }
+      
+      const data = await response.json()
+      const count = data.unreadCount || 0
+      setUnreadCount(count)
+      return count
+    } catch (error) {
+      console.error('Fetch unread count error:', error)
+      setUnreadCount(0)
+      return 0
+    }
+  }
+
   // 현재 로그인한 사용자 정보를 백엔드에서 가져오기
   const fetchCurrentUser = async () => {
     try {
@@ -882,6 +933,7 @@ export default function App() {
         if (response.status === 401) {
           // 로그인되지 않은 경우
           setCurrentUser(null)
+          setUnreadCount(0)
           if (typeof window !== 'undefined') {
             window.sessionStorage.removeItem('rewearUser')
           }
@@ -917,6 +969,9 @@ export default function App() {
             address: user.address || '',
           }
         }))
+        
+        // 사용자 정보를 가져온 후 읽지 않은 알림 개수도 조회
+        await fetchUnreadCount()
         
         return updatedUser
       }
@@ -1075,6 +1130,8 @@ export default function App() {
         if (typeof window !== 'undefined') {
           window.sessionStorage.setItem('rewearUser', normalizedId)
         }
+        // 로그인 성공 후 읽지 않은 알림 개수 조회
+        await fetchUnreadCount()
         return { success: true, role: role }
       } else {
         // 로그인 실패
@@ -2037,7 +2094,6 @@ export default function App() {
   const activeNotifications = currentUser
     ? notifications[currentUser.username] || []
     : []
-  const unreadCount = activeNotifications.filter(item => !item.read).length
   const currentProfile = currentUser ? profiles[currentUser.username] : null
   const userInquiries = currentUser
     ? adminInquiries.filter(inquiry => inquiry.requester === currentUser.username)
@@ -2072,17 +2128,20 @@ export default function App() {
     } else if (href === '#mypage') {
       goToMyPage()
     } else if (href === '/admin/manage' || href === '/admin/manage/members') {
-      goToMyPage({ panel: 'members' })
+      setActivePage('adminManage')
+      setAdminPanel('members')
     } else if (href === '/admin/manage/orgs' || href === '/admin/organization-approval') {
-      goToMyPage({ panel: 'orgs' })
+      setActivePage('adminOrgApproval')
     } else if (href === '/admin/manage/items' || href === '/admin/donation-approval') {
-      goToMyPage({ panel: 'items' })
+      setActivePage('adminItemApproval')
     } else if (href === '/admin/manage/matching' || href === '/admin/matched-donations') {
-      goToMyPage({ panel: 'matching' })
+      setActivePage('adminMatching')
+    } else if (href === '/admin/manage/posts') {
+      setActivePage('adminPostManage')
     } else if (href === '/admin/faq') {
       goToAdminFaq()
     } else if (href === '/admin/delivery') {
-      goToMyPage({ panel: 'items' })
+      setActivePage('adminItemApproval')
     } else {
       goToMain('/main')
     }
@@ -2129,7 +2188,12 @@ export default function App() {
         goToLogin({ push: false, replace: true })
         break
       case '/board':
-        goToBoard({ push: false, replace: true })
+        // 관리자일 때는 관리자 전용 게시판으로 이동
+        if (userOverride?.role === '관리자 회원' || currentUser?.role === '관리자 회원') {
+          setActivePage('adminPostManage')
+        } else {
+          goToBoard({ push: false, replace: true })
+        }
         break
       case '/board/write':
         goToBoardWrite({ push: false, replace: true })
@@ -2147,23 +2211,25 @@ export default function App() {
         goToMyPage({ push: false, replace: true }, userOverride)
         break
       case '/admin/manage':
-        goToMyPage({ push: false, replace: true, panel: 'members' }, userOverride ?? currentUser)
-        break
       case '/admin/manage/members':
-        goToMyPage({ push: false, replace: true, panel: 'members' }, userOverride ?? currentUser)
+        setActivePage('adminManage')
+        setAdminPanel('members')
         break
       case '/admin/manage/orgs':
       case '/admin/organization-approval':
-        goToMyPage({ push: false, replace: true, panel: 'orgs' }, userOverride ?? currentUser)
+        setActivePage('adminOrgApproval')
         break
       case '/admin/manage/items':
       case '/admin/donation-approval':
       case '/admin/delivery':
-        goToMyPage({ push: false, replace: true, panel: 'items' }, userOverride ?? currentUser)
+        setActivePage('adminItemApproval')
         break
       case '/admin/manage/matching':
       case '/admin/matched-donations':
-        goToMyPage({ push: false, replace: true, panel: 'matching' }, userOverride ?? currentUser)
+        setActivePage('adminMatching')
+        break
+      case '/admin/manage/posts':
+        setActivePage('adminPostManage')
         break
       case '/notification':
         goToNotifications({ push: false, replace: true }, userOverride)
@@ -2255,6 +2321,7 @@ export default function App() {
         />
       ) : activePage === 'board' ? (
         <BoardPage
+          key={boardRefreshKey}
           onNavigateHome={goToMain}
           onLogin={goToLogin}
           onNavLink={handleNavRedirection}
@@ -2308,11 +2375,9 @@ export default function App() {
         />
       ) : activePage === 'notification' ? (
         <NotificationPage
-          notifications={activeNotifications}
-          onDelete={handleNotificationDelete}
-          onMarkRead={handleNotificationRead}
           onNavigate={handleNotificationNavigate}
           onClose={() => goToMain()}
+          onUnreadCountChange={(count) => setUnreadCount(count)}
         />
       ) : activePage === 'mypage' ? (
         <MyPage
@@ -2326,25 +2391,129 @@ export default function App() {
           onRequireLogin={goToLogin}
         />
       ) : activePage === 'adminManage' ? (
-        <AdminManagePage
-          accounts={accounts}
-          profiles={profiles}
-          notifications={notifications}
-          shipments={shipments}
-          pendingOrganizations={pendingOrganizations}
-          donationItems={allDonationItems}
-          organizationOptions={organizationOptions}
-          matchingInvites={matchingInvites}
-          onApproveOrganization={handleApproveOrganizationRequest}
-          onRejectOrganization={handleRejectOrganizationRequest}
-          onUpdateDonationStatus={handleDonationStatusChange}
-          onSendMatchingInvite={handleSendMatchingInvite}
-          onResetPassword={handleAdminPasswordReset}
-          onDeleteUser={handleAdminDeleteUser}
-          onNavigateHome={goToMain}
-          initialPanel={adminPanel}
-          onPanelChange={setAdminPanel}
-        />
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={() => {}}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminManagePage
+              accounts={accounts}
+              profiles={profiles}
+              notifications={notifications}
+              shipments={shipments}
+              pendingOrganizations={pendingOrganizations}
+              donationItems={allDonationItems}
+              organizationOptions={organizationOptions}
+              matchingInvites={matchingInvites}
+              onApproveOrganization={handleApproveOrganizationRequest}
+              onRejectOrganization={handleRejectOrganizationRequest}
+              onUpdateDonationStatus={handleDonationStatusChange}
+              onSendMatchingInvite={handleSendMatchingInvite}
+              onResetPassword={handleAdminPasswordReset}
+              onDeleteUser={handleAdminDeleteUser}
+              onNavigateHome={goToMain}
+              initialPanel={adminPanel}
+              onPanelChange={setAdminPanel}
+            />
+          </div>
+        </section>
+      ) : activePage === 'adminOrgApproval' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={() => {}}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminOrgApprovalPage
+              pendingOrganizations={pendingOrganizations}
+              onApproveOrganization={handleApproveOrganizationRequest}
+              onRejectOrganization={handleRejectOrganizationRequest}
+              onNavigateHome={goToMain}
+            />
+          </div>
+        </section>
+      ) : activePage === 'adminItemApproval' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={() => {}}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminItemApprovalPage
+              donationItems={allDonationItems}
+              onNavigateHome={goToMain}
+            />
+          </div>
+        </section>
+      ) : activePage === 'adminMatching' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={() => {}}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminMatchingPage
+              donationItems={allDonationItems}
+              organizationOptions={organizationOptions}
+              matchingInvites={matchingInvites}
+              onSendMatchingInvite={handleSendMatchingInvite}
+              onNavigateHome={goToMain}
+            />
+          </div>
+        </section>
+      ) : activePage === 'adminPostManage' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={() => {}}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminPostManagePage
+              onNavigateHome={goToMain}
+            />
+          </div>
+        </section>
       ) : activePage === 'inquiryAnswers' ? (
         <InquiryAnswersPage
           onNavigateHome={goToMain}
