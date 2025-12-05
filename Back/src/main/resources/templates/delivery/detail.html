@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>배송 정보 상세 | RE-WEAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bd: #e5e7eb;
+            --txt: #111827;
+            --sub: #6b7280;
+            --ok: #065f46;
+            --warn: #b91c1c;
+            --bg: #f7f7fb;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--txt);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+        .wrap {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--bd);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px;
+        }
+        .success-msg {
+            padding: 12px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            color: #065f46;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--bd);
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--ok);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: var(--sub);
+        }
+        .info-value {
+            color: var(--txt);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-preparing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status-in_transit {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+        .status-delivered {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background: var(--ok);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #047857;
+        }
+        .btn-secondary {
+            background: var(--bd);
+            color: var(--txt);
+        }
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        .status-form {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        .status-form select {
+            padding: 8px;
+            border: 1px solid var(--bd);
+            border-radius: 6px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+    <div class="card">
+        <h1>배송 정보 상세</h1>
+
+        <div th:if="${success}" class="success-msg" th:text="${success}"></div>
+
+        <div class="section">
+            <div class="section-title">배송 상태</div>
+            <div class="info-grid">
+                <div class="info-label">상태:</div>
+                <div class="info-value">
+                    <span class="status-badge" 
+                          th:classappend="${delivery.status.name() == 'PENDING' ? 'status-pending' : 
+                                         delivery.status.name() == 'IN_TRANSIT' ? 'status-in_transit' : 
+                                         delivery.status.name() == 'DELIVERED' ? 'status-delivered' : 
+                                         'status-pending'}"
+                          th:text="${delivery.status.name() == 'PENDING' ? '대기' : 
+                                   delivery.status.name() == 'IN_TRANSIT' ? '배송중' : 
+                                   delivery.status.name() == 'DELIVERED' ? '완료' : 
+                                   delivery.status.name()}">상태</span>
+                </div>
+            </div>
+            <div th:if="${delivery.shippedAt != null}" class="info-grid">
+                <div class="info-label">발송일:</div>
+                <div class="info-value" th:text="${#temporals.format(delivery.shippedAt, 'yyyy-MM-dd HH:mm')}"></div>
+            </div>
+            <div th:if="${delivery.deliveredAt != null}" class="info-grid">
+                <div class="info-label">배송완료일:</div>
+                <div class="info-value" th:text="${#temporals.format(delivery.deliveredAt, 'yyyy-MM-dd HH:mm')}"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">발송인 정보</div>
+            <div class="info-grid">
+                <div class="info-label">이름:</div>
+                <div class="info-value" th:text="${delivery.senderName}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">전화번호:</div>
+                <div class="info-value" th:text="${delivery.senderPhone}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">주소:</div>
+                <div class="info-value">
+                    <span th:text="${delivery.senderPostalCode}"></span>
+                    <span th:if="${delivery.senderPostalCode != null && !delivery.senderPostalCode.isEmpty()}"> </span>
+                    <span th:text="${delivery.senderAddress}"></span>
+                    <span th:if="${delivery.senderDetailAddress != null && !delivery.senderDetailAddress.isEmpty()}">
+                        <span th:text="${' ' + delivery.senderDetailAddress}"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">수령인 정보</div>
+            <div class="info-grid">
+                <div class="info-label">이름:</div>
+                <div class="info-value" th:text="${delivery.receiverName}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">전화번호:</div>
+                <div class="info-value" th:text="${delivery.receiverPhone}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">주소:</div>
+                <div class="info-value">
+                    <span th:text="${delivery.receiverPostalCode}"></span>
+                    <span th:if="${delivery.receiverPostalCode != null && !delivery.receiverPostalCode.isEmpty()}"> </span>
+                    <span th:text="${delivery.receiverAddress}"></span>
+                    <span th:if="${delivery.receiverDetailAddress != null && !delivery.receiverDetailAddress.isEmpty()}">
+                        <span th:text="${' ' + delivery.receiverDetailAddress}"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${delivery.carrier != null || delivery.trackingNumber != null}" class="section">
+            <div class="section-title">택배 정보</div>
+            <div th:if="${delivery.carrier != null}" class="info-grid">
+                <div class="info-label">택배사:</div>
+                <div class="info-value" th:text="${delivery.carrier}"></div>
+            </div>
+            <div th:if="${delivery.trackingNumber != null}" class="info-grid">
+                <div class="info-label">운송장 번호:</div>
+                <div class="info-value" th:text="${delivery.trackingNumber}"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">기부 정보</div>
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
+                <div class="info-label">옷의 종류:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.mainCategory.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
+                <div class="info-label">성별:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.genderType.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null}">
+                <div class="info-label">사이즈:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.size.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null && delivery.donation.donationItem != null && delivery.donation.donationItem.detailCategory != null}">
+                <div class="info-label">상세 카테고리:</div>
+                <div class="info-value" th:text="${delivery.donation.donationItem.detailCategory}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
+                <div class="info-label">기관:</div>
+                <div class="info-value" th:text="${delivery.donation.organ != null ? delivery.donation.organ.orgName : '없음'}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
+                <div class="info-label">매칭 방식:</div>
+                <div class="info-value" th:text="${delivery.donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></div>
+            </div>
+            <div class="info-grid" th:if="${delivery.donation != null}">
+                <div class="info-label">배송 방법:</div>
+                <div class="info-value" th:text="${delivery.donation.deliveryMethod == T(com.rewear.common.enums.DeliveryMethod).DIRECT_DELIVERY ? '직접 배송' : '택배 배송'}"></div>
+            </div>
+        </div>
+
+        <div th:unless="${readOnly}" class="status-form">
+            <form th:action="@{/admin/deliveries/{id}/status(id=${delivery.id})}" method="post">
+                <label for="status">배송 상태 변경:</label>
+                <select id="status" name="status">
+                    <option th:value="PENDING" th:selected="${delivery.status.name() == 'PENDING'}">배송 대기</option>
+                    <option th:value="PREPARING" th:selected="${delivery.status.name() == 'PREPARING'}">배송 준비 중</option>
+                    <option th:value="IN_TRANSIT" th:selected="${delivery.status.name() == 'IN_TRANSIT'}">배송 중</option>
+                    <option th:value="DELIVERED" th:selected="${delivery.status.name() == 'DELIVERED'}">배송 완료</option>
+                    <option th:value="CANCELLED" th:selected="${delivery.status.name() == 'CANCELLED'}">배송 취소</option>
+                </select>
+                <button type="submit" class="btn btn-primary">상태 업데이트</button>
+            </form>
+        </div>
+
+        <div class="btn-group">
+            <a th:unless="${readOnly}" th:href="@{/admin/deliveries/{id}/edit(id=${delivery.id})}" class="btn btn-primary">수정하기</a>
+            <a th:if="${readOnly}" th:href="@{/deliveries/list}" class="btn btn-secondary">목록으로</a>
+            <a th:unless="${readOnly}" th:href="@{/admin/deliveries}" class="btn btn-secondary">목록으로</a>
+            <a th:href="@{/donations}" class="btn btn-secondary">기부 목록</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
