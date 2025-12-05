@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>기부 상세 | RE-WEAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bd: #e5e7eb;
+            --txt: #111827;
+            --sub: #6b7280;
+            --ok: #065f46;
+            --warn: #b91c1c;
+            --bg: #f7f7fb;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--txt);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+        .wrap {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--bd);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px;
+        }
+        .donation-image {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--bd);
+        }
+        .info-section {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--bd);
+        }
+        .info-section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--ok);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: var(--sub);
+        }
+        .info-value {
+            color: var(--txt);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-cancelled {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .status-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status-pending {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: var(--ok);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #047857;
+        }
+        .btn-secondary {
+            background: var(--bd);
+            color: var(--txt);
+        }
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+    <div class="card">
+        <h1>기부 상세 정보</h1>
+
+        <div th:if="${donation.donationItem != null && donation.donationItem.imageUrl != null && !donation.donationItem.imageUrl.isEmpty()}">
+            <img th:src="@{'/uploads/' + ${donation.donationItem.imageUrl}}" 
+                 alt="기부 이미지" 
+                 class="donation-image"
+                 onerror="this.parentElement.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+        </div>
+        <div th:if="${donation.donationItem == null || donation.donationItem.imageUrl == null || donation.donationItem.imageUrl.isEmpty()}" 
+             style="width: 100%; max-width: 500px; height: 300px; background: var(--bd); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--sub); margin-bottom: 24px;">
+            이미지 없음
+        </div>
+
+        <div class="info-section">
+            <div class="section-title">기본 정보</div>
+            <div class="info-grid" th:if="${donation.donationItem != null}">
+                <div class="info-label">옷의 종류:</div>
+                <div class="info-value" th:text="${donation.donationItem.mainCategory.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${donation.donationItem != null}">
+                <div class="info-label">성별:</div>
+                <div class="info-value" th:text="${donation.donationItem.genderType.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${donation.donationItem != null}">
+                <div class="info-label">사이즈:</div>
+                <div class="info-value" th:text="${donation.donationItem.size.name()}"></div>
+            </div>
+            <div class="info-grid" th:if="${donation.donationItem != null && donation.donationItem.detailCategory != null}">
+                <div class="info-label">상세 카테고리:</div>
+                <div class="info-value" th:text="${donation.donationItem.detailCategory}"></div>
+            </div>
+            <div class="info-grid" th:if="${donation.donationItem != null && donation.donationItem.description != null}">
+                <div class="info-label">설명:</div>
+                <div class="info-value" th:text="${donation.donationItem.description}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">매칭 방식:</div>
+                <div class="info-value" th:text="${donation.matchType == T(com.rewear.common.enums.MatchType).DIRECT ? '직접 매칭' : '간접 매칭'}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">배송 방법:</div>
+                <div class="info-value" th:text="${donation.deliveryMethod == T(com.rewear.common.enums.DeliveryMethod).DIRECT_DELIVERY ? '직접 배송' : '택배 배송'}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">익명 여부:</div>
+                <div class="info-value" th:text="${donation.isAnonymous ? '익명' : '비익명'}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">상태:</div>
+                <div class="info-value">
+                    <span class="status-badge"
+                          th:classappend="${donation.status == T(com.rewear.common.enums.DonationStatus).COMPLETED ? 'status-completed' : 
+                                         donation.status == T(com.rewear.common.enums.DonationStatus).CANCELLED ? 'status-cancelled' : 
+                                         donation.status == T(com.rewear.common.enums.DonationStatus).IN_PROGRESS ? 'status-in-progress' : 
+                                         'status-pending'}"
+                          th:text="${donation.status.name()}"></span>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">관리자 결정:</div>
+                <div class="info-value" th:text="${donation.adminDecision.name()}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">신청일:</div>
+                <div class="info-value" th:text="${#temporals.format(donation.createdAt, 'yyyy-MM-dd HH:mm')}"></div>
+            </div>
+            <div class="info-grid" th:if="${donation.status == T(com.rewear.common.enums.DonationStatus).COMPLETED || donation.status == T(com.rewear.common.enums.DonationStatus).CANCELLED}">
+                <div class="info-label">완료/취소일:</div>
+                <div class="info-value" th:text="${#temporals.format(donation.updatedAt, 'yyyy-MM-dd HH:mm')}"></div>
+            </div>
+            <div class="info-grid" th:if="${donation.cancelReason != null}">
+                <div class="info-label">취소 사유:</div>
+                <div class="info-value" th:text="${donation.cancelReason}"></div>
+            </div>
+        </div>
+
+        <div class="info-section" th:if="${donation.donor != null}">
+            <div class="section-title">기부자 정보</div>
+            <div class="info-grid">
+                <div class="info-label">이름:</div>
+                <div class="info-value" th:text="${donation.isAnonymous ? '익명' : donation.donor.name}"></div>
+            </div>
+            <div class="info-grid" th:if="${!donation.isAnonymous}">
+                <div class="info-label">이메일:</div>
+                <div class="info-value" th:text="${donation.donor.email}"></div>
+            </div>
+            <div class="info-grid" th:if="${!donation.isAnonymous}">
+                <div class="info-label">전화번호:</div>
+                <div class="info-value" th:text="${donation.donor.phone}"></div>
+            </div>
+        </div>
+
+        <div class="info-section" th:if="${donation.organ != null}">
+            <div class="section-title">매칭된 기관 정보</div>
+            <div class="info-grid">
+                <div class="info-label">기관명:</div>
+                <div class="info-value" th:text="${donation.organ.orgName}"></div>
+            </div>
+            <div class="info-grid">
+                <div class="info-label">사업자 번호:</div>
+                <div class="info-value" th:text="${donation.organ.businessNo}"></div>
+            </div>
+        </div>
+
+        <!-- 배송 상태 관리 섹션 (배송 정보 유무와 관계없이 표시) -->
+        <div class="info-section">
+            <div class="section-title">배송 상태 관리</div>
+            <div class="info-grid" th:if="${donation.delivery != null}">
+                <div class="info-label">현재 배송 상태:</div>
+                <div class="info-value">
+                    <span class="status-badge"
+                          th:classappend="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? 'status-completed' : 
+                                         donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? 'status-in-progress' : 
+                                         'status-pending'}"
+                          th:text="${donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).PENDING ? '대기' : 
+                                   donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT ? '배송중' : 
+                                   donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED ? '완료' : 
+                                   donation.delivery.status.name()}"></span>
+                </div>
+            </div>
+            <div class="info-grid" th:unless="${donation.delivery != null}">
+                <div class="info-label">현재 배송 상태:</div>
+                <div class="info-value" style="color: var(--sub);">배송 정보 없음</div>
+            </div>
+            <!-- 배송 상태 변경 폼 -->
+            <div style="margin-top: 16px; padding: 16px; background: var(--bg); border-radius: 8px;">
+                <div style="font-weight: 600; margin-bottom: 12px; color: var(--txt);">배송 상태 설정</div>
+                <form th:action="@{/admin/donations/{donationId}/delivery/status(donationId=${donation.id})}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <label style="font-weight: 600; min-width: 100px;">배송 상태:</label>
+                            <select name="status" style="padding: 8px 12px; border: 1px solid var(--bd); border-radius: 8px; font-size: 14px; min-width: 150px;">
+                                <option value="PENDING" th:selected="${donation.delivery == null || donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).PENDING}">대기</option>
+                                <option value="IN_TRANSIT" th:selected="${donation.delivery != null && donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).IN_TRANSIT}">배송중</option>
+                                <option value="DELIVERED" th:selected="${donation.delivery != null && donation.delivery.status == T(com.rewear.common.enums.DeliveryStatus).DELIVERED}">완료</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <label style="font-weight: 600; min-width: 100px;">택배사:</label>
+                            <select name="carrier" style="padding: 8px 12px; border: 1px solid var(--bd); border-radius: 8px; font-size: 14px; min-width: 150px;">
+                                <option value="">택배사 선택</option>
+                                <option value="CJ대한통운" th:selected="${donation.delivery != null && donation.delivery.carrier == 'CJ대한통운'}">CJ대한통운</option>
+                                <option value="한진택배" th:selected="${donation.delivery != null && donation.delivery.carrier == '한진택배'}">한진택배</option>
+                                <option value="로젠택배" th:selected="${donation.delivery != null && donation.delivery.carrier == '로젠택배'}">로젠택배</option>
+                                <option value="롯데택배" th:selected="${donation.delivery != null && donation.delivery.carrier == '롯데택배'}">롯데택배</option>
+                                <option value="우체국택배" th:selected="${donation.delivery != null && donation.delivery.carrier == '우체국택배'}">우체국택배</option>
+                                <option value="기타" th:selected="${donation.delivery != null && donation.delivery.carrier == '기타'}">기타</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <label style="font-weight: 600; min-width: 100px;">운송장 번호:</label>
+                            <input type="text" name="trackingNumber" 
+                                   th:value="${donation.delivery != null ? donation.delivery.trackingNumber : ''}"
+                                   placeholder="운송장 번호 입력"
+                                   style="padding: 8px 12px; border: 1px solid var(--bd); border-radius: 8px; font-size: 14px; min-width: 200px;">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">상태 변경</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <a th:href="@{/admin/donations/matched}" class="btn btn-secondary">목록으로</a>
+            <a th:if="${donation.delivery != null}" 
+               th:href="@{/admin/deliveries/{id}(id=${donation.delivery.id})}" 
+               class="btn btn-primary">배송 정보 보기</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
