@@ -7,24 +7,15 @@ import com.rewear.donation.DonationForm;
 import com.rewear.donation.DonationItemForm;
 import com.rewear.donation.entity.Donation;
 import com.rewear.donation.entity.DonationItem;
-import com.rewear.donation.repository.DonationItemRepository;
 import com.rewear.donation.repository.DonationRepository;
 import com.rewear.organ.entity.Organ;
 import com.rewear.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -33,12 +24,8 @@ import java.util.UUID;
 public class DonationServiceImpl implements DonationService {
 
     private final DonationRepository donationRepository;
-    private final DonationItemRepository donationItemRepository;
     private final com.rewear.notification.service.NotificationService notificationService;
     private final com.rewear.delivery.repository.DeliveryRepository deliveryRepository;
-
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDir;
 
     @Override
     public Donation createDonation(User donor, DonationForm form, DonationItemForm itemForm, Organ organ) {
@@ -393,20 +380,4 @@ public class DonationServiceImpl implements DonationService {
         return donationRepository.save(donation);
     }
 
-    private String saveImage(MultipartFile image) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = image.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        return filename;
-    }
 }

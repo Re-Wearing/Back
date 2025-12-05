@@ -1,7 +1,6 @@
 package com.rewear.post.controller;
 
 import com.rewear.common.enums.PostType;
-import com.rewear.organ.service.OrganService;
 import com.rewear.post.dto.PostRequestDto;
 import com.rewear.post.dto.PostResponseDto;
 import com.rewear.post.entity.Post;
@@ -38,7 +37,6 @@ public class PostApiController {
     private final PostService postService;
     private final UserServiceImpl userService;
     private final PostRepository postRepository;
-    private final OrganService organService;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -66,44 +64,31 @@ public class PostApiController {
             Page<Post> posts;
 
             if (postType != null) {
-                // 요청 게시판(ORGAN_REQUEST)인 경우, 현재 로그인한 기관이 작성한 게시물만 조회
                 if (postType == PostType.ORGAN_REQUEST) {
-                    if (principal == null) {
-                        // 로그인하지 않은 경우 빈 목록 반환
-                        posts = Page.empty(pageable);
-                    } else {
-                        User user = userService.findByUsername(principal.getUsername())
-                                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
-                        
-                        // 현재 사용자의 기관 찾기
-                        var organOpt = organService.findByUserId(user.getId());
-                        if (organOpt.isEmpty()) {
-                            // 기관 정보가 없는 경우 빈 목록 반환
-                            log.warn("기관 정보를 찾을 수 없음 - 사용자 ID: {}", user.getId());
-                            posts = Page.empty(pageable);
-                        } else {
-                            // 해당 기관이 작성한 게시물만 조회
-                            List<Post> organPosts = postService.getPostsByAuthorOrgan(organOpt.get().getId());
-                            // 페이지네이션 처리
-                            int start = (int) pageable.getOffset();
-                            int end = Math.min((start + pageable.getPageSize()), organPosts.size());
-                            List<Post> pagedPosts = start < organPosts.size() ? organPosts.subList(start, end) : new ArrayList<>();
-                            
-                            posts = new org.springframework.data.domain.PageImpl<>(
-                                    pagedPosts,
-                                    pageable,
-                                    organPosts.size()
-                            );
-                            log.debug("기관 게시글 조회 완료 - 기관 ID: {}, 개수: {}", organOpt.get().getId(), organPosts.size());
-                        }
-                    }
+                    // 요청 게시판: 모든 기관의 요청 게시물 조회
+                    posts = postService.getPostsByType(postType, pageable);
+                    log.debug("요청 게시판 조회 완료 - 모든 기관의 요청 게시물, 개수: {}", posts.getTotalElements());
                 } else {
                     // 기부 후기 등 다른 타입은 전체 조회
                     posts = postService.getPostsByType(postType, pageable);
                 }
             } else {
-                // 전체 게시물 조회 (기부 후기 기본)
-                posts = postService.getPostsByType(PostType.DONATION_REVIEW, pageable);
+                // 전체 게시물 조회: 모든 타입의 게시글을 조회
+                List<Post> allPosts = postService.getAllPosts();
+                // 최신순으로 정렬
+                allPosts.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+                
+                // 페이지네이션 처리
+                int start = (int) pageable.getOffset();
+                int end = Math.min((start + pageable.getPageSize()), allPosts.size());
+                List<Post> pagedPosts = start < allPosts.size() ? allPosts.subList(start, end) : new ArrayList<>();
+                
+                posts = new org.springframework.data.domain.PageImpl<>(
+                        pagedPosts,
+                        pageable,
+                        allPosts.size()
+                );
+                log.debug("전체 게시물 조회 완료 - 개수: {}", allPosts.size());
             }
 
             List<PostResponseDto> postDtos = posts.getContent().stream()
@@ -164,6 +149,39 @@ public class PostApiController {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+
+            // 게시글 타입에 따른 권한 체크
+            PostType postType = requestDto.getPostType();
+            if (postType == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "게시글 타입을 지정해주세요.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            // 권한 확인
+            boolean hasUserRole = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
+            boolean hasOrganRole = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ORGAN"));
+            boolean hasAdminRole = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            // 기부 후기(DONATION_REVIEW): USER 또는 ORGAN 권한 필요
+            if (postType == PostType.DONATION_REVIEW) {
+                if (!hasUserRole && !hasOrganRole && !hasAdminRole) {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("error", "기부 후기 게시물은 일반 회원 또는 기관 회원만 작성할 수 있습니다.");
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+                }
+            }
+            // 요청 게시물(ORGAN_REQUEST): ORGAN 권한만 필요
+            else if (postType == PostType.ORGAN_REQUEST) {
+                if (!hasOrganRole && !hasAdminRole) {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("error", "요청 게시물은 기관 회원만 작성할 수 있습니다.");
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+                }
             }
 
             User author = userService.findByUsername(principal.getUsername())
@@ -243,13 +261,21 @@ public class PostApiController {
 
             Post post = postService.getPostById(postId);
             
-            // 작성자 확인
+            // 관리자 권한 확인
+            boolean hasAdminRole = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            // 작성자 확인 (관리자는 모든 게시물 수정 가능)
             boolean isAuthor = false;
-            if (post.getAuthorUser() != null && post.getAuthorUser().getId().equals(author.getId())) {
+            if (hasAdminRole) {
                 isAuthor = true;
-            } else if (post.getAuthorOrgan() != null && post.getAuthorOrgan().getUser() != null
-                    && post.getAuthorOrgan().getUser().getId().equals(author.getId())) {
-                isAuthor = true;
+            } else {
+                if (post.getAuthorUser() != null && post.getAuthorUser().getId().equals(author.getId())) {
+                    isAuthor = true;
+                } else if (post.getAuthorOrgan() != null && post.getAuthorOrgan().getUser() != null
+                        && post.getAuthorOrgan().getUser().getId().equals(author.getId())) {
+                    isAuthor = true;
+                }
             }
 
             if (!isAuthor) {
@@ -284,7 +310,13 @@ public class PostApiController {
                 }
             }
 
-            Post updatedPost = postService.updatePost(postId, author, form, null);
+            // 관리자는 모든 게시물 수정 가능, 일반 사용자는 본인 게시물만 수정 가능
+            Post updatedPost;
+            if (hasAdminRole) {
+                updatedPost = postService.updatePostByAdmin(postId, form, null);
+            } else {
+                updatedPost = postService.updatePost(postId, author, form, null);
+            }
             
             // 이미지 URL 업데이트 (Base64로 저장한 이미지)
             if (!savedImageUrls.isEmpty()) {
@@ -335,8 +367,18 @@ public class PostApiController {
             User author = userService.findByUsername(principal.getUsername())
                     .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
 
-            postService.deletePost(postId, author);
-            log.info("게시글 삭제 완료 - ID: {}, 사용자: {}", postId, principal.getUsername());
+            // 관리자 권한 확인
+            boolean hasAdminRole = principal.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            // 관리자는 모든 게시물 삭제 가능, 일반 사용자는 본인 게시물만 삭제 가능
+            if (hasAdminRole) {
+                postService.deletePostByAdmin(postId);
+                log.info("게시글 삭제 완료 (관리자) - ID: {}, 사용자: {}", postId, principal.getUsername());
+            } else {
+                postService.deletePost(postId, author);
+                log.info("게시글 삭제 완료 - ID: {}, 사용자: {}", postId, principal.getUsername());
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "게시글이 삭제되었습니다.");

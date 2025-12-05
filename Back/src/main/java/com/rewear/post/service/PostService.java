@@ -13,6 +13,7 @@ import java.util.List;
 public interface PostService {
     Post createPost(User author, PostForm form, MultipartFile image);
     Post updatePost(Long postId, User author, PostForm form, MultipartFile image);
+    Post updatePostByAdmin(Long postId, PostForm form, MultipartFile image); // 관리자용 수정 (작성자 확인 없이)
     void deletePost(Long postId, User author);
     void deletePostByAdmin(Long postId); // 관리자용 삭제 (작성자 확인 없이)
     Post getPostById(Long postId);

@@ -23,6 +23,7 @@ export default function AdminManagePage({
   // API 데이터 상태
   const [apiDonationItems, setApiDonationItems] = useState([]);
   const [apiOrganizations, setApiOrganizations] = useState([]);
+  const [apiPosts, setApiPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   // 디버깅: props 확인 (개발 환경에서만)
@@ -51,6 +52,7 @@ const [showModal, setShowModal] = useState(false);
   const [imageModal, setImageModal] = useState(null);
   const [reasonModal, setReasonModal] = useState(null);
   const [reasonText, setReasonText] = useState('');
+  const [viewingPost, setViewingPost] = useState(null);
 
   // API에서 기부 목록 조회
   useEffect(() => {
@@ -130,6 +132,96 @@ const [showModal, setShowModal] = useState(false);
     
     fetchDonationData();
   }, [activePanel]);
+
+  // API에서 게시물 목록 조회
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (activePanel !== 'posts') return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 모든 게시물 조회 (타입 필터 없이)
+        const response = await fetch('/api/posts?page=0&size=100', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error('게시물 목록 조회에 실패했습니다.');
+        }
+        
+        const data = await response.json();
+        console.log('게시물 목록 조회 성공:', data);
+        const posts = data.content || [];
+        console.log('게시물 개수:', posts.length);
+        setApiPosts(posts);
+      } catch (err) {
+        console.error('게시물 목록 조회 오류:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPosts();
+  }, [activePanel]);
+
+  // 게시물 상세 조회
+  const handleViewPost = async (postId) => {
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('게시물 조회에 실패했습니다.');
+      }
+      
+      const post = await response.json();
+      setViewingPost(post);
+    } catch (err) {
+      console.error('게시물 조회 오류:', err);
+      showToast(err.message || '게시물 조회에 실패했습니다.');
+    }
+  };
+
+  // 게시물 삭제 핸들러
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('정말 이 게시물을 삭제하시겠습니까?')) return;
+    
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '게시물 삭제에 실패했습니다.');
+      }
+      
+      showToast('게시물이 삭제되었습니다.');
+      
+      // 목록에서 제거
+      setApiPosts(prev => prev.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('게시물 삭제 오류:', err);
+      showToast(err.message || '게시물 삭제에 실패했습니다.');
+    }
+  };
+
 
   useEffect(() => {
     if (initialPanel && initialPanel !== activePanel) {
@@ -688,29 +780,12 @@ const [showModal, setShowModal] = useState(false);
       {toast && <div className="toast">{toast}</div>}
 
       <div className="admin-manage-header">
-        <h1>운영 도구</h1>
+        <h1>회원 관리</h1>
         <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
-          메인으로
+메인으로
         </button>
       </div>
 
-      <div className="admin-tabs">
-        <button type="button" className={activePanel === 'members' ? 'active' : ''} onClick={() => handlePanelChange('members')}>
-          회원 관리
-        </button>
-        <button type="button" className={activePanel === 'orgs' ? 'active' : ''} onClick={() => handlePanelChange('orgs')}>
-          기관 가입 승인
-        </button>
-        <button type="button" className={activePanel === 'items' ? 'active' : ''} onClick={() => handlePanelChange('items')}>
-          물품 승인
-        </button>
-        <button type="button" className={activePanel === 'matching' ? 'active' : ''} onClick={() => handlePanelChange('matching')}>
-          자동 매칭
-        </button>
-      </div>
-
-      {activePanel === 'members' && (
-        <>
       <div className="admin-controls">
         <input
           type="text"
@@ -809,308 +884,10 @@ const [showModal, setShowModal] = useState(false);
               다음
             </button>
           </div>
-        </>
-      )}
 
-      {activePanel === 'orgs' && (
-        <section className="admin-panel">
-          {orgRequests.length === 0 ? (
-            <p className="empty-hint">대기 중인 기관 가입 요청이 없습니다.</p>
-          ) : (
-            <div className="admin-card-list">
-              {orgRequests.map((request) => (
-                <article key={request.id} className="admin-card">
-                  <div className="admin-card-header">
-                    <div>
-                      <strong>{request.organizationName}</strong>
-                      <p>{request.contactName}</p>
-                    </div>
-                    <span className={`status-chip status-${request.status}`}>{request.status}</span>
-                  </div>
-                  <ul className="admin-card-meta">
-                    <li>아이디 : {request.username}</li>
-                    <li>연락처 : {request.phone}</li>
-                    <li>이메일 : {request.email}</li>
-                    <li>신청일 : {request.submittedAt}</li>
-                    {request.address && <li>주소 : {request.address}</li>}
-                  </ul>
-                  {request.memo && <p className="admin-card-memo">{request.memo}</p>}
-                  {request.status === 'pending' ? (
-                    <div className="admin-card-actions">
-                      <button type="button" className="small-btn primary" onClick={() => handleApproveOrg(request.id)}>
-                        승인
-                      </button>
-                      <button type="button" className="small-btn danger" onClick={() => handleRejectOrg(request.id)}>
-                        거절
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="admin-card-result">
-                      {request.status === 'approved'
-                        ? '승인 완료'
-                        : `거절 사유: ${request.rejectionReason || '미입력'}`}
-                    </p>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      {/* Other panels (orgs, items, matching, posts) have been moved to separate pages */}
 
-      {activePanel === 'items' && (
-        <section className="admin-panel">
-          {donationQueue.length === 0 ? (
-            <p className="empty-hint">등록된 기부 물품이 없습니다.</p>
-          ) : (
-            <div className="admin-table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>이미지</th>
-                    <th>물품</th>
-                    <th>신청자</th>
-                    <th>기부 방법</th>
-                    <th>현재 상태</th>
-                    <th>최근 메모</th>
-                    <th>조치</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {donationQueue.map((item) => {
-                    const pendingUpdate = pendingItemUpdates[item.id]
-                    return (
-                      <tr key={item.id}>
-                        <td className="item-image-cell">
-                          {item.images?.length && item.images[0] ? (
-                            (() => {
-                              const imageUrl = item.images[0].dataUrl || item.images[0].url || item.images[0];
-                              const hasValidUrl = imageUrl && typeof imageUrl === 'string' && imageUrl.trim().length > 0;
-                              
-                              if (!hasValidUrl) {
-                                console.warn('기부 ID:', item.id, '- 유효하지 않은 이미지 URL:', imageUrl);
-                                return <span className="text-muted">이미지 없음</span>;
-                              }
-                              
-                              return (
-                                <button
-                                  type="button"
-                                  className="image-large-button"
-                                  onClick={() =>
-                                    openImageModal({
-                                      title: item.name || '기부 물품',
-                                      images: item.images,
-                                      description: item.itemDescription,
-                                      memo: item.memo,
-                                      deliveryMethod: item.deliveryMethod,
-                                      desiredDate: item.desiredDate,
-                                      contact: item.contact,
-                                      owner: item.ownerName || item.owner
-                                    })
-                                  }
-                                >
-                                  <img
-                                    className="item-image-large"
-                                    src={imageUrl}
-                                    alt="기부 물품"
-                                    onError={(e) => {
-                                      console.error('이미지 로드 실패 - 기부 ID:', item.id, '이미지 URL:', imageUrl, '전체 이미지 데이터:', item.images[0]);
-                                      // 이미지 로드 실패 시 placeholder 표시
-                                      e.target.style.display = 'none';
-                                      const placeholder = e.target.parentElement.querySelector('.image-placeholder');
-                                      if (placeholder) {
-                                        placeholder.style.display = 'flex';
-                                      }
-                                    }}
-                                    onLoad={() => {
-                                      console.log('이미지 로드 성공 - 기부 ID:', item.id, '이미지 URL:', imageUrl);
-                                    }}
-                                  />
-                                  <div className="image-placeholder" style={{ display: 'none' }}>
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                                      <circle cx="8.5" cy="8.5" r="1.5" />
-                                      <polyline points="21 15 16 10 5 21" />
-                                    </svg>
-                                    <span>이미지 없음</span>
-                                  </div>
-                                  <span className="image-zoom-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                      <circle cx="11" cy="11" r="6" />
-                                      <line x1="16" y1="16" x2="22" y2="22" />
-                                    </svg>
-                                  </span>
-                                </button>
-                              );
-                            })()
-                          ) : (
-                            <span className="text-muted">이미지 없음</span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="text-strong">{item.items || item.name}</div>
-                          {item.itemDescription && <p className="item-detail">{item.itemDescription}</p>}
-                          <div className="item-meta">
-                            {item.deliveryMethod && <span>배송: {item.deliveryMethod}</span>}
-                            {item.desiredDate && <span>희망일: {item.desiredDate}</span>}
-                            {item.memo && <span>메모: {item.memo}</span>}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="text-strong">{item.ownerName || item.owner}</div>
-                          {item.isAnonymous && <span className="anon-chip">익명 요청</span>}
-                        </td>
-                        <td>{item.donationMethod || '자동 매칭'}</td>
-                        <td>{item.status}</td>
-                        <td>
-                          <div className="text-muted">{getMatchingMemoText(item)}</div>
-                        </td>
-                        <td>
-                          {pendingUpdate ? (
-                            <>
-                              <div className="pending-note">
-                                변경 예정: {pendingUpdate.label || formatStatusLabel(pendingUpdate.nextStatus)}
-                              </div>
-                              <div className="admin-card-actions">
-                                <button
-                                  type="button"
-                                  className="small-btn primary"
-                                  onClick={() => applyPendingUpdate(item.id)}
-                                >
-                                  저장
-                                </button>
-                                <button
-                                  type="button"
-                                  className="small-btn"
-                                  onClick={() => clearPendingUpdate(item.id)}
-                                >
-                                  취소
-                                </button>
-                              </div>
-                            </>
-                          ) : item.status === '매칭됨' || item.status === '매칭대기' || item.status === '거절됨' || item.pendingOrganization ? (
-                            <div className="text-muted">
-                              {item.status === '매칭됨' ? '매칭 완료' : 
-                               item.status === '매칭대기' ? '매칭 대기 중' :
-                               item.status === '거절됨' ? '거절됨' :
-                               '기관 확인 중입니다.'}
-                            </div>
-                          ) : (
-                            <div className="admin-card-actions">
-                              {(() => {
-                                const isDirectMatch =
-                                  item.donationMethod === '직접 매칭' &&
-                                  (item.donationOrganizationId || item.donationOrganization)
-                                const orgName = item.donationOrganization || item.organization || item.pendingOrganization
-                                const approvalOptions = {
-                                  matchingInfo: isDirectMatch && orgName
-                                    ? `${orgName} 기관 확인 중입니다.`
-                                    : '기관 매칭을 기다리는 중입니다.',
-                                  rejectionReason: '',
-                                  pendingOrganization: isDirectMatch ? orgName : null,
-                                  matchedOrganization: null,
-                                  directMatchOrganization: isDirectMatch ? orgName : null,
-                                  directMatchOrganizationId: isDirectMatch ? item.donationOrganizationId || null : null
-                                }
-                                return (
-                                  <button
-                                    type="button"
-                                    className="small-btn"
-                                    onClick={() => queueItemUpdate(item, '매칭대기', approvalOptions, '승인')}
-                                  >
-                                    승인
-                                  </button>
-                                )
-                              })()}
-                              <button type="button" className="small-btn warning" onClick={() => handleRejectItem(item)}>
-                                거절
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
-
-      {activePanel === 'matching' && (
-        <section className="admin-panel">
-          <h2>자동 매칭 대기 물품</h2>
-          {autoMatchingQueue.length === 0 ? (
-            <p className="empty-hint">자동 매칭이 필요한 물품이 없습니다.</p>
-          ) : (
-            <div className="admin-card-list">
-              {autoMatchingQueue.map((item) => (
-                <article key={item.id} className="admin-card">
-                  <div className="admin-card-header">
-                    <div>
-                      <strong>{item.name}</strong>
-                      <p>{item.ownerName || item.owner}</p>
-                    </div>
-                    <span className="status-chip status-pending">대기</span>
-                  </div>
-                  <p className="admin-card-memo">{item.items}</p>
-                  <div className="match-select">
-                    <select
-                      value={matchSelections[item.id] || ''}
-                      onChange={(event) =>
-                        setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
-                      }
-                    >
-                      <option value="">기관 선택</option>
-                      {mergedOrganizationOptions.map((org) => (
-                        <option key={org.username || org.id} value={org.username || org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button type="button" className="small-btn primary" onClick={() => handleSendInvite(item)}>
-                      매칭 제안
-        </button>
-      </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          <h2>기관 응답 현황</h2>
-          {pendingInviteList.length === 0 ? (
-            <p className="empty-hint">최근 매칭 제안 내역이 없습니다.</p>
-          ) : (
-            <div className="admin-table-wrapper mini">
-              <table>
-                <thead>
-                  <tr>
-                    <th>물품</th>
-                    <th>기관</th>
-                    <th>상태</th>
-                    <th>비고</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingInviteList.map((invite) => (
-                    <tr key={invite.id}>
-                      <td>
-                        {invite.donorName} / {invite.itemName || invite.itemId}
-                      </td>
-                      <td>{invite.organizationName}</td>
-                      <td>{invite.status}</td>
-                      <td>{invite.responseReason || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
-
-{showModal && selectedUser && (
+      {showModal && selectedUser && (
   <div className="modal-overlay" onClick={() => setShowModal(false)}>
     <div className="modal" onClick={(e) => e.stopPropagation()}>
       <h2>회원 상세 정보</h2>
@@ -1242,6 +1019,135 @@ const [showModal, setShowModal] = useState(false);
             )}
             <div className="modal-buttons">
               <button className="small-btn" onClick={() => setImageModal(null)}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingPost && (
+        <div className="modal-overlay" onClick={() => setViewingPost(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2>게시물 상세보기</h2>
+            
+            <div className="modal-content" style={{ padding: '1rem 0' }}>
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <label style={{ fontWeight: '600' }}>게시물 타입:</label>
+                <span className={`type-badge ${viewingPost.postType === 'DONATION_REVIEW' ? 'review' : 'request'}`}>
+                  {viewingPost.postType === 'DONATION_REVIEW' ? '기부 후기' : '요청 게시물'}
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>제목</label>
+                <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                  {viewingPost.title}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>내용</label>
+                <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd', minHeight: '150px', whiteSpace: 'pre-wrap' }}>
+                  {viewingPost.content}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>작성자</label>
+                <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                  {viewingPost.writer || '익명'}
+                  {viewingPost.writerType && (
+                    <span className="anon-chip" style={{ marginLeft: '0.5rem' }}>
+                      {viewingPost.writerType === 'user' ? '일반 회원' : '기관 회원'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>조회수</label>
+                  <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                    {viewingPost.viewCount || 0}
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>작성일</label>
+                  <div style={{ padding: '0.75rem', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+                    {viewingPost.createdAt 
+                      ? new Date(viewingPost.createdAt).toLocaleString('ko-KR', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : '-'}
+                  </div>
+                </div>
+              </div>
+
+              {viewingPost.images && viewingPost.images.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>이미지</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
+                    {viewingPost.images.map((img, index) => {
+                      const imageUrl = img.url || img.dataUrl || img;
+                      const fullUrl = imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')
+                        ? `http://localhost:8080${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`
+                        : imageUrl;
+                      return (
+                        <div key={index} style={{ position: 'relative' }}>
+                          <img
+                            src={fullUrl}
+                            alt={`게시물 이미지 ${index + 1}`}
+                            style={{ 
+                              width: '100%', 
+                              height: '150px', 
+                              objectFit: 'cover', 
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              border: '1px solid #ddd'
+                            }}
+                            onClick={() => {
+                              setImageModal({
+                                title: viewingPost.title,
+                                images: viewingPost.images.map(i => ({
+                                  url: i.url || i.dataUrl || i,
+                                  dataUrl: i.dataUrl || i.url || i
+                                }))
+                              });
+                            }}
+                            onError={(e) => {
+                              console.error('이미지 로드 실패:', fullUrl);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-buttons">
+              <button
+                className="small-btn danger"
+                onClick={async () => {
+                  if (window.confirm('정말 이 게시물을 삭제하시겠습니까?')) {
+                    await handleDeletePost(viewingPost.id);
+                    setViewingPost(null);
+                  }
+                }}
+              >
+                삭제
+              </button>
+              <button
+                className="small-btn"
+                onClick={() => setViewingPost(null)}
+              >
                 닫기
               </button>
             </div>

@@ -39,50 +39,50 @@ export default function BoardPage({
   const fetchPosts = async () => {
     setLoading(true)
     try {
-      // 기부 후기 목록
+      // 기부 후기 목록 (DONATION_REVIEW 타입만)
       const reviewResponse = await fetch('http://localhost:8080/api/posts?type=DONATION_REVIEW&page=0&size=100')
       if (reviewResponse.ok) {
         const reviewData = await reviewResponse.json()
-          const reviewPosts = (reviewData.content || []).map(post => ({
-            id: post.id,
-            title: post.title,
-            content: post.content,
-            writer: post.writer,
-            views: post.viewCount || 0,
-            date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }).replace(/\s/g, '.') : '',
-            createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
-            boardType: 'review'
-          }))
+        const reviewPosts = (reviewData.content || []).map(post => ({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          writer: post.writer,
+          views: post.viewCount || 0,
+          date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).replace(/\s/g, '.') : '',
+          createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
+          boardType: 'review',
+          postType: post.postType // 게시글 타입 저장
+        }))
         setApiPosts(prev => ({ ...prev, review: reviewPosts })) // 완전 교체
       }
 
-      // 요청 게시판 목록 (로그인한 경우만)
-      if (isLoggedIn) {
-        const requestResponse = await fetch('http://localhost:8080/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
-          credentials: 'include'
-        })
-        if (requestResponse.ok) {
-          const requestData = await requestResponse.json()
-            const requestPosts = (requestData.content || []).map(post => ({
-              id: post.id,
-              title: post.title,
-              content: post.content,
-              writer: post.writer,
-              views: post.viewCount || 0,
-              date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-              }).replace(/\s/g, '.') : '',
-              createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
-              boardType: 'request'
-            }))
-          setApiPosts(prev => ({ ...prev, request: requestPosts })) // 완전 교체
-        }
+      // 요청 게시판 목록 (ORGAN_REQUEST 타입만, 모든 기관의 게시물)
+      const requestResponse = await fetch('http://localhost:8080/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
+        credentials: 'include'
+      })
+      if (requestResponse.ok) {
+        const requestData = await requestResponse.json()
+        const requestPosts = (requestData.content || []).map(post => ({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          writer: post.writer,
+          views: post.viewCount || 0,
+          date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).replace(/\s/g, '.') : '',
+          createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
+          boardType: 'request',
+          postType: post.postType // 게시글 타입 저장
+        }))
+        setApiPosts(prev => ({ ...prev, request: requestPosts })) // 완전 교체
       }
     } catch (error) {
       console.error('게시글 목록 조회 실패:', error)

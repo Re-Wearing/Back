@@ -192,6 +192,86 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public Post updatePostByAdmin(Long postId, PostForm form, MultipartFile image) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
+
+        // 관리자는 작성자 확인 없이 수정 가능
+
+        // 여러 이미지 업데이트
+        if (form.getImages() != null && !form.getImages().isEmpty()) {
+            // 기존 이미지 삭제
+            if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
+                String[] existingUrls = post.getImageUrls().split(",");
+                for (String url : existingUrls) {
+                    if (url != null && !url.trim().isEmpty()) {
+                        deleteImage(url.trim());
+                    }
+                }
+            } else if (post.getImageUrl() != null) {
+                deleteImage(post.getImageUrl());
+            }
+            
+            // 새 이미지 저장
+            List<String> savedImageUrls = new java.util.ArrayList<>();
+            for (MultipartFile img : form.getImages()) {
+                if (img != null && !img.isEmpty()) {
+                    try {
+                        String savedUrl = saveImage(img);
+                        savedImageUrls.add(savedUrl);
+                    } catch (IOException e) {
+                        log.error("이미지 저장 실패", e);
+                        throw new RuntimeException("이미지 저장에 실패했습니다.", e);
+                    }
+                }
+            }
+            if (!savedImageUrls.isEmpty()) {
+                post.setImageUrls(String.join(",", savedImageUrls));
+                post.setImageUrl(savedImageUrls.get(0)); // 첫 번째 이미지를 imageUrl에도 설정 (하위 호환성)
+            }
+        }
+        // 단일 이미지 업데이트 (하위 호환성)
+        else if (image != null && !image.isEmpty()) {
+            // 기존 이미지 삭제
+            if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
+                String[] existingUrls = post.getImageUrls().split(",");
+                for (String url : existingUrls) {
+                    if (url != null && !url.trim().isEmpty()) {
+                        deleteImage(url.trim());
+                    }
+                }
+            } else if (post.getImageUrl() != null) {
+                deleteImage(post.getImageUrl());
+            }
+            // 새 이미지 저장
+            try {
+                String savedUrl = saveImage(image);
+                post.setImageUrl(savedUrl);
+                post.setImageUrls(savedUrl);
+            } catch (IOException e) {
+                log.error("이미지 저장 실패", e);
+                throw new RuntimeException("이미지 저장에 실패했습니다.", e);
+            }
+        }
+
+        // 내용 업데이트
+        post.setTitle(form.getTitle());
+        post.setContent(form.getContent());
+
+        // 타입별 필드 업데이트
+        if (form.getPostType() == PostType.DONATION_REVIEW) {
+            post.setIsAnonymous(form.getIsAnonymous() != null ? form.getIsAnonymous() : false);
+        } else if (form.getPostType() == PostType.ORGAN_REQUEST) {
+            post.setReqGenderType(form.getReqGenderType());
+            post.setReqMainCategory(form.getReqMainCategory());
+            post.setReqDetailCategory(form.getReqDetailCategory());
+            post.setReqSize(form.getReqSize());
+        }
+
+        return postRepository.save(post);
+    }
+
+    @Override
     public void deletePost(Long postId, User author) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물을 찾을 수 없습니다."));
