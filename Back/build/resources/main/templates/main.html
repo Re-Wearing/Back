@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 - RE-WEAR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-bottom: 20px;
+        }
+
+        .welcome-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .welcome-section h2 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section .user-email {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .menu-section h3 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .menu-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .menu-item {
+            background: #333;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background: #555;
+        }
+
+        .menu-item a {
+            display: block;
+            padding: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .description {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .error-msg {
+            padding: 12px 16px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: #991b1b;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>RE-WEAR</h1>
+        <p>지속가능한 패션을 위한 기부 플랫폼</p>
+    </div>
+
+    <!-- 네비게이션 배너 - 모든 사용자에게 표시 -->
+    <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+    <div class="card">
+        <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+
+        <!-- 로그인된 사용자용 환영 메시지 -->
+        <div sec:authorize="isAuthenticated()" class="welcome-section">
+            <h2 th:text="'안녕하세요, ' + ${user.name} + '님'">안녕하세요</h2>
+            <p class="user-email" th:text="${user.email}">email</p>
+        </div>
+
+        <!-- 비로그인 사용자용 환영 메시지 -->
+        <div sec:authorize="isAnonymous()" class="welcome-section">
+            <h2>RE-WEAR에 오신 것을 환영합니다</h2>
+            <p class="user-email">지속가능한 패션을 위한 기부 플랫폼입니다</p>
+        </div>
+
+        <p class="description">
+            RE-WEAR에 오신 것을 환영합니다. 여기서는 옷을 기부하고, 필요한 사람들에게 전달할 수 있습니다.
+            지속가능한 패션 문화를 함께 만들어가요!
+        </p>
+    </div>
+</div>
+</body>
+</html>
