@@ -14,7 +14,8 @@ export default function DonationStatusPage({
   shipments = [],
   donationItems = [], // 하위 호환성을 위해 유지
   onNavigateDeliveryStatus = null,
-  onCancelDonation = null
+  onCancelDonation = null,
+  onLogin = () => {}
 }) {
   if (!isLoggedIn || !currentUser) {
     if (onRequireLogin) {
@@ -192,7 +193,8 @@ export default function DonationStatusPage({
               : '사유 확인 후 다시 신청해주세요.'
             : '-'),
         matchedOrganization: item.matchedOrganization || (statusLabel === '매칭됨' ? item.organization : null),
-        referenceCode: item.referenceCode || item.id || `donation-${index}`
+        referenceCode: item.referenceCode || item.id || `donation-${index}`,
+        deliveryId: item.deliveryId || null // 하위 호환성을 위해 null 허용
       }
     })
   }, [apiData, donationItems])
@@ -268,9 +270,9 @@ export default function DonationStatusPage({
     return counts
   }, [apiData, approvalItems])
 
-  const handleNavigateToDeliveryStatus = reference => {
+  const handleNavigateToDeliveryStatus = (deliveryId) => {
     if (typeof onNavigateDeliveryStatus === 'function') {
-      onNavigateDeliveryStatus(reference)
+      onNavigateDeliveryStatus(deliveryId)
     } else {
       setActiveTab('history')
     }
@@ -479,11 +481,12 @@ export default function DonationStatusPage({
                       <span className="approval-item-placeholder">
                         {approvalStatusDescriptions[item.status] || '진행 중입니다.'}
                       </span>
-                      {item.status === '배송대기' && (
+                      {/* 배송 정보가 있으면 배송 조회 버튼 표시 (배송대기 또는 매칭됨 상태) */}
+                      {item.deliveryId && (item.status === '배송대기' || item.status === '매칭됨') && (
                         <button
                           type="button"
                           className="btn-filter"
-                          onClick={() => handleNavigateToDeliveryStatus(item.referenceCode)}
+                          onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
                         >
                           배송 조회
                         </button>
@@ -595,11 +598,11 @@ export default function DonationStatusPage({
                     // 이미 전체 URL이거나 data URL인 경우 그대로 사용
                     imageSrc = imageSrc
                   } else if (imageSrc.startsWith('/uploads/')) {
-                    // /uploads/로 시작하는 경우 백엔드 서버 주소 추가
-                    imageSrc = `http://localhost:8080${imageSrc}`
+                    // /uploads/로 시작하는 경우 그대로 사용 (상대 경로)
+                    imageSrc = imageSrc
                   } else {
-                    // 파일명만 있는 경우
-                    imageSrc = `http://localhost:8080/uploads/${imageSrc}`
+                    // 파일명만 있는 경우 /uploads/ 경로 추가
+                    imageSrc = `/uploads/${imageSrc}`
                   }
 
                   console.log(`기부 상세 모달 - 이미지 ${idx + 1} URL:`, imageSrc)
@@ -667,7 +670,14 @@ export default function DonationStatusPage({
                 )}
                 {delivery && (
                   <>
-                    {delivery.status && <li><strong>배송 상태:</strong> {delivery.status}</li>}
+                    {delivery.status && (
+                      <li><strong>배송 상태:</strong> {
+                        delivery.status === 'DELIVERED' ? '완료' :
+                        delivery.status === 'IN_TRANSIT' ? '배송중' :
+                        (delivery.status === 'PENDING' || delivery.status === 'PREPARING') ? '대기' :
+                        delivery.status === 'CANCELLED' ? '취소' : delivery.status
+                      }</li>
+                    )}
                     {delivery.carrier && <li><strong>택배사:</strong> {delivery.carrier}</li>}
                     {delivery.trackingNumber && <li><strong>송장번호:</strong> {delivery.trackingNumber}</li>}
                   </>
@@ -797,6 +807,7 @@ export default function DonationStatusPage({
           onNavClick={onNavLink}
           isLoggedIn={isLoggedIn}
           onLogout={onLogout}
+          onLogin={onLogin}
           onNotifications={onNotifications}
           unreadCount={unreadCount}
           onMenu={onMenu}

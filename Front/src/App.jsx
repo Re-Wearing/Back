@@ -16,7 +16,10 @@ import AdminManagePage from './pages/AdminManagePage'
 import AdminOrgApprovalPage from './pages/AdminOrgApprovalPage'
 import AdminItemApprovalPage from './pages/AdminItemApprovalPage'
 import AdminMatchingPage from './pages/AdminMatchingPage'
+import AdminMatchingSelectPage from './pages/AdminMatchingSelectPage'
+import AdminDirectMatchingPage from './pages/AdminDirectMatchingPage'
 import AdminPostManagePage from './pages/AdminPostManagePage'
+import AdminDeliveryManagePage from './pages/AdminDeliveryManagePage'
 import AdminFaqPage from './pages/AdminFaqPage'
 import FaqPage from './pages/FaqPage'
 import InquiryPage from './pages/InquiryPage'
@@ -442,6 +445,7 @@ export default function App() {
   const isLoggedIn = Boolean(currentUser)
   const [currentPath, setCurrentPath] = useState('/main')
   const [recoveryContext, setRecoveryContext] = useState(null)
+  const [selectedDeliveryId, setSelectedDeliveryId] = useState(null)
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
   const [unreadCount, setUnreadCount] = useState(0)
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS)
@@ -847,25 +851,49 @@ export default function App() {
   }
 
   const goToDonationStatus = (options = {}, userOverride) => {
-    const { push = true, replace = false } = options
-    const targetUser = userOverride || currentUser
-    if (!targetUser) {
-      goToLogin(options)
-      return
-    }
-    if (targetUser.role === '관리자 회원') {
+    try {
+      const { push = true, replace = false } = options
+      const targetUser = userOverride || currentUser
+      if (!targetUser) {
+        // currentUser가 없으면 다시 가져오기 시도
+        fetchCurrentUser().then(user => {
+          if (user) {
+            // 사용자 정보를 가져온 후 다시 시도
+            setShowLanding(false)
+            setActivePage(user.role === '기관 회원' ? 'organizationDonationStatus' : 'donationStatus')
+            if (push) updatePath('/donation-status', { replace })
+            else if (replace) updatePath('/donation-status', { replace: true })
+          } else {
+            // 사용자 정보를 가져올 수 없으면 로그인 페이지로
+            goToLogin(options)
+          }
+        }).catch(() => {
+          goToLogin(options)
+        })
+        return
+      }
+      if (targetUser.role === '관리자 회원') {
+        goToMain('/main', options)
+        return
+      }
+      setShowLanding(false)
+      setActivePage(targetUser.role === '기관 회원' ? 'organizationDonationStatus' : 'donationStatus')
+      if (push) updatePath('/donation-status', { replace })
+      else if (replace) updatePath('/donation-status', { replace: true })
+    } catch (error) {
+      console.error('기부 현황 페이지 이동 오류:', error)
+      // 에러 발생 시 메인으로 이동
       goToMain('/main', options)
-      return
     }
-    setShowLanding(false)
-    setActivePage(targetUser.role === '기관 회원' ? 'organizationDonationStatus' : 'donationStatus')
-    if (push) updatePath('/donation-status', { replace })
-    else if (replace) updatePath('/donation-status', { replace: true })
   }
-  const goToDeliveryCheck = (options = {}) => {
+  const goToDeliveryCheck = (deliveryId = null, options = {}) => {
     const { push = true, replace = false } = options
     setShowLanding(false)
     setActivePage('deliveryCheck')
+    // 배송 ID를 상태로 저장 (DeliveryCheckPage에서 사용)
+    if (deliveryId) {
+      setSelectedDeliveryId(deliveryId)
+    }
     if (push) updatePath('/delivery-check', { replace })
     else if (replace) updatePath('/delivery-check', { replace: true })
   }
@@ -1234,11 +1262,12 @@ export default function App() {
   }
 
   const handleLogout = () => {
-  setCurrentUser(null)
-  if (typeof window !== 'undefined') {
-    window.sessionStorage.removeItem('rewearUser')
-  }
-  goToMain()
+    setCurrentUser(null)
+    setUnreadCount(0) // 로그아웃 시 알림 횟수 초기화
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('rewearUser')
+    }
+    goToMain()
   }
 
   const handleForgotPasswordSubmit = async ({ username, email }) => {
@@ -2134,14 +2163,20 @@ export default function App() {
       setActivePage('adminOrgApproval')
     } else if (href === '/admin/manage/items' || href === '/admin/donation-approval') {
       setActivePage('adminItemApproval')
+    } else if (href === '/admin/manage/matching/select') {
+      setActivePage('adminMatchingSelect')
+    } else if (href === '/admin/manage/matching/direct') {
+      setActivePage('adminDirectMatching')
     } else if (href === '/admin/manage/matching' || href === '/admin/matched-donations') {
       setActivePage('adminMatching')
     } else if (href === '/admin/manage/posts') {
       setActivePage('adminPostManage')
+    } else if (href === '/admin/manage/delivery') {
+      setActivePage('adminDeliveryManage')
     } else if (href === '/admin/faq') {
       goToAdminFaq()
     } else if (href === '/admin/delivery') {
-      setActivePage('adminItemApproval')
+      setActivePage('adminDeliveryManage')
     } else {
       goToMain('/main')
     }
@@ -2223,6 +2258,12 @@ export default function App() {
       case '/admin/donation-approval':
       case '/admin/delivery':
         setActivePage('adminItemApproval')
+        break
+      case '/admin/manage/matching/select':
+        setActivePage('adminMatchingSelect')
+        break
+      case '/admin/manage/matching/direct':
+        setActivePage('adminDirectMatching')
         break
       case '/admin/manage/matching':
       case '/admin/matched-donations':
@@ -2397,7 +2438,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2433,7 +2474,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2456,7 +2497,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2465,7 +2506,50 @@ export default function App() {
               onMenu={() => setIsMenuOpen(true)}
             />
             <AdminItemApprovalPage
+              onNavigateHome={goToMain}
+            />
+          </div>
+        </section>
+      ) : activePage === 'adminMatchingSelect' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={goToLogin}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminMatchingSelectPage
+              onNavigateHome={goToMain}
+            />
+          </div>
+        </section>
+      ) : activePage === 'adminDirectMatching' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={goToLogin}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminDirectMatchingPage
               donationItems={allDonationItems}
+              organizationOptions={organizationOptions}
+              matchingInvites={matchingInvites}
+              onSendMatchingInvite={handleSendMatchingInvite}
               onNavigateHome={goToMain}
             />
           </div>
@@ -2477,7 +2561,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2501,7 +2585,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2514,6 +2598,18 @@ export default function App() {
             />
           </div>
         </section>
+      ) : activePage === 'adminDeliveryManage' ? (
+        <AdminDeliveryManagePage
+          onNavigateHome={goToMain}
+          onNavLink={handleNavRedirection}
+          isLoggedIn={isLoggedIn}
+          onLogout={handleLogout}
+          onLogin={goToLogin}
+          onNotifications={goToNotifications}
+          unreadCount={unreadCount}
+          onMenu={() => setIsMenuOpen(true)}
+          currentUser={currentUser}
+        />
       ) : activePage === 'inquiryAnswers' ? (
         <InquiryAnswersPage
           onNavigateHome={goToMain}
@@ -2624,6 +2720,7 @@ export default function App() {
           onInquiry={goToInquiry}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           hasInquiries={userInquiries.length > 0}
@@ -2639,6 +2736,7 @@ export default function App() {
           onBack={() => goToFaq()}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onSubmitInquiry={handleInquirySubmit}
@@ -2651,6 +2749,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}
@@ -2658,7 +2757,7 @@ export default function App() {
           onRequireLogin={goToLogin}
           shipments={shipments}
           donationItems={currentUser ? donations[currentUser.username] || [] : []}
-          onNavigateDeliveryStatus={() => goToDeliveryCheck()}
+          onNavigateDeliveryStatus={(deliveryId) => goToDeliveryCheck(deliveryId)}
           onCancelDonation={itemId => currentUser && handleCancelDonation(currentUser.username, itemId)}
         />
       ) : activePage === 'deliveryCheck' ? (
@@ -2667,6 +2766,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}
@@ -2675,6 +2775,8 @@ export default function App() {
           shipments={shipments}
           donorProfile={profiles.user}
           organizationProfile={currentUser ? profiles[currentUser.username] : null}
+          selectedDeliveryId={selectedDeliveryId}
+          onDeliveryIdProcessed={() => setSelectedDeliveryId(null)}
         />
       ) : activePage === 'organizationDonationStatus' ? (
         <OrganizationDonationStatusPage
@@ -2682,6 +2784,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}
@@ -2691,6 +2794,7 @@ export default function App() {
           shipments={shipments}
           matchingInvites={matchingInvites}
           onRespondMatchingInvite={handleRespondMatchingInvite}
+          onNavigateDeliveryStatus={(deliveryId) => goToDeliveryCheck(deliveryId)}
         />
       ) : activePage === 'businessIntro' ? (
         <BusinessIntroPage
@@ -2710,6 +2814,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}

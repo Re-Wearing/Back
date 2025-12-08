@@ -266,6 +266,7 @@
     border: none;
     margin-right: 6px;
     cursor: pointer;
+    white-space: nowrap;
   }
   
   .small-btn.danger {
@@ -291,6 +292,35 @@
   background: transparent;
   border: 1px solid #ddd;
   color: #555;
+}
+
+/* 승인 버튼 - 연두색 */
+.small-btn.approve-btn {
+  background: #c8e6c9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  white-space: nowrap;
+}
+
+.small-btn.approve-btn:hover {
+  background: #a5d6a7;
+}
+
+/* 승인대기 버튼 - 흰색 */
+.small-btn.pending-btn {
+  background: #ffffff;
+  color: #555;
+  border: 1px solid #ddd;
+  white-space: nowrap;
+}
+
+.small-btn.pending-btn:hover {
+  background: #f5f5f5;
+}
+
+/* 모든 small-btn에 텍스트 줄바꿈 방지 */
+.small-btn {
+  white-space: nowrap;
 }
   
   /* 토스트 메시지 */
@@ -529,14 +559,14 @@
 
 .admin-card-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
 }
 
-/* 작은 화면에서는 1개씩 표시 */
-@media (max-width: 768px) {
+/* 큰 화면에서는 2개씩 표시 */
+@media (min-width: 1200px) {
   .admin-card-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -544,7 +574,7 @@
   background: #fff;
   border: 1px solid #eee;
   border-radius: 16px;
-  padding: 1.2rem;
+  padding: 2rem;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
 

@@ -10,10 +10,13 @@ export default function DeliveryCheckPage({
   unreadCount,
   onMenu = () => {},
   currentUser,
+  onLogin = () => {},
   currentProfile,
   shipments = [],
   donorProfile,
-  organizationProfile
+  organizationProfile,
+  selectedDeliveryId = null,
+  onDeliveryIdProcessed = () => {}
 }) {
   const [deliveries, setDeliveries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -78,6 +81,19 @@ export default function DeliveryCheckPage({
         }))
 
         setDeliveries(deliveryList)
+        
+        // selectedDeliveryId가 있으면 해당 배송을 자동으로 상세 모달로 열기
+        if (selectedDeliveryId) {
+          const targetDelivery = deliveryList.find(d => d.id === selectedDeliveryId)
+          if (targetDelivery) {
+            // 배송 상세 정보 가져오기
+            handleViewDetail(selectedDeliveryId)
+            // 처리 완료 알림
+            if (onDeliveryIdProcessed) {
+              onDeliveryIdProcessed()
+            }
+          }
+        }
       } catch (err) {
         console.error('배송 목록 조회 실패:', err)
         setError(err.message)
@@ -88,23 +104,22 @@ export default function DeliveryCheckPage({
     }
 
     fetchDeliveries()
-  }, [isLoggedIn, currentUser])
+  }, [isLoggedIn, currentUser, selectedDeliveryId])
 
-  // 배송 상태 변환
+  // 배송 상태 변환 (3단계: 대기, 배송중, 완료)
   const convertStatus = (status) => {
     switch (status) {
       case 'DELIVERED':
-        return '배송완료'
+        return '완료'
       case 'IN_TRANSIT':
         return '배송중'
       case 'PREPARING':
-        return '배송준비중'
       case 'PENDING':
-        return '배송대기'
+        return '대기'
       case 'CANCELLED':
-        return '배송취소'
+        return '취소'
       default:
-        return '배송대기'
+        return '대기'
     }
   }
 
@@ -134,26 +149,38 @@ export default function DeliveryCheckPage({
 
   const statusColor = status => {
     switch (status) {
-      case "배송완료":
+      case "완료":
         return "status-complete"
       case "배송중":
-      case "배송준비중":
         return "status-progress"
-      case "배송대기":
+      case "대기":
         return "status-wait"
-      case "배송취소":
+      case "취소":
         return "status-cancelled"
       default:
         return ""
     }
   }
 
+  // selectedDeliveryId가 있으면 해당 배송만 필터링, 없으면 전체 배송 표시
+  const filteredDeliveries = selectedDeliveryId
+    ? deliveries.filter(d => d.id === selectedDeliveryId)
+    : deliveries
+
   // 기존 shipments 데이터와 API 데이터 병합 (하위 호환성)
-  const tableData = deliveries.length > 0 
-    ? deliveries
+  const tableData = filteredDeliveries.length > 0 
+    ? filteredDeliveries.map((item, index) => ({
+        ...item,
+        // 기관 회원인 경우 순서 번호 추가 (최신순이므로 1번부터)
+        orderNumber: !isDonorView ? index + 1 : null
+      }))
     : (Array.isArray(shipments) && shipments.length > 0
         ? shipments
             .filter(item => {
+              // selectedDeliveryId가 있으면 해당 항목만 필터링
+              if (selectedDeliveryId && item.id !== selectedDeliveryId) {
+                return false
+              }
               if (isDonorView) {
                 return (
                   !item.sender ||
@@ -165,10 +192,12 @@ export default function DeliveryCheckPage({
                 item.receiver === currentUser?.name || item.receiver === currentUser?.nickname
               )
             })
-            .map(item => ({
+            .map((item, index) => ({
               ...item,
               sender: item.sender || senderName,
-              receiver: item.receiver || receiverName
+              receiver: item.receiver || receiverName,
+              // 기관 회원인 경우 순서 번호 추가
+              orderNumber: !isDonorView ? index + 1 : null
             }))
         : [])
 
@@ -182,6 +211,7 @@ export default function DeliveryCheckPage({
           onNavClick={onNavLink}
           isLoggedIn={isLoggedIn}
           onLogout={onLogout}
+          onLogin={onLogin}
           onNotifications={onNotifications}
           unreadCount={unreadCount}
           onMenu={onMenu}
@@ -193,7 +223,7 @@ export default function DeliveryCheckPage({
           <table className="delivery-table">
             <thead>
               <tr>
-                <th>송장번호</th>
+                <th>{isDonorView ? '송장번호' : 'No.'}</th>
                 <th>보내는 사람</th>
                 <th>배송 시작</th>
                 <th>받는 곳</th>
@@ -202,27 +232,40 @@ export default function DeliveryCheckPage({
               </tr>
             </thead>
             <tbody>
-              {tableData.map((row, idx) => (
-                <tr key={idx}>
-                  <td>{row.id}</td>
-                  <td>{senderName}</td>
-                  <td>{row.startDate}</td>
-                  <td>{row.receiver}</td>
-                  <td>
-                    <span className={`status-badge ${statusColor(row.status)}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="delivery-link"
-                      onClick={() => handleViewDetail(row.id)}
-                    >
-                      상세조회 →
-                    </button>
+              {tableData.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>
+                    {loading ? '로딩 중...' : '배송 내역이 없습니다.'}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                tableData.map((row, idx) => (
+                  <tr key={idx} style={selectedDeliveryId === row.id ? { backgroundColor: '#fff9e6' } : {}}>
+                    <td>
+                      {isDonorView 
+                        ? row.id 
+                        : (row.orderNumber ? `No. ${row.orderNumber}` : `No. ${idx + 1}`)
+                      }
+                    </td>
+                    <td>{row.sender}</td>
+                    <td>{row.startDate}</td>
+                    <td>{row.receiver}</td>
+                    <td>
+                      <span className={`status-badge ${statusColor(row.status)}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="delivery-link"
+                        onClick={() => handleViewDetail(row.id)}
+                      >
+                        상세조회 →
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
 

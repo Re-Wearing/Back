@@ -39,7 +39,8 @@ export default function DonationPage({
   onRequireLogin,
   onAddDonation,
   onGoToDonationStatus,
-  availableOrganizations = []
+  availableOrganizations = [],
+  onLogin = () => {}
 }) {
   const today = new Date().toISOString().split('T')[0]
   const [itemType, setItemType] = useState('')
@@ -333,6 +334,7 @@ export default function DonationPage({
         itemSize,
         itemCondition,
         itemDescription,
+        quantity,
         donationMethod,
         donationOrganizationId,
         donationOrganizationName: donationMethod === '직접 매칭' 
@@ -358,11 +360,19 @@ export default function DonationPage({
         body: JSON.stringify(requestData)
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.message || '기부 신청에 실패했습니다.')
+        let errorMessage = '기부 신청에 실패했습니다.'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch (e) {
+          // JSON 파싱 실패 시 상태 코드 기반 메시지
+          errorMessage = `기부 신청에 실패했습니다. (${response.status})`
+        }
+        throw new Error(errorMessage)
       }
+
+      const result = await response.json()
 
       // 성공 시 기존 콜백 호출 (하위 호환성)
       if (onAddDonation) {
@@ -389,7 +399,7 @@ export default function DonationPage({
 
       alert(result.message || '기부 신청이 완료되었습니다! 감사합니다.')
       
-      // 초기화 및 기부 현황 조회로 이동
+      // 초기화
       setStep('item')
       setItemType('')
       setItemDetail('')
@@ -407,9 +417,17 @@ export default function DonationPage({
       setDesiredDate(today)
       setMemo('')
       
-      if (onGoToDonationStatus) {
-        onGoToDonationStatus()
-      } else {
+      // 기부 현황 조회로 이동 (currentUser 확인 후)
+      try {
+        if (onGoToDonationStatus && isLoggedIn && currentUser) {
+          onGoToDonationStatus()
+        } else {
+          // 로그인 상태가 아니면 메인으로 이동
+          onNavigateHome()
+        }
+      } catch (navError) {
+        console.error('페이지 이동 오류:', navError)
+        // 에러 발생 시 메인으로 이동
         onNavigateHome()
       }
     } catch (error) {
@@ -520,6 +538,7 @@ export default function DonationPage({
             onNavClick={onNavLink}
             isLoggedIn={isLoggedIn}
             onLogout={onLogout}
+            onLogin={onLogin}
             onNotifications={onNotifications}
             unreadCount={unreadCount}
             onMenu={onMenu}

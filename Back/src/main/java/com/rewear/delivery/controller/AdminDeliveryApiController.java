@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,6 +19,37 @@ import java.util.Map;
 public class AdminDeliveryApiController {
 
     private final DeliveryService deliveryService;
+
+    /**
+     * 배송 목록 조회 API
+     */
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllDeliveries() {
+        List<Delivery> deliveries = deliveryService.getAllDeliveries();
+        
+        List<Map<String, Object>> deliveryList = deliveries.stream()
+                .map(this::convertToDeliveryDto)
+                .collect(java.util.stream.Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("deliveries", deliveryList);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 배송 상세 조회 API
+     */
+    @GetMapping("/{deliveryId}")
+    public ResponseEntity<Map<String, Object>> getDelivery(@PathVariable Long deliveryId) {
+        Delivery delivery = deliveryService.getDeliveryById(deliveryId)
+                .orElseThrow(() -> new IllegalArgumentException("배송 정보를 찾을 수 없습니다."));
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("delivery", convertToDeliveryDto(delivery));
+        
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * 배송 상태 업데이트 API
@@ -67,12 +99,18 @@ public class AdminDeliveryApiController {
         dto.put("senderName", delivery.getSenderName());
         dto.put("senderPhone", delivery.getSenderPhone());
         dto.put("senderAddress", delivery.getSenderAddress());
+        dto.put("senderDetailAddress", delivery.getSenderDetailAddress());
+        dto.put("senderPostalCode", delivery.getSenderPostalCode());
         dto.put("receiverName", delivery.getReceiverName());
         dto.put("receiverPhone", delivery.getReceiverPhone());
         dto.put("receiverAddress", delivery.getReceiverAddress());
+        dto.put("receiverDetailAddress", delivery.getReceiverDetailAddress());
+        dto.put("receiverPostalCode", delivery.getReceiverPostalCode());
         dto.put("status", delivery.getStatus() != null ? delivery.getStatus().name() : "PENDING");
         dto.put("shippedAt", delivery.getShippedAt() != null ? delivery.getShippedAt().toString() : null);
         dto.put("deliveredAt", delivery.getDeliveredAt() != null ? delivery.getDeliveredAt().toString() : null);
+        dto.put("createdAt", delivery.getCreatedAt() != null ? delivery.getCreatedAt().toString() : null);
+        dto.put("updatedAt", delivery.getUpdatedAt() != null ? delivery.getUpdatedAt().toString() : null);
         return dto;
     }
 }

@@ -1,9 +1,11 @@
 package com.rewear.admin.controller;
 
+import com.rewear.common.enums.AdminDecision;
 import com.rewear.common.enums.DonationStatus;
 import com.rewear.common.enums.MatchType;
 import com.rewear.common.enums.OrganStatus;
 import com.rewear.donation.entity.Donation;
+import com.rewear.donation.repository.DonationRepository;
 import com.rewear.donation.service.DonationService;
 import com.rewear.donation.util.DonationStatusConverter;
 import com.rewear.organ.entity.Organ;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,19 +36,25 @@ public class AdminDonationApiController {
 
     private final DonationService donationService;
     private final OrganService organService;
+    private final com.rewear.donation.repository.DonationRepository donationRepository;
     
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
     /**
-     * 승인 대기 기부 목록 조회
+     * 승인 대기 기부 목록 조회 (PENDING 상태이면서 REJECTED가 아닌 것만)
      */
     @GetMapping("/pending")
     public ResponseEntity<?> getPendingDonations() {
         try {
-            List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.PENDING);
+            List<Donation> allPending = donationService.getDonationsByStatus(DonationStatus.PENDING);
             
-            List<Map<String, Object>> donationList = donations.stream()
+            // AdminDecision이 PENDING인 것만 필터링 (REJECTED 제외)
+            List<Donation> pendingDonations = allPending.stream()
+                    .filter(d -> d.getAdminDecision() == AdminDecision.PENDING)
+                    .collect(Collectors.toList());
+            
+            List<Map<String, Object>> donationList = pendingDonations.stream()
                     .map(this::convertToAdminDonationDto)
                     .collect(Collectors.toList());
             
@@ -64,13 +73,80 @@ public class AdminDonationApiController {
     }
 
     /**
+     * 거절된 기부 목록 조회 (adminDecision이 REJECTED인 것들)
+     */
+    @GetMapping("/rejected")
+    public ResponseEntity<?> getRejectedDonations() {
+        try {
+            // 모든 기부를 가져와서 adminDecision이 REJECTED인 것만 필터링
+            List<Donation> allDonations = donationService.getAllDonations();
+            List<Donation> rejectedDonations = allDonations.stream()
+                    .filter(d -> d.getAdminDecision() == AdminDecision.REJECTED)
+                    .collect(Collectors.toList());
+            
+            List<Map<String, Object>> donationList = rejectedDonations.stream()
+                    .map(this::convertToAdminDonationDto)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("donations", donationList);
+            response.put("count", donationList.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("거절된 기부 목록 조회 오류", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", true);
+            errorResponse.put("message", "기부 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 승인 완료된 기부 목록 조회 (매칭대기 이상)
+     */
+    @GetMapping("/approved")
+    public ResponseEntity<?> getApprovedDonations() {
+        try {
+            List<Donation> allInProgress = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS);
+            List<Donation> allCompleted = donationService.getDonationsByStatus(DonationStatus.COMPLETED);
+            List<Donation> allShipped = donationService.getDonationsByStatus(DonationStatus.SHIPPED);
+            
+            // 승인 완료된 것들 (매칭대기 이상) - PENDING이 아니고 REJECTED가 아닌 것들
+            List<Donation> approvedDonations = new ArrayList<>();
+            approvedDonations.addAll(allInProgress);
+            approvedDonations.addAll(allCompleted);
+            approvedDonations.addAll(allShipped);
+            
+            List<Map<String, Object>> donationList = approvedDonations.stream()
+                    .map(this::convertToAdminDonationDto)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("donations", donationList);
+            response.put("count", donationList.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("승인 완료된 기부 목록 조회 오류", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", true);
+            errorResponse.put("message", "기부 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
      * 자동 매칭 대기 기부 목록 조회
+     * 간접 매칭으로 신청되고, 승인이 완료되었으며, 아직 기관이 할당되지 않은 기부만 표시
      */
     @GetMapping("/auto-match")
     public ResponseEntity<?> getAutoMatchDonations() {
         try {
             List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
-                    .filter(d -> d.getMatchType() == MatchType.INDIRECT && d.getOrgan() == null)
+                    .filter(d -> d.getMatchType() == MatchType.INDIRECT 
+                            && d.getAdminDecision() == AdminDecision.APPROVED 
+                            && d.getOrgan() == null)
                     .collect(Collectors.toList());
             
             List<Map<String, Object>> donationList = donations.stream()
@@ -87,6 +163,77 @@ public class AdminDonationApiController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", true);
             errorResponse.put("message", "기부 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 직접 매칭 대기 기부 목록 조회
+     * 직접 매칭으로 신청되고, 승인 대기 중이거나 기관 확인을 기다리는 기부만 표시
+     */
+    @GetMapping("/direct-match")
+    public ResponseEntity<?> getDirectMatchDonations() {
+        try {
+            // PENDING 상태의 직접 매칭 기부
+            List<Donation> pendingDirect = donationService.getDonationsByStatus(DonationStatus.PENDING).stream()
+                    .filter(d -> d.getMatchType() == MatchType.DIRECT 
+                            && d.getAdminDecision() == AdminDecision.PENDING)
+                    .collect(Collectors.toList());
+            
+            // IN_PROGRESS 상태의 직접 매칭 기부 (기관이 할당되었고, 기관이 수락한 것도 포함)
+            List<Donation> inProgressDirect = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
+                    .filter(d -> d.getMatchType() == MatchType.DIRECT 
+                            && d.getOrgan() != null)
+                    .collect(Collectors.toList());
+            
+            // 두 리스트 합치기
+            List<Donation> allDirectMatch = new ArrayList<>();
+            allDirectMatch.addAll(pendingDirect);
+            allDirectMatch.addAll(inProgressDirect);
+            
+            List<Map<String, Object>> donationList = allDirectMatch.stream()
+                    .map(this::convertToAdminDonationDto)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("donations", donationList);
+            response.put("count", donationList.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("직접 매칭 대기 기부 목록 조회 오류", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", true);
+            errorResponse.put("message", "기부 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 기부 상세 정보 조회
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDonationDetail(@PathVariable Long id) {
+        try {
+            Donation donation = donationService.getDonationById(id);
+            if (donation == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "기부를 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
+            
+            Map<String, Object> donationDto = convertToAdminDonationDto(donation);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("donation", donationDto);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("기부 상세 정보 조회 오류", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "기부 상세 정보 조회 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -181,6 +328,44 @@ public class AdminDonationApiController {
     }
 
     /**
+     * 기부 상태를 승인대기로 변경
+     */
+    @PostMapping("/{id}/reset-to-pending")
+    public ResponseEntity<Map<String, Object>> resetDonationToPending(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Donation donation = donationService.getDonationById(id);
+            if (donation == null) {
+                response.put("success", false);
+                response.put("message", "기부를 찾을 수 없습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // 상태를 PENDING으로 변경하고 adminDecision도 PENDING으로 변경
+            donation.setStatus(DonationStatus.PENDING);
+            donation.setAdminDecision(AdminDecision.PENDING);
+            donation.setCancelReason(null); // 거절 사유 제거
+            
+            // 간접 매칭인 경우 기관 할당 해제
+            if (donation.getMatchType() == com.rewear.common.enums.MatchType.INDIRECT) {
+                donation.setOrgan(null);
+            }
+            
+            donationRepository.save(donation);
+            
+            response.put("success", true);
+            response.put("message", "기부 상태가 승인대기로 변경되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("기부 상태 변경 오류", e);
+            response.put("success", false);
+            response.put("message", "기부 상태 변경 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
      * 기관 할당
      */
     @PostMapping("/{id}/assign")
@@ -218,7 +403,23 @@ public class AdminDonationApiController {
                     .filter(o -> o.getStatus() == OrganStatus.APPROVED)
                     .orElseThrow(() -> new IllegalArgumentException("유효한 기관을 선택해주세요."));
             
-            donationService.assignDonationToOrgan(id, organ);
+            // 택배 회사와 운송장 번호 추출
+            String carrier = null;
+            String trackingNumber = null;
+            if (requestBody.containsKey("carrier")) {
+                Object carrierObj = requestBody.get("carrier");
+                if (carrierObj instanceof String && !((String) carrierObj).isEmpty()) {
+                    carrier = (String) carrierObj;
+                }
+            }
+            if (requestBody.containsKey("trackingNumber")) {
+                Object trackingNumberObj = requestBody.get("trackingNumber");
+                if (trackingNumberObj instanceof String && !((String) trackingNumberObj).isEmpty()) {
+                    trackingNumber = (String) trackingNumberObj;
+                }
+            }
+            
+            donationService.assignDonationToOrgan(id, organ, carrier, trackingNumber);
             response.put("success", true);
             response.put("message", "선택한 기관으로 기부를 할당했습니다. 이제 매칭 승인을 진행해주세요.");
             return ResponseEntity.ok(response);
@@ -358,17 +559,24 @@ public class AdminDonationApiController {
         // 익명 여부
         dto.put("isAnonymous", donation.getIsAnonymous() != null ? donation.getIsAnonymous() : false);
         
-        // 기타 정보 (Delivery 정보가 있다면)
-        if (donation.getDelivery() != null) {
-            dto.put("deliveryMethod", donation.getDelivery().getCarrier() != null ? "택배 배송" : "직접 배송");
+        // 배송 방법 (Donation 엔티티에서 직접 가져오기)
+        if (donation.getDeliveryMethod() != null) {
+            dto.put("deliveryMethod", donation.getDeliveryMethod() == com.rewear.common.enums.DeliveryMethod.PARCEL_DELIVERY ? "택배 배송" : "직접 배송");
         } else {
             dto.put("deliveryMethod", null);
         }
         
-        // 메모, 연락처, 희망일 등은 Donation 엔티티에 없을 수 있으므로 null 처리
-        dto.put("memo", null);
-        dto.put("contact", null);
-        dto.put("desiredDate", null);
+        // 연락처, 희망일, 메모 (Donation 엔티티에서 가져오기)
+        dto.put("contact", donation.getContact());
+        dto.put("desiredDate", donation.getDesiredDate() != null ? donation.getDesiredDate().toString() : null);
+        dto.put("memo", donation.getMemo());
+        
+        // 배송 정보 ID (택배 정보 입력 시 사용)
+        if (donation.getDelivery() != null) {
+            dto.put("deliveryId", donation.getDelivery().getId());
+        } else {
+            dto.put("deliveryId", null);
+        }
         
         return dto;
     }

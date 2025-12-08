@@ -52,6 +52,10 @@ public class DonationItem {
     @Column(name = "image_urls", columnDefinition = "TEXT")
     private String imageUrls; // 여러 이미지 (쉼표로 구분)
 
+    @Column(name = "quantity", nullable = false)
+    @Builder.Default
+    private Integer quantity = 1; // 수량
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

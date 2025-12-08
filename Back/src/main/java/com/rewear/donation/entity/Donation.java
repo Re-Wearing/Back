@@ -64,6 +64,15 @@ public class Donation {
     @Column(name = "cancel_reason", length = 255)
     private String cancelReason;
 
+    @Column(name = "contact", length = 20)
+    private String contact; // 연락처
+
+    @Column(name = "desired_date")
+    private java.time.LocalDate desiredDate; // 희망일
+
+    @Column(name = "memo", length = 500)
+    private String memo; // 메모
+
     @OneToOne(mappedBy = "donation", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Delivery delivery;
 

@@ -33,5 +33,7 @@ public class DonationItemForm {
     // 이미지 파일명 (세션 저장용)
     private String imageUrl; // 단일 이미지 URL
     private List<String> imageUrls; // 여러 이미지 URL
+    
+    private Integer quantity = 1; // 수량
 }
 

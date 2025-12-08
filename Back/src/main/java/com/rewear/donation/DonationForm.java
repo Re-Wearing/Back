@@ -20,6 +20,12 @@ public class DonationForm {
     @NotNull(message = "익명 여부를 선택해주세요.")
     private Boolean isAnonymous;
 
+    private String contact; // 연락처
+
+    private java.time.LocalDate desiredDate; // 희망일
+
+    private String memo; // 메모
+
     // 직접 매칭인 경우 기관 선택 필수 검증
     public boolean isOrganRequired() {
         return matchType == MatchType.DIRECT;

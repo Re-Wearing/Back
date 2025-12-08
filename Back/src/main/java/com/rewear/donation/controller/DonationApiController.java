@@ -126,6 +126,8 @@ public class DonationApiController {
             itemForm.setMainCategory(DonationConverter.convertItemDetailToClothType(requestDto.getItemDetail()));
             itemForm.setDetailCategory(requestDto.getItemDetail());
             itemForm.setSize(DonationConverter.convertItemSizeToSize(requestDto.getItemSize()));
+            itemForm.setQuantity(requestDto.getQuantity() != null ? requestDto.getQuantity() : 1);
+            // quantity는 프론트엔드에서 보내지 않으므로 기본값 1 사용 (필요시 requestDto에 추가 가능)
             
             // 물품 상태 정보를 description에 포함
             String description = requestDto.getItemDescription();
@@ -146,6 +148,18 @@ public class DonationApiController {
             form.setOrganId(requestDto.getDonationOrganizationId());
             form.setDeliveryMethod(DonationConverter.convertDeliveryMethod(requestDto.getDeliveryMethod()));
             form.setIsAnonymous(requestDto.getIsAnonymous());
+            form.setContact(requestDto.getContact());
+            
+            // desiredDate 파싱 (String -> LocalDate)
+            if (requestDto.getDesiredDate() != null && !requestDto.getDesiredDate().isEmpty()) {
+                try {
+                    form.setDesiredDate(java.time.LocalDate.parse(requestDto.getDesiredDate()));
+                } catch (Exception e) {
+                    log.warn("희망일 파싱 실패: {}", requestDto.getDesiredDate(), e);
+                }
+            }
+            
+            form.setMemo(requestDto.getMemo());
             
             // 기부 생성
             Donation donation = donationService.createDonation(donor, form, itemForm, organ);
@@ -249,6 +263,12 @@ public class DonationApiController {
                         // 참조 코드 생성 (ID 기반)
                         String referenceCode = "REQ-" + donation.getId();
                         
+                        // 배송 ID 가져오기
+                        Long deliveryId = null;
+                        if (donation.getDelivery() != null) {
+                            deliveryId = donation.getDelivery().getId();
+                        }
+                        
                         DonationStatusResponseDto.ApprovalItemDto item = DonationStatusResponseDto.ApprovalItemDto.builder()
                                 .id(donation.getId())
                                 .name(itemName)
@@ -258,6 +278,7 @@ public class DonationApiController {
                                 .matchingInfo(matchingInfo)
                                 .matchedOrganization(matchedOrg)
                                 .referenceCode(referenceCode)
+                                .deliveryId(deliveryId)
                                 .build();
                         
                         log.info("기부 변환 완료 - ID: {}, name: {}, status: {}", 

@@ -25,6 +25,8 @@ public class DonationRequestDto {
     @NotBlank(message = "물품 상세 정보를 입력해주세요.")
     private String itemDescription;
     
+    private Integer quantity = 1; // 수량 (기본값 1)
+    
     // 기부 방법 정보
     @NotBlank(message = "기부 방법을 선택해주세요.")
     private String donationMethod; // '자동 매칭', '직접 매칭'
