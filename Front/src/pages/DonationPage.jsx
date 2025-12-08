@@ -333,6 +333,7 @@ export default function DonationPage({
         itemSize,
         itemCondition,
         itemDescription,
+        quantity,
         donationMethod,
         donationOrganizationId,
         donationOrganizationName: donationMethod === '직접 매칭' 

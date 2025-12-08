@@ -1,8 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/admin-manage.css';
 
 export default function AdminItemApprovalPage({
-  donationItems = [],
   onNavigateHome
 }) {
   const [apiDonationItems, setApiDonationItems] = useState([]);
@@ -13,6 +12,7 @@ export default function AdminItemApprovalPage({
   const [reasonModal, setReasonModal] = useState(null);
   const [reasonText, setReasonText] = useState('');
   const [pendingItemUpdates, setPendingItemUpdates] = useState({});
+  const [activeFilter, setActiveFilter] = useState('pending'); // 'pending', 'approved', 'rejected'
 
   const allowedAdminStatuses = new Set(['승인대기', '매칭대기', '매칭됨', '거절됨']);
 
@@ -23,7 +23,14 @@ export default function AdminItemApprovalPage({
         setLoading(true);
         setError(null);
         
-        const pendingResponse = await fetch('/api/admin/donations/pending', {
+        let apiEndpoint = '/api/admin/donations/pending';
+        if (activeFilter === 'approved') {
+          apiEndpoint = '/api/admin/donations/approved';
+        } else if (activeFilter === 'rejected') {
+          apiEndpoint = '/api/admin/donations/rejected';
+        }
+        
+        const response = await fetch(apiEndpoint, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -31,17 +38,17 @@ export default function AdminItemApprovalPage({
           credentials: 'include'
         });
         
-        if (!pendingResponse.ok) {
+        if (!response.ok) {
           throw new Error('기부 목록 조회에 실패했습니다.');
         }
         
-        const pendingData = await pendingResponse.json();
-        const pendingItems = (pendingData.donations || []).map(item => ({
+        const data = await response.json();
+        const items = (data.donations || []).map(item => ({
           ...item,
           owner: item.owner || 'unknown'
         }));
         
-        setApiDonationItems(pendingItems);
+        setApiDonationItems(items);
       } catch (err) {
         console.error('기부 목록 조회 오류:', err);
         setError(err.message);
@@ -51,19 +58,10 @@ export default function AdminItemApprovalPage({
     };
     
     fetchDonationData();
-  }, []);
+  }, [activeFilter]);
 
-  // API 데이터와 기존 prop 데이터 병합
-  const mergedDonationItems = useMemo(() => {
-    if (apiDonationItems.length > 0) {
-      return apiDonationItems;
-    }
-    return Array.isArray(donationItems)
-      ? donationItems.filter(item => item.status && allowedAdminStatuses.has(item.status))
-      : [];
-  }, [apiDonationItems, donationItems, allowedAdminStatuses]);
-  
-  const donationQueue = mergedDonationItems;
+  // API 데이터만 사용 (더미 데이터 제거)
+  const donationQueue = apiDonationItems;
 
   const showToast = (message) => {
     setToast(message);
@@ -120,7 +118,14 @@ export default function AdminItemApprovalPage({
   // 목록 새로고침 함수
   const refreshDonationList = async () => {
     try {
-      const response = await fetch('/api/admin/donations/pending', {
+      let apiEndpoint = '/api/admin/donations/pending';
+      if (activeFilter === 'approved') {
+        apiEndpoint = '/api/admin/donations/approved';
+      } else if (activeFilter === 'rejected') {
+        apiEndpoint = '/api/admin/donations/rejected';
+      }
+      
+      const response = await fetch(apiEndpoint, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -227,8 +232,67 @@ export default function AdminItemApprovalPage({
 
       <div className="admin-manage-header">
         <h1>물품 승인</h1>
-        <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
+        <button type="button" className="btn primary" onClick={() => {
+          if (typeof onNavigateHome === 'function') {
+            onNavigateHome()
+          }
+        }}>
           메인으로
+        </button>
+      </div>
+
+      {/* 필터 탭 */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '2px solid #eee', paddingBottom: '0.5rem' }}>
+        <button
+          type="button"
+          onClick={() => setActiveFilter('pending')}
+          style={{
+            padding: '0.5rem 1.5rem',
+            border: 'none',
+            background: activeFilter === 'pending' ? '#4a90e2' : 'transparent',
+            color: activeFilter === 'pending' ? 'white' : '#666',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+            fontWeight: activeFilter === 'pending' ? 'bold' : 'normal',
+            borderBottom: activeFilter === 'pending' ? '2px solid #4a90e2' : '2px solid transparent',
+            marginBottom: activeFilter === 'pending' ? '-2px' : '0'
+          }}
+        >
+          승인 대기
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveFilter('approved')}
+          style={{
+            padding: '0.5rem 1.5rem',
+            border: 'none',
+            background: activeFilter === 'approved' ? '#4a90e2' : 'transparent',
+            color: activeFilter === 'approved' ? 'white' : '#666',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+            fontWeight: activeFilter === 'approved' ? 'bold' : 'normal',
+            borderBottom: activeFilter === 'approved' ? '2px solid #4a90e2' : '2px solid transparent',
+            marginBottom: activeFilter === 'approved' ? '-2px' : '0'
+          }}
+        >
+          승인 완료
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveFilter('rejected')}
+          style={{
+            padding: '0.5rem 1.5rem',
+            border: 'none',
+            background: activeFilter === 'rejected' ? '#4a90e2' : 'transparent',
+            color: activeFilter === 'rejected' ? 'white' : '#666',
+            cursor: 'pointer',
+            borderRadius: '4px 4px 0 0',
+            fontWeight: activeFilter === 'rejected' ? 'bold' : 'normal',
+            borderBottom: activeFilter === 'rejected' ? '2px solid #4a90e2' : '2px solid transparent',
+            marginBottom: activeFilter === 'rejected' ? '-2px' : '0'
+          }}
+        >
+          거절됨
         </button>
       </div>
 
@@ -320,9 +384,9 @@ export default function AdminItemApprovalPage({
                         <div className="text-strong">{item.items || item.name}</div>
                         {item.itemDescription && <p className="item-detail">{item.itemDescription}</p>}
                         <div className="item-meta">
-                          {item.deliveryMethod && <span>배송: {item.deliveryMethod}</span>}
-                          {item.desiredDate && <span>희망일: {item.desiredDate}</span>}
-                          {item.memo && <span>메모: {item.memo}</span>}
+                          {item.deliveryMethod && <div>배송: {item.deliveryMethod}</div>}
+                          {item.desiredDate && <div>희망일: {item.desiredDate}</div>}
+                          {item.memo && <div>메모: {item.memo}</div>}
                         </div>
                       </td>
                       <td>
@@ -357,13 +421,6 @@ export default function AdminItemApprovalPage({
                               </button>
                             </div>
                           </>
-                        ) : item.status === '매칭됨' || item.status === '매칭대기' || item.status === '거절됨' || item.pendingOrganization ? (
-                          <div className="text-muted">
-                            {item.status === '매칭됨' ? '매칭 완료' : 
-                             item.status === '매칭대기' ? '매칭 대기 중' :
-                             item.status === '거절됨' ? '거절됨' :
-                             '기관 확인 중입니다.'}
-                          </div>
                         ) : (
                           <div className="admin-card-actions">
                             {(() => {
@@ -381,19 +438,113 @@ export default function AdminItemApprovalPage({
                                 directMatchOrganization: isDirectMatch ? orgName : null,
                                 directMatchOrganizationId: isDirectMatch ? item.donationOrganizationId || null : null
                               };
-                              return (
-                                <button
-                                  type="button"
-                                  className="small-btn"
-                                  onClick={() => queueItemUpdate(item, '매칭대기', approvalOptions, '승인')}
-                                >
-                                  승인
-                                </button>
-                              );
+                              // 상태에 따라 필요한 버튼만 표시
+                              if (item.status === '승인대기') {
+                                // 승인대기 상태: 승인, 거절 버튼만 일렬로
+                                return (
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                      type="button"
+                                      className="small-btn approve-btn"
+                                      onClick={() => queueItemUpdate(item, '매칭대기', approvalOptions, '승인')}
+                                    >
+                                      승인
+                                    </button>
+                                    <button type="button" className="small-btn warning" onClick={() => handleRejectItem(item)}>
+                                      거절
+                                    </button>
+                                  </div>
+                                );
+                              } else if (item.status === '매칭대기' || item.status === '매칭됨') {
+                                // 매칭대기/매칭됨 상태: 텍스트 + 거절, 승인대기 버튼 일렬로
+                                return (
+                                  <>
+                                    <div className="text-muted" style={{ marginBottom: '8px' }}>
+                                      {item.status === '매칭됨' ? '매칭 완료' : '매칭 대기중입니다.'}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <button type="button" className="small-btn warning" onClick={() => handleRejectItem(item)}>
+                                        거절
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        className="small-btn pending-btn"
+                                        onClick={async () => {
+                                          try {
+                                            const response = await fetch(`/api/admin/donations/${item.id}/reset-to-pending`, {
+                                              method: 'POST',
+                                              headers: {
+                                                'Content-Type': 'application/json'
+                                              },
+                                              credentials: 'include'
+                                            });
+                                            
+                                            const result = await response.json();
+                                            
+                                            if (!response.ok || !result.success) {
+                                              throw new Error(result.message || '상태 변경에 실패했습니다.');
+                                            }
+                                            
+                                            showToast(result.message || '상태가 승인대기로 변경되었습니다.');
+                                            await refreshDonationList();
+                                          } catch (err) {
+                                            console.error('상태 변경 오류:', err);
+                                            showToast(err.message || '상태 변경에 실패했습니다.');
+                                          }
+                                        }}
+                                      >
+                                        승인대기
+                                      </button>
+                                    </div>
+                                  </>
+                                );
+                              } else if (item.status === '거절됨') {
+                                // 거절됨 상태: 승인, 승인대기 버튼만 일렬로
+                                return (
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                      type="button"
+                                      className="small-btn approve-btn"
+                                      onClick={() => queueItemUpdate(item, '매칭대기', approvalOptions, '승인')}
+                                    >
+                                      승인
+                                    </button>
+                                    <button 
+                                      type="button" 
+                                      className="small-btn pending-btn"
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`/api/admin/donations/${item.id}/reset-to-pending`, {
+                                            method: 'POST',
+                                            headers: {
+                                              'Content-Type': 'application/json'
+                                            },
+                                            credentials: 'include'
+                                          });
+                                          
+                                          const result = await response.json();
+                                          
+                                          if (!response.ok || !result.success) {
+                                            throw new Error(result.message || '상태 변경에 실패했습니다.');
+                                          }
+                                          
+                                          showToast(result.message || '상태가 승인대기로 변경되었습니다.');
+                                          await refreshDonationList();
+                                        } catch (err) {
+                                          console.error('상태 변경 오류:', err);
+                                          showToast(err.message || '상태 변경에 실패했습니다.');
+                                        }
+                                      }}
+                                    >
+                                      승인대기
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              
+                              // 기본값 (예상치 못한 상태)
+                              return null;
                             })()}
-                            <button type="button" className="small-btn warning" onClick={() => handleRejectItem(item)}>
-                              거절
-                            </button>
                           </div>
                         )}
                       </td>
