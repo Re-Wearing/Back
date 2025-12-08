@@ -40,6 +40,8 @@ export default function DonationStatusPage({
   const [apiData, setApiData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedDonation, setSelectedDonation] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   // API에서 기부 상태 데이터 가져오기
   useEffect(() => {
@@ -274,6 +276,40 @@ export default function DonationStatusPage({
     }
   }
 
+  const handleRowClick = async (itemId, event) => {
+    // 버튼 클릭 시에는 모달을 열지 않음
+    if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+      return
+    }
+
+    try {
+      setDetailLoading(true)
+      const response = await fetch(`/api/donations/${itemId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('기부 상세 정보를 불러올 수 없습니다.')
+      }
+
+      const result = await response.json()
+      if (result.success && result.donation) {
+        setSelectedDonation(result.donation)
+      } else {
+        window.alert(result.message || '기부 상세 정보를 불러올 수 없습니다.')
+      }
+    } catch (err) {
+      console.error('기부 상세 조회 오류:', err)
+      window.alert('기부 상세 정보를 불러오는 중 오류가 발생했습니다.')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
   const completedDonations = useMemo(() => {
     // API 데이터가 있으면 사용
     if (apiData && apiData.completedDonations) {
@@ -414,7 +450,11 @@ export default function DonationStatusPage({
             </thead>
             <tbody>
               {approvalItems.map(item => (
-                <tr key={item.id}>
+                <tr 
+                  key={item.id}
+                  onClick={(e) => handleRowClick(item.id, e)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <td>{item.registeredAt}</td>
                   <td>
                     <div className="approval-item-name">{item.name}</div>
@@ -467,6 +507,176 @@ export default function DonationStatusPage({
 
         <p className="donation-hint">승인 · 매칭 · 거절 상태가 바뀌면 알림으로 알려드릴게요.</p>
       </>
+    )
+  }
+
+  const renderDonationDetailModal = () => {
+    if (!selectedDonation) return null
+
+    const donation = selectedDonation
+    const item = donation.item || {}
+    const organization = donation.organization || null
+    const delivery = donation.delivery || null
+
+    return (
+      <div className="donation-modal-overlay" onClick={() => setSelectedDonation(null)}>
+        <div className="donation-modal" onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+            <h2 style={{ marginTop: 0, marginBottom: 0, color: '#2f261c' }}>
+              기부 상세 정보
+            </h2>
+            <button
+              type="button"
+              onClick={() => setSelectedDonation(null)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                background: 'transparent',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#7a6b55',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#f5f5f5'
+                e.target.style.color = '#2f261c'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent'
+                e.target.style.color = '#7a6b55'
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* 물품 정보 */}
+          {(() => {
+            // 이미지 URL 리스트 생성
+            let imageList = []
+            if (item.imageUrls && Array.isArray(item.imageUrls) && item.imageUrls.length > 0) {
+              imageList = item.imageUrls
+            } else if (item.imageUrl) {
+              imageList = [item.imageUrl]
+            }
+
+            console.log('기부 상세 모달 - 이미지 정보:', {
+              imageUrl: item.imageUrl,
+              imageUrls: item.imageUrls,
+              imageList: imageList
+            })
+
+            if (imageList.length === 0) {
+              console.warn('기부 상세 모달 - 이미지가 없습니다.')
+              return null
+            }
+
+            return (
+              <div style={{ marginBottom: '1.5rem' }}>
+                {imageList.map((imgUrl, idx) => {
+                  // 이미지 URL 처리
+                  let imageSrc = imgUrl
+                  
+                  if (!imageSrc) {
+                    console.warn('기부 상세 모달 - 이미지 URL이 비어있습니다:', imgUrl)
+                    return null
+                  }
+
+                  // 이미지 URL 정규화
+                  if (imageSrc.startsWith('http://') || imageSrc.startsWith('https://') || imageSrc.startsWith('data:')) {
+                    // 이미 전체 URL이거나 data URL인 경우 그대로 사용
+                    imageSrc = imageSrc
+                  } else if (imageSrc.startsWith('/uploads/')) {
+                    // /uploads/로 시작하는 경우 백엔드 서버 주소 추가
+                    imageSrc = `http://localhost:8080${imageSrc}`
+                  } else {
+                    // 파일명만 있는 경우
+                    imageSrc = `http://localhost:8080/uploads/${imageSrc}`
+                  }
+
+                  console.log(`기부 상세 모달 - 이미지 ${idx + 1} URL:`, imageSrc)
+                  
+                  return (
+                    <div key={idx} style={{ marginBottom: idx < imageList.length - 1 ? '1rem' : 0 }}>
+                      <img 
+                        src={imageSrc}
+                        alt={item.name || '기부 물품'} 
+                        onError={(e) => {
+                          console.error('이미지 로드 실패:', {
+                            imageSrc,
+                            originalUrl: imgUrl,
+                            error: e
+                          })
+                          e.target.style.display = 'none'
+                        }}
+                        onLoad={() => {
+                          console.log('이미지 로드 성공:', imageSrc)
+                        }}
+                        style={{ 
+                          maxHeight: '400px', 
+                          objectFit: 'contain',
+                          width: '100%',
+                          borderRadius: '12px',
+                          border: '1px solid #eee',
+                          display: 'block'
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
+
+          <div className="image-meta">
+            <div>
+              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#2f261c' }}>물품 정보</h3>
+              <ul className="image-detail-list">
+                {item.name && <li><strong>물품명:</strong> {item.name}</li>}
+                {item.size && <li><strong>사이즈:</strong> {item.size}</li>}
+                {item.genderType && <li><strong>성별:</strong> {item.genderType}</li>}
+                {item.description && <li><strong>설명:</strong> {item.description}</li>}
+              </ul>
+            </div>
+
+            <div>
+              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#2f261c' }}>기부 정보</h3>
+              <ul className="image-detail-list">
+                <li><strong>등록일:</strong> {donation.createdAt || '-'}</li>
+                <li><strong>상태:</strong> 
+                  <span 
+                    className="donation-status-badge" 
+                    style={{ color: getApprovalStatusColor(donation.status), marginLeft: '0.5rem' }}
+                  >
+                    {donation.status}
+                  </span>
+                </li>
+                {organization && (
+                  <li><strong>매칭 기관:</strong> {organization.name}</li>
+                )}
+                {donation.matchingInfo && (
+                  <li><strong>매칭 정보:</strong> {donation.matchingInfo}</li>
+                )}
+                {delivery && (
+                  <>
+                    {delivery.status && <li><strong>배송 상태:</strong> {delivery.status}</li>}
+                    {delivery.carrier && <li><strong>택배사:</strong> {delivery.carrier}</li>}
+                    {delivery.trackingNumber && <li><strong>송장번호:</strong> {delivery.trackingNumber}</li>}
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -624,6 +834,8 @@ export default function DonationStatusPage({
           {activeTab === 'approval' ? renderApprovalTab() : renderHistoryTab()}
         </div>
       </div>
+
+      {renderDonationDetailModal()}
     </section>
   )
 }

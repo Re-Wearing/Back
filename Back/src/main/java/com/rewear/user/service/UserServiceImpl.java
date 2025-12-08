@@ -46,8 +46,11 @@ public class UserServiceImpl implements UserService{
             throw new IllegalArgumentException("비밀번호는 최소 5자 이상이어야 합니다.");
         }
         
-        if(userRepository.existsByEmail(user.getEmail())){
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+        // 이메일 검증 (null이 아닌 경우에만 중복 체크)
+        if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+            if(userRepository.existsByEmail(user.getEmail())){
+                throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            }
         }
 
         if(userRepository.findByUsername(user.getUsername()).isPresent()){

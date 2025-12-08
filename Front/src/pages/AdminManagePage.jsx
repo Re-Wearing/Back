@@ -134,13 +134,14 @@ const [showModal, setShowModal] = useState(false);
     fetchDonationData();
   }, [activePanel]);
 
-  // API에서 사용자 목록 조회
+  // API에서 사용자 목록 및 통계 정보 조회
   useEffect(() => {
     const fetchUsers = async () => {
       if (activePanel !== 'members') return;
       
       try {
-        const response = await fetch('/api/admin/users', {
+        setLoading(true);
+        const response = await fetch('/api/admin/users/with-stats', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -157,7 +158,10 @@ const [showModal, setShowModal] = useState(false);
         setApiUsers(users);
       } catch (err) {
         console.error('사용자 목록 조회 오류:', err);
+        setError(err.message);
         setApiUsers([]);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -289,92 +293,23 @@ const [showModal, setShowModal] = useState(false);
     }
   }
 
-  // 🔍 검색 + 필터 적용된 rows
+  // 🔍 검색 + 필터 적용된 rows (API 데이터 기반)
   const rows = useMemo(() => {
-    // shipments가 배열인지 확인하고, 아니면 빈 배열로 처리
-    const shipmentsArray = Array.isArray(shipments) ? shipments : [];
-    
-    // 디버깅: shipments 데이터 확인
-    if (shipmentsArray.length > 0) {
-      console.log('🔍 AdminManagePage - shipments:', shipmentsArray);
-    } else {
-      console.warn('⚠️ AdminManagePage - shipments가 비어있거나 배열이 아님:', shipments);
+    // API에서 가져온 사용자 데이터 사용
+    if (apiUsers.length === 0) {
+      return [];
     }
     
-    // 디버깅: 모든 accounts 확인
-    console.log('🔍 모든 accounts:', Object.keys(accounts));
-    console.log('🔍 accounts[user]:', accounts['user']);
-    
-    return Object.entries(accounts)
-    .map(([username, acc]) => {
-      const nickname = profiles[username]?.nickname || acc.name;
-      
-      // 디버깅: user 계정 정보
-      if (username === 'user') {
-        console.log('🔍 user 계정 발견!', { username, role: acc.role, name: acc.name, nickname });
-      }
-    
-      // ⭐ 일반/기관 기부 횟수 계산
-      let donationCount = 0;
-    
-      if (acc.role === "일반 회원") {
-        // 모든 shipments의 sender와 비교 가능한 값들을 확인
-        const accountName = String(acc.name || '').trim();
-        const accountNickname = String(nickname || '').trim();
-        const accountUsername = String(username || '').trim();
-        
-        donationCount = shipmentsArray.filter((s) => {
-          if (!s || !s.sender) return false;
-          
-          const sender = String(s.sender || '').trim();
-          
-          // username이 'user'인 경우, sender가 '권석현'이면 매칭
-          if (username === 'user' && sender === '권석현') {
-            console.log(`✅ user 계정 매칭 성공! sender: "${sender}"`);
-            return true;
-          }
-          
-          // 일반적인 비교 로직
-          const matches = sender === accountName || 
-                         sender === accountNickname || 
-                         sender === accountUsername;
-          
-          if (username === 'user') {
-            console.log(`🔍 비교: sender="${sender}" vs name="${accountName}" nickname="${accountNickname}" username="${accountUsername}" → ${matches}`);
-          }
-          
-          return matches;
-        }).length;
-        
-        if (username === 'user') {
-          console.log(`📊 최종 기부횟수: ${donationCount}회`);
-        }
-      }
-    
-      if (acc.role === "기관 회원") {
-        donationCount = shipmentsArray.filter(
-          (s) => {
-            if (!s || !s.receiver) return false;
-            const receiver = String(s.receiver || '').trim();
-            const accountName = String(acc.name || '').trim();
-            const accountNickname = String(nickname || '').trim();
-            
-            return receiver === accountName || 
-                   receiver === accountNickname;
-          }
-        ).length;
-      }
-    
-      return {
-        username,
-        role: acc.role,
-        email: acc.email,
-        nickname,
-        unread: (notifications[username] || []).filter((n) => !n.read).length,
-        donationCount   // ⭐ 새로 추가됨
-      };
-    })
-    
+    return apiUsers
+      .map(user => ({
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname || user.username,
+        role: user.role,
+        email: user.email,
+        unread: user.unreadNotificationCount || 0,
+        donationCount: user.donationCount || 0
+      }))
       .filter((row) => {
         const text = searchText.toLowerCase();
         const match =
@@ -386,7 +321,7 @@ const [showModal, setShowModal] = useState(false);
         const roleMatch = roleFilter === '전체' || roleFilter === row.role;
         return match && roleMatch;
       });
-  }, [accounts, profiles, notifications, searchText, roleFilter, shipments]);
+  }, [apiUsers, searchText, roleFilter]);
 
   // 🔽 정렬 기능 적용
   const sortedRows = useMemo(() => {
@@ -461,6 +396,8 @@ const [showModal, setShowModal] = useState(false);
   };
 
   const handleReset = async (username) => {
+    if (!window.confirm(`${username} 계정의 비밀번호를 초기화하시겠습니까?`)) return;
+    
     // API에서 가져온 사용자 목록에서 ID 찾기
     const user = apiUsers.find(u => u.username === username);
     if (!user || !user.id) {
@@ -484,6 +421,21 @@ const [showModal, setShowModal] = useState(false);
       }
 
       showToast(result.message || `${username} 비밀번호 초기화 완료!`);
+      
+      // 사용자 목록 새로고침
+      const refreshResponse = await fetch('/api/admin/users/with-stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        const refreshedUsers = refreshData.data || refreshData || [];
+        setApiUsers(refreshedUsers);
+      }
       
       // 기존 콜백도 호출 (하위 호환성)
       if (typeof onResetPassword === 'function') {
@@ -523,7 +475,7 @@ const [showModal, setShowModal] = useState(false);
       showToast(result.message || `${username} 계정 삭제됨`);
       
       // 사용자 목록 새로고침
-      const refreshResponse = await fetch('/api/admin/users', {
+      const refreshResponse = await fetch('/api/admin/users/with-stats', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -856,55 +808,6 @@ const [showModal, setShowModal] = useState(false);
     setReasonText('');
   };
 
-  // ⭐ 회원 기부/수혜 내역 계산 함수
-  const getUserDonationStats = (user) => {
-    if (!user || !shipments || !Array.isArray(shipments)) return { count: 0, recent: [] };
-    
-    // accounts에서 실제 계정 정보 가져오기
-    const account = accounts[user.username];
-    if (!account) return { count: 0, recent: [] };
-
-    // 1) 일반 회원: sender(보낸 사람) 기준
-    if (user.role === "일반 회원") {
-      const sent = shipments.filter(s => {
-        if (!s || !s.sender) return false;
-        const sender = String(s.sender || '').trim();
-        
-        // username이 'user'인 경우, sender가 '권석현'이면 매칭
-        if (user.username === 'user' && sender === '권석현') {
-          return true;
-        }
-        
-        // 일반적인 비교 로직
-        const accountName = String(account.name || '').trim();
-        const userNickname = String(user.nickname || '').trim();
-        const userUsername = String(user.username || '').trim();
-        
-        return sender === accountName ||
-               sender === userNickname ||
-               sender === userUsername;
-      });
-      return {
-        count: sent.length,
-        recent: sent.slice(0, 3)
-      };
-    }
-
-    // 2) 기관 회원: receiver(받은 기관) 기준
-    if (user.role === "기관 회원") {
-      const received = shipments.filter(s =>
-        s?.receiver === account.name ||
-        s?.receiver === user.nickname
-      );
-      return {
-        count: received.length,
-        recent: received.slice(0, 3)
-      };
-    }
-
-    // 3) 관리자 회원 → 기부/수혜 통계 없음
-    return { count: 0, recent: [] };
-  };
 
 
   return (
@@ -942,6 +845,9 @@ const [showModal, setShowModal] = useState(false);
         </select>
       </div>
 
+      {loading && <div className="loading">로딩 중...</div>}
+      {error && <div className="error">오류: {error}</div>}
+      
       <div className="admin-table-wrapper">
         <table>
           <thead>
@@ -956,7 +862,14 @@ const [showModal, setShowModal] = useState(false);
             </tr>
           </thead>
           <tbody>
-            {paginatedRows.map((row) => (
+            {paginatedRows.length === 0 && !loading ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                  회원이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              paginatedRows.map((row) => (
               <tr 
               key={row.username}
               className="user-row"
@@ -1002,7 +915,8 @@ const [showModal, setShowModal] = useState(false);
                   )}
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -1047,20 +961,7 @@ const [showModal, setShowModal] = useState(false);
             <p>{selectedUser.donationCount || 0} 회</p>
 
             <h4>📌 최근 내역</h4>
-            {(() => {
-              const stats = getUserDonationStats(selectedUser);
-              return stats.recent.length === 0 ? (
-                <p>최근 내역이 없습니다.</p>
-              ) : (
-                <ul>
-                  {stats.recent.map((item, i) => (
-                    <li key={i}>
-                      {item.startDate || item.date} — {item.product || item.items} → {item.receiver}
-                    </li>
-                  ))}
-                </ul>
-              );
-            })()}
+            <p className="text-muted">상세 내역은 개별 조회 기능을 이용해주세요.</p>
           </>
         )}
       </div>

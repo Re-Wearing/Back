@@ -64,6 +64,9 @@ public class UserController {
     @PostMapping("/signup/organ")
     public ResponseEntity<?> signupOrgan(@RequestBody OrganSignupRequest request) {
         try {
+            log.info("기관 회원가입 요청 - username: {}, orgName: {}, businessNumber: {}, email: {}", 
+                    request.getUsername(), request.getOrgName(), request.getBusinessNumber(), request.getEmail());
+            
             // 입력 검증
             if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
                 return ResponseEntity.badRequest()
@@ -87,20 +90,42 @@ public class UserController {
             user.setUsername(request.getUsername().trim().toLowerCase());
             user.setPassword(request.getPassword());
             user.setName(request.getManager() != null ? request.getManager().trim() : request.getOrgName().trim());
-            user.setEmail(request.getEmail() != null ? request.getEmail().trim().toLowerCase() : null);
-            user.setPhone(request.getPhone() != null ? request.getPhone().trim() : "01000000000");
+            
+            // 이메일 처리: null이거나 빈 문자열이면 기본값 설정
+            String email = request.getEmail();
+            if (email == null || email.trim().isEmpty()) {
+                // 기관 회원은 이메일이 필수가 아니므로 기본값 사용
+                email = request.getUsername().trim().toLowerCase() + "@organ.rewear";
+            } else {
+                email = email.trim().toLowerCase();
+            }
+            user.setEmail(email);
+            
+            // 전화번호 정규화: 하이픈, 공백 등 제거 후 패턴 검증
+            String phoneDigits = request.getPhone() != null ? request.getPhone().replaceAll("\\D", "") : null;
+            // 전화번호가 비어있거나 형식이 맞지 않으면 기본값 설정
+            if (phoneDigits == null || phoneDigits.isEmpty() || !phoneDigits.matches("^01[0-9]{8,9}$")) {
+                phoneDigits = "01000000000"; // 기본 전화번호
+            }
+            user.setPhone(phoneDigits);
+            
             user.setAddressPostcode(request.getZipCode() != null ? request.getZipCode().trim() : "00000");
             user.setAddress(request.getAddress() != null ? request.getAddress().trim() : "주소 미입력");
             user.setNickname(request.getOrgName().trim()); // 기관명을 닉네임으로 설정
             user.setRoles(EnumSet.of(Role.ORGAN)); // ORGAN 권한 부여
             
+            log.info("User 생성 시작 - username: {}, email: {}", user.getUsername(), user.getEmail());
             User createdUser = userService.registerUser(user);
+            log.info("User 생성 완료 - userId: {}, username: {}", createdUser.getId(), createdUser.getUsername());
             
             // 사업자번호에서 하이픈 제거
             String businessNoDigits = request.getBusinessNumber().replaceAll("\\D", "");
+            log.info("Organ 생성 시작 - userId: {}, businessNo: {}, orgName: {}", 
+                    createdUser.getId(), businessNoDigits, request.getOrgName());
             
             // Organ 엔티티 생성 (PENDING 상태)
             organService.createPending(createdUser, businessNoDigits, request.getOrgName().trim());
+            log.info("Organ 생성 완료 - userId: {}", createdUser.getId());
             
             return ResponseEntity.ok(Map.of(
                 "user", createdUser,
@@ -113,8 +138,10 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("message", e.getMessage(), "error", "STATE_ERROR"));
         } catch (Exception e) {
+            log.error("기관 회원가입 오류 발생 - username: {}, orgName: {}, error: {}", 
+                    request.getUsername(), request.getOrgName(), e.getMessage(), e);
             return ResponseEntity.internalServerError()
-                .body(Map.of("message", "기관 회원가입 중 오류가 발생했습니다.", "error", "INTERNAL_ERROR"));
+                .body(Map.of("message", "기관 회원가입 중 오류가 발생했습니다: " + e.getMessage(), "error", "INTERNAL_ERROR"));
         }
     }
 
