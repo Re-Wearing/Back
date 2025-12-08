@@ -48,7 +48,7 @@ export default function BoardDetailPage({
 
         try {
           // API로 조회수 증가
-          await fetch(`http://localhost:8080/api/posts/${postIdNum}/view`, {
+          await fetch(`/api/posts/${postIdNum}/view`, {
             method: 'PUT',
             credentials: 'include'
           })
@@ -108,7 +108,7 @@ export default function BoardDetailPage({
           return
         }
 
-        const response = await fetch(`http://localhost:8080/api/posts/${postIdNum}`, {
+        const response = await fetch(`/api/posts/${postIdNum}`, {
           credentials: 'include'
         })
 
@@ -235,7 +235,7 @@ export default function BoardDetailPage({
         return
       }
 
-      const response = await fetch(`http://localhost:8080/api/posts/${postIdNum}`, {
+      const response = await fetch(`/api/posts/${postIdNum}`, {
         method: 'DELETE',
         credentials: 'include'
       })
@@ -316,8 +316,8 @@ export default function BoardDetailPage({
                 const fullImageUrl = imageUrl.startsWith('http') 
                   ? imageUrl 
                   : imageUrl.startsWith('/') 
-                    ? `http://localhost:8080${imageUrl}`
-                    : `http://localhost:8080/uploads/${imageUrl}`
+                    ? imageUrl
+                    : `/uploads/${imageUrl}`
                 
                 console.log(`이미지 ${index + 1} URL:`, fullImageUrl)
                 

@@ -14,7 +14,8 @@ export default function DonationStatusPage({
   shipments = [],
   donationItems = [], // 하위 호환성을 위해 유지
   onNavigateDeliveryStatus = null,
-  onCancelDonation = null
+  onCancelDonation = null,
+  onLogin = () => {}
 }) {
   if (!isLoggedIn || !currentUser) {
     if (onRequireLogin) {
@@ -595,11 +596,11 @@ export default function DonationStatusPage({
                     // 이미 전체 URL이거나 data URL인 경우 그대로 사용
                     imageSrc = imageSrc
                   } else if (imageSrc.startsWith('/uploads/')) {
-                    // /uploads/로 시작하는 경우 백엔드 서버 주소 추가
-                    imageSrc = `http://localhost:8080${imageSrc}`
+                    // /uploads/로 시작하는 경우 그대로 사용 (상대 경로)
+                    imageSrc = imageSrc
                   } else {
-                    // 파일명만 있는 경우
-                    imageSrc = `http://localhost:8080/uploads/${imageSrc}`
+                    // 파일명만 있는 경우 /uploads/ 경로 추가
+                    imageSrc = `/uploads/${imageSrc}`
                   }
 
                   console.log(`기부 상세 모달 - 이미지 ${idx + 1} URL:`, imageSrc)
@@ -797,6 +798,7 @@ export default function DonationStatusPage({
           onNavClick={onNavLink}
           isLoggedIn={isLoggedIn}
           onLogout={onLogout}
+          onLogin={onLogin}
           onNotifications={onNotifications}
           unreadCount={unreadCount}
           onMenu={onMenu}

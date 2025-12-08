@@ -332,12 +332,12 @@ export default function AdminItemApprovalPage({
                               return <span className="text-muted">이미지 없음</span>;
                             }
                             
-                            // 이미지 URL 처리: 백엔드 서버 주소 추가
+                            // 이미지 URL 처리: 상대 경로 사용
                             if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
                               if (imageUrl.startsWith('/uploads/')) {
-                                imageUrl = `http://localhost:8080${imageUrl}`;
+                                imageUrl = imageUrl;
                               } else {
-                                imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                                imageUrl = `/uploads/${imageUrl}`;
                               }
                             }
                             
@@ -565,13 +565,13 @@ export default function AdminItemApprovalPage({
               imageModal.images.map((img, index) => {
                 let imageUrl = img.dataUrl || img.url || img;
                 
-                // 이미지 URL 처리: 백엔드 서버 주소 추가
+                // 이미지 URL 처리: 상대 경로 사용
                 if (imageUrl && typeof imageUrl === 'string') {
                   if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
                     if (imageUrl.startsWith('/uploads/')) {
-                      imageUrl = `http://localhost:8080${imageUrl}`;
+                      imageUrl = imageUrl;
                     } else {
-                      imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                      imageUrl = `/uploads/${imageUrl}`;
                     }
                   }
                 }
