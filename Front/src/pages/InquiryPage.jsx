@@ -11,7 +11,8 @@ export default function InquiryPage({
   unreadCount,
   onSubmitInquiry = () => ({ success: true }),
   onMenu = () => {},
-  currentUser = null
+  currentUser = null,
+  onLogin = () => {}
 }) {
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
@@ -48,6 +49,7 @@ export default function InquiryPage({
           onNotifications={onNotifications}
           isLoggedIn={isLoggedIn}
           onLogout={onLogout}
+          onLogin={onLogin}
           unreadCount={unreadCount}
           onMenu={onMenu}
         />

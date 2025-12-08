@@ -84,7 +84,7 @@ export default function AdminPostManagePage({
         const previews = post.images.map(img => {
           const url = img.url || img.dataUrl || img;
           if (url && !url.startsWith('http') && !url.startsWith('data:')) {
-            return `http://localhost:8080${url.startsWith('/') ? url : '/' + url}`;
+            return url.startsWith('/') ? url : `/${url}`;
           }
           return url;
         });
@@ -121,9 +121,8 @@ export default function AdminPostManagePage({
       editImagePreviews.forEach((preview) => {
         if (preview.startsWith('data:')) {
           base64Images.push(preview);
-        } else if (preview.startsWith('http://localhost:8080/')) {
-          const url = preview.replace('http://localhost:8080', '');
-          const filename = url.split('/').pop();
+        } else if (preview.startsWith('/')) {
+          const filename = preview.split('/').pop();
           if (filename) {
             existingImageUrls.push(filename);
           }
@@ -184,7 +183,7 @@ export default function AdminPostManagePage({
         const previews = updatedPost.images.map(img => {
           const url = img.url || img.dataUrl || img;
           if (url && !url.startsWith('http') && !url.startsWith('data:')) {
-            return `http://localhost:8080${url.startsWith('/') ? url : '/' + url}`;
+            return url.startsWith('/') ? url : `/${url}`;
           }
           return url;
         });
@@ -543,7 +542,7 @@ export default function AdminPostManagePage({
                     {viewingPost.images.map((img, index) => {
                       const imageUrl = img.url || img.dataUrl || img;
                       const fullUrl = imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')
-                        ? `http://localhost:8080${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`
+                        ? (imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`)
                         : imageUrl;
                       return (
                         <div key={index} style={{ position: 'relative' }}>
@@ -599,7 +598,7 @@ export default function AdminPostManagePage({
                         const previews = viewingPost.images.map(img => {
                           const url = img.url || img.dataUrl || img;
                           if (url && !url.startsWith('http') && !url.startsWith('data:')) {
-                            return `http://localhost:8080${url.startsWith('/') ? url : '/' + url}`;
+                            return url.startsWith('/') ? url : `/${url}`;
                           }
                           return url;
                         });
