@@ -14,6 +14,8 @@ export default function AdminMatchingPage({
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [matchSelections, setMatchSelections] = useState({});
+  const [detailModal, setDetailModal] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   // API에서 자동 매칭 대기 목록 조회
   useEffect(() => {
@@ -74,9 +76,12 @@ export default function AdminMatchingPage({
     return Array.isArray(organizationOptions) ? organizationOptions : [];
   }, [apiOrganizations, organizationOptions]);
 
+  // 간접 매칭으로 신청되고 승인이 완료된 항목만 표시
   const autoMatchingQueue = useMemo(() => {
     return apiDonationItems.filter(
-      item => item.donationMethod === '자동 매칭' && item.status === '매칭대기' && !item.pendingOrganization
+      item => item.donationMethod === '자동 매칭' 
+              && (item.status === '매칭대기' || item.status === 'IN_PROGRESS')
+              && !item.pendingOrganization
     );
   }, [apiDonationItems]);
 
@@ -85,6 +90,43 @@ export default function AdminMatchingPage({
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(null), 2000);
+  };
+
+  const handleCardClick = async (item, event) => {
+    // 버튼이나 select 클릭 시에는 모달을 열지 않음
+    if (event.target.tagName === 'BUTTON' || 
+        event.target.tagName === 'SELECT' || 
+        event.target.closest('button') || 
+        event.target.closest('select')) {
+      return;
+    }
+
+    try {
+      setDetailLoading(true);
+      const response = await fetch(`/api/admin/donations/${item.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('기부 상세 정보를 불러올 수 없습니다.');
+      }
+
+      const result = await response.json();
+      if (result.success && result.donation) {
+        setDetailModal(result.donation);
+      } else {
+        showToast(result.message || '기부 상세 정보를 불러올 수 없습니다.');
+      }
+    } catch (err) {
+      console.error('기부 상세 조회 오류:', err);
+      showToast(err.message || '기부 상세 정보를 불러올 수 없습니다.');
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const handleSendInvite = async item => {
@@ -123,6 +165,7 @@ export default function AdminMatchingPage({
       showToast(result.message || '기관에 할당되었습니다.');
       setMatchSelections(prev => ({ ...prev, [item.id]: '' }));
       
+      // 목록 새로고침 (할당된 항목은 자동으로 제외됨)
       const refreshResponse = await fetch('/api/admin/donations/auto-match', {
         method: 'GET',
         headers: {
@@ -137,10 +180,7 @@ export default function AdminMatchingPage({
           ...i,
           owner: i.owner || 'unknown'
         }));
-        setApiDonationItems(prev => {
-          const filtered = prev.filter(i => i.id !== item.id);
-          return [...filtered, ...refreshedItems];
-        });
+        setApiDonationItems(refreshedItems);
       }
       
       if (typeof onSendMatchingInvite === 'function') {
@@ -174,7 +214,12 @@ export default function AdminMatchingPage({
         ) : (
           <div className="admin-card-list">
             {autoMatchingQueue.map((item) => (
-              <article key={item.id} className="admin-card">
+              <article 
+                key={item.id} 
+                className="admin-card"
+                onClick={(e) => handleCardClick(item, e)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="admin-card-header">
                   <div>
                     <strong>{item.name}</strong>
@@ -183,7 +228,7 @@ export default function AdminMatchingPage({
                   <span className="status-chip status-pending">대기</span>
                 </div>
                 <p className="admin-card-memo">{item.items}</p>
-                <div className="match-select">
+                <div className="match-select" onClick={(e) => e.stopPropagation()}>
                   <select
                     value={matchSelections[item.id] || ''}
                     onChange={(event) =>
@@ -236,6 +281,197 @@ export default function AdminMatchingPage({
           </div>
         )}
       </section>
+
+      {/* 상세 정보 모달 */}
+      {detailModal && (
+        <div className="modal-overlay" onClick={() => setDetailModal(null)}>
+          <div 
+            className="modal image-modal" 
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              margin: 'auto',
+              maxWidth: '1200px',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'row',
+              padding: 0
+            }}
+          >
+            {/* 왼쪽: 제목 영역 */}
+            <div style={{
+              width: '200px',
+              minWidth: '200px',
+              background: '#f5f5f5',
+              padding: '2rem 1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              borderRight: '1px solid #ddd',
+              position: 'relative'
+            }}>
+              <h2 style={{ 
+                margin: 0, 
+                padding: 0,
+                fontSize: '1.5rem',
+                fontWeight: '600',
+                color: '#2f261c',
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                transform: 'rotate(180deg)',
+                whiteSpace: 'nowrap'
+              }}>
+                기부 상세 정보
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDetailModal(null)}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '1.8rem',
+                  cursor: 'pointer',
+                  color: '#7a6b55',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  padding: 0,
+                  lineHeight: 1
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = '#e0e0e0';
+                  e.target.style.color = '#2f261c';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'transparent';
+                  e.target.style.color = '#7a6b55';
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 오른쪽: 내용 영역 */}
+            <div style={{
+              flex: 1,
+              padding: '2rem',
+              overflowY: 'auto',
+              maxHeight: '90vh'
+            }}>
+
+            {detailLoading ? (
+              <p>상세 정보를 불러오는 중...</p>
+            ) : (
+              <div className="modal-content">
+                {/* 이미지 */}
+                {(() => {
+                  let imageList = [];
+                  if (detailModal.imageUrls && Array.isArray(detailModal.imageUrls) && detailModal.imageUrls.length > 0) {
+                    imageList = detailModal.imageUrls;
+                  } else if (detailModal.imageUrl) {
+                    imageList = [detailModal.imageUrl];
+                  } else if (detailModal.images && Array.isArray(detailModal.images)) {
+                    imageList = detailModal.images.map(img => img.url || img.dataUrl || img);
+                  }
+
+                  if (imageList.length > 0) {
+                    return (
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h3 style={{ marginBottom: '0.75rem', color: '#2f261c' }}>이미지</h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          {imageList.map((img, index) => {
+                            let imageUrl = img;
+                            if (imageUrl && typeof imageUrl === 'string') {
+                              if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+                                if (imageUrl.startsWith('/uploads/')) {
+                                  imageUrl = `http://localhost:8080${imageUrl}`;
+                                } else {
+                                  imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                                }
+                              }
+                            }
+                            return (
+                              <img
+                                key={index}
+                                src={imageUrl}
+                                alt={`기부 물품 ${index + 1}`}
+                                style={{
+                                  width: '100%',
+                                  maxWidth: '300px',
+                                  height: 'auto',
+                                  borderRadius: '8px',
+                                  border: '1px solid #ddd',
+                                  objectFit: 'cover'
+                                }}
+                                onError={(e) => {
+                                  console.error('이미지 로드 실패:', imageUrl);
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* 물품 정보 */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '0.75rem', color: '#2f261c' }}>물품 정보</h3>
+                  <div style={{ padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                    <p style={{ margin: '0.5rem 0' }}><strong>물품명:</strong> {detailModal.items || detailModal.name || '-'}</p>
+                    <p style={{ margin: '0.5rem 0' }}><strong>카테고리:</strong> {detailModal.detailCategory || detailModal.category || '-'}</p>
+                    <p style={{ margin: '0.5rem 0' }}><strong>상태:</strong> {detailModal.itemDescription || '-'}</p>
+                    {detailModal.quantity && <p style={{ margin: '0.5rem 0' }}><strong>수량:</strong> {detailModal.quantity}</p>}
+                  </div>
+                </div>
+
+                {/* 기부자 정보 */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '0.75rem', color: '#2f261c' }}>기부자 정보</h3>
+                  <div style={{ padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                    <p style={{ margin: '0.5rem 0' }}><strong>신청자:</strong> {detailModal.ownerName || detailModal.owner || '-'}</p>
+                    {detailModal.contact && <p style={{ margin: '0.5rem 0' }}><strong>연락처:</strong> {detailModal.contact}</p>}
+                    {detailModal.isAnonymous && <p style={{ margin: '0.5rem 0' }}><strong>익명 요청:</strong> 예</p>}
+                  </div>
+                </div>
+
+                {/* 기부 방법 및 배송 정보 */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '0.75rem', color: '#2f261c' }}>기부 방법 및 배송 정보</h3>
+                  <div style={{ padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                    <p style={{ margin: '0.5rem 0' }}><strong>기부 방법:</strong> {detailModal.donationMethod || '자동 매칭'}</p>
+                    {detailModal.deliveryMethod && <p style={{ margin: '0.5rem 0' }}><strong>배송 방식:</strong> {detailModal.deliveryMethod}</p>}
+                    {detailModal.desiredDate && <p style={{ margin: '0.5rem 0' }}><strong>희망일:</strong> {detailModal.desiredDate}</p>}
+                    {detailModal.memo && <p style={{ margin: '0.5rem 0' }}><strong>메모:</strong> {detailModal.memo}</p>}
+                  </div>
+                </div>
+
+                {/* 상태 정보 */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '0.75rem', color: '#2f261c' }}>상태 정보</h3>
+                  <div style={{ padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                    <p style={{ margin: '0.5rem 0' }}><strong>현재 상태:</strong> {detailModal.status || '-'}</p>
+                    {detailModal.matchingInfo && <p style={{ margin: '0.5rem 0' }}><strong>매칭 정보:</strong> {detailModal.matchingInfo}</p>}
+                    {detailModal.rejectionReason && <p style={{ margin: '0.5rem 0' }}><strong>거절 사유:</strong> {detailModal.rejectionReason}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2465,7 +2465,6 @@ export default function App() {
               onMenu={() => setIsMenuOpen(true)}
             />
             <AdminItemApprovalPage
-              donationItems={allDonationItems}
               onNavigateHome={goToMain}
             />
           </div>
