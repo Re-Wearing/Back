@@ -39,33 +39,33 @@ public class AdminOrganQueryService {
 
     private PendingOrganVM toVM(Organ o) {
         try {
-            String username = resolveRequesterUsername(o);
-            log.debug("기관 정보 변환 - id: {}, orgName: {}, username: {}", 
-                    o.getId(), o.getOrgName(), username);
+            String username = null;
+            String phone = null;
+            String email = null;
+            String contactName = null;
+            
+            if (o != null && o.getUser() != null) {
+                username = o.getUser().getUsername();
+                phone = o.getUser().getPhone();
+                email = o.getUser().getEmail();
+                contactName = o.getUser().getName();
+            }
+            
+            log.debug("기관 정보 변환 - id: {}, orgName: {}, username: {}, phone: {}, email: {}", 
+                    o.getId(), o.getOrgName(), username, phone, email);
             return PendingOrganVM.of(
                     o.getId(),
                     o.getOrgName(),
                     o.getBusinessNo(),
                     username,
-                    o.getCreatedAt()
+                    o.getCreatedAt(),
+                    phone,
+                    email,
+                    contactName
             );
         } catch (Exception e) {
             log.error("기관 정보 변환 실패 - id: {}", o != null ? o.getId() : "null", e);
             throw e;
         }
-    }
-
-    /**
-     * Organ 엔티티의 User 관계를 통해 신청자 아이디 조회
-     */
-    private String resolveRequesterUsername(Organ o) {
-        try {
-            if (o != null && o.getUser() != null) {
-                return o.getUser().getUsername();
-            }
-        } catch (Exception e) {
-            log.warn("사용자 정보 조회 실패 - organId: {}", o != null ? o.getId() : "null", e);
-        }
-        return null;
     }
 }

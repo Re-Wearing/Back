@@ -88,8 +88,10 @@ export default function DonationPage({
           name: org.name || org.orgName,
           username: org.username,
           label: org.name || org.orgName,
-          value: org.username || org.id.toString()
+          value: org.id ? org.id.toString() : (org.username || '')
         }))
+        
+        console.log('API에서 가져온 기관 목록:', orgs)
         
         setApiOrganizations(orgs)
       } catch (err) {
@@ -302,6 +304,29 @@ export default function DonationPage({
       }
       
       // 기부 신청 데이터 준비
+      // 디버깅: donationOrganization 값 확인
+      console.log('기부 신청 데이터 준비:', {
+        donationMethod,
+        donationOrganization,
+        donationOrganizationLabel,
+        donationOrganizationType: typeof donationOrganization
+      })
+      
+      // donationOrganizationId 계산
+      let donationOrganizationId = null
+      if (donationMethod === '직접 매칭') {
+        if (donationOrganization) {
+          const parsed = parseInt(donationOrganization, 10)
+          if (!isNaN(parsed)) {
+            donationOrganizationId = parsed
+          } else {
+            console.error('donationOrganization을 숫자로 변환할 수 없습니다:', donationOrganization)
+          }
+        } else {
+          console.warn('직접 매칭이 선택되었지만 donationOrganization이 비어있습니다')
+        }
+      }
+      
       const requestData = {
         itemType,
         itemDetail,
@@ -309,7 +334,7 @@ export default function DonationPage({
         itemCondition,
         itemDescription,
         donationMethod,
-        donationOrganizationId: donationMethod === '직접 매칭' ? (donationOrganization ? parseInt(donationOrganization) : null) : null,
+        donationOrganizationId,
         donationOrganizationName: donationMethod === '직접 매칭' 
           ? (donationOrganizationLabel || donationOrganization) 
           : null,
@@ -320,6 +345,8 @@ export default function DonationPage({
         memo: memo || null,
         images: imageUrls
       }
+      
+      console.log('전송할 requestData:', requestData)
 
       // REST API 호출
       const response = await fetch('/api/donations', {

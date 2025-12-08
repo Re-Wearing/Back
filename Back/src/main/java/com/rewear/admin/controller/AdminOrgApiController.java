@@ -112,6 +112,9 @@ public class AdminOrgApiController {
         dto.put("username", vm.getRequesterUsername());
         dto.put("submittedAt", vm.getRequestedAt() != null ? vm.getRequestedAt().toString() : null);
         dto.put("status", "pending");
+        dto.put("phone", vm.getPhone());
+        dto.put("email", vm.getEmail());
+        dto.put("contactName", vm.getContactName());
         return dto;
     }
 }

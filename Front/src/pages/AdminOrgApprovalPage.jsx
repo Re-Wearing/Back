@@ -163,9 +163,12 @@ export default function AdminOrgApprovalPage({
             {orgRequests.map((request) => (
               <article key={request.id} className="admin-card">
                 <div className="admin-card-header">
-                  <div>
-                    <strong>{request.organizationName}</strong>
-                    <p>{request.contactName}</p>
+                  <div className="org-main-info">
+                    <div className="org-name-section">
+                      <strong className="org-name">{request.organizationName || '-'}</strong>
+                      <span className="business-no-badge">사업자번호: {request.businessNo || '-'}</span>
+                    </div>
+                    <p className="contact-name">담당자: {request.contactName || request.username}</p>
                   </div>
                   <span className={`status-chip status-${request.status}`}>{request.status}</span>
                 </div>

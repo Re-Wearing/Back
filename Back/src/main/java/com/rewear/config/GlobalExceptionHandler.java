@@ -1,16 +1,62 @@
 package com.rewear.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    
+    /**
+     * REST API용 validation 예외 핸들러
+     */
+    @RestControllerAdvice
+    public static class RestApiExceptionHandler {
+        
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<Map<String, Object>> handleValidationExceptions(
+                MethodArgumentNotValidException ex) {
+            
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> errors = new HashMap<>();
+            
+            ex.getBindingResult().getAllErrors().forEach((error) -> {
+                String fieldName = ((FieldError) error).getField();
+                String errorMessage = error.getDefaultMessage();
+                errors.put(fieldName, errorMessage);
+            });
+            
+            log.error("Validation 오류 발생: {}", errors);
+            
+            // 첫 번째 오류 메시지를 메인 메시지로 사용
+            String mainMessage = errors.values().iterator().hasNext() 
+                ? errors.values().iterator().next() 
+                : "입력 정보를 확인해주세요.";
+            
+            // 여러 필드 오류가 있는 경우 통합 메시지
+            if (errors.size() > 1) {
+                mainMessage = "물품 정보를 모두 입력해주세요.";
+            }
+            
+            response.put("success", false);
+            response.put("message", mainMessage);
+            response.put("errors", errors);
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 
     @ExceptionHandler(TemplateProcessingException.class)
     public ModelAndView handleTemplateProcessingException(

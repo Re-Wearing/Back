@@ -1,5 +1,6 @@
 package com.rewear.admin.controller;
 
+import com.rewear.admin.dto.UserWithStatsDto;
 import com.rewear.admin.service.AdminServiceImpl;
 import com.rewear.admin.entity.Admin;
 import com.rewear.common.utils.ApiResponse;
@@ -39,6 +40,16 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
         List<User> users = adminService.getAllUsers();
+        return ResponseEntity.ok(ApiResponse.ok(users));
+    }
+
+    /**
+     * 사용자 목록과 통계 정보를 함께 반환하는 API
+     */
+    @GetMapping("/users/with-stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserWithStatsDto>>> getAllUsersWithStats() {
+        List<UserWithStatsDto> users = adminService.getAllUsersWithStats();
         return ResponseEntity.ok(ApiResponse.ok(users));
     }
 

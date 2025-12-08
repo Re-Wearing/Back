@@ -108,42 +108,40 @@ export default function AdminItemApprovalPage({
         
         showToast(result.message || '기부가 승인되었습니다.');
         
-        setApiDonationItems(prev => prev.map(i => {
-          if (i.id === item.id) {
-            return {
-              ...i,
-              status: '매칭대기',
-              matchingInfo: options.matchingInfo || '기관 매칭을 기다리는 중입니다.',
-              pendingOrganization: options.pendingOrganization || i.pendingOrganization,
-              matchedOrganization: null
-            };
-          }
-          return i;
-        }));
-        
-        const refreshResponse = await fetch('/api/admin/donations/pending', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json();
-          const refreshedItems = (refreshData.donations || []).map(i => ({
-            ...i,
-            owner: i.owner || 'unknown'
-          }));
-          setApiDonationItems(prev => {
-            const filtered = prev.filter(i => i.id !== item.id);
-            return [...filtered, ...refreshedItems];
-          });
-        }
+        // 목록 완전 새로고침
+        await refreshDonationList();
       }
     } catch (err) {
       console.error('기부 상태 변경 오류:', err);
       showToast(err.message || '기부 상태 변경에 실패했습니다.');
+    }
+  };
+
+  // 목록 새로고침 함수
+  const refreshDonationList = async () => {
+    try {
+      const response = await fetch('/api/admin/donations/pending', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('기부 목록 조회에 실패했습니다.');
+      }
+      
+      const data = await response.json();
+      const refreshedItems = (data.donations || []).map(i => ({
+        ...i,
+        owner: i.owner || 'unknown'
+      }));
+      
+      setApiDonationItems(refreshedItems);
+    } catch (err) {
+      console.error('목록 새로고침 오류:', err);
+      showToast('목록을 새로고침하는 중 오류가 발생했습니다.');
     }
   };
 
@@ -211,39 +209,8 @@ export default function AdminItemApprovalPage({
         
         showToast(result.message || '기부가 반려되었습니다.');
         
-        setApiDonationItems(prev => prev.map(i => {
-          if (i.id === reasonModal.item.id) {
-            return {
-              ...i,
-              status: '거절됨',
-              rejectionReason: trimmed,
-              matchingInfo: `거절 사유: ${trimmed}`,
-              pendingOrganization: null,
-              matchedOrganization: null
-            };
-          }
-          return i;
-        }));
-        
-        const refreshResponse = await fetch('/api/admin/donations/pending', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json();
-          const refreshedItems = (refreshData.donations || []).map(i => ({
-            ...i,
-            owner: i.owner || 'unknown'
-          }));
-          setApiDonationItems(prev => {
-            const filtered = prev.filter(i => i.id !== reasonModal.item.id);
-            return [...filtered, ...refreshedItems];
-          });
-        }
+        // 목록 완전 새로고침
+        await refreshDonationList();
       } catch (err) {
         console.error('기부 반려 오류:', err);
         showToast(err.message || '기부 반려에 실패했습니다.');
@@ -294,11 +261,20 @@ export default function AdminItemApprovalPage({
                       <td className="item-image-cell">
                         {item.images?.length && item.images[0] ? (
                           (() => {
-                            const imageUrl = item.images[0].dataUrl || item.images[0].url || item.images[0];
+                            let imageUrl = item.images[0].dataUrl || item.images[0].url || item.images[0];
                             const hasValidUrl = imageUrl && typeof imageUrl === 'string' && imageUrl.trim().length > 0;
                             
                             if (!hasValidUrl) {
                               return <span className="text-muted">이미지 없음</span>;
+                            }
+                            
+                            // 이미지 URL 처리: 백엔드 서버 주소 추가
+                            if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+                              if (imageUrl.startsWith('/uploads/')) {
+                                imageUrl = `http://localhost:8080${imageUrl}`;
+                              } else {
+                                imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                              }
                             }
                             
                             return (
@@ -323,6 +299,7 @@ export default function AdminItemApprovalPage({
                                   src={imageUrl}
                                   alt="기부 물품"
                                   onError={(e) => {
+                                    console.error('이미지 로드 실패:', imageUrl);
                                     e.target.style.display = 'none';
                                   }}
                                 />
@@ -435,7 +412,19 @@ export default function AdminItemApprovalPage({
             <h2>{imageModal.title || '기부 물품 이미지'}</h2>
             {imageModal.images?.length ? (
               imageModal.images.map((img, index) => {
-                const imageUrl = img.dataUrl || img.url || img;
+                let imageUrl = img.dataUrl || img.url || img;
+                
+                // 이미지 URL 처리: 백엔드 서버 주소 추가
+                if (imageUrl && typeof imageUrl === 'string') {
+                  if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+                    if (imageUrl.startsWith('/uploads/')) {
+                      imageUrl = `http://localhost:8080${imageUrl}`;
+                    } else {
+                      imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                    }
+                  }
+                }
+                
                 return (
                   <img 
                     key={img.id || index} 

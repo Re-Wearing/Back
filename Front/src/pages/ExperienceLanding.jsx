@@ -114,7 +114,20 @@ export default function ExperienceLanding({
                 <button className="hero-btn light" onClick={() => onNavLink?.({ href: '/donation-status' })}>
                   나의 기부 현황 조회
                 </button>
-                <button className="hero-btn dark" onClick={onSignup}>
+                <button 
+                  className="hero-btn dark" 
+                  onClick={() => {
+                    // 로그인 상태 확인
+                    const loggedIn = Boolean(localUser) || isLoggedIn
+                    if (loggedIn) {
+                      // 로그인되어 있으면 기부 페이지로 이동
+                      onNavLink?.({ href: '/donation' })
+                    } else {
+                      // 로그인되어 있지 않으면 회원가입 페이지로 이동
+                      onSignup()
+                    }
+                  }}
+                >
                   지금 바로 기부하기 📦
                 </button>
               </div>
@@ -169,7 +182,20 @@ export default function ExperienceLanding({
             <h3>함께하면, 옷의 다음 주인이 조금 더 빨리 웃습니다.</h3>
           </div>
           <div className="cta-actions">
-            <button className="btn primary" onClick={onSignup}>
+            <button 
+              className="btn primary" 
+              onClick={() => {
+                // 로그인 상태 확인
+                const loggedIn = Boolean(localUser) || isLoggedIn
+                if (loggedIn) {
+                  // 로그인되어 있으면 기부 페이지로 이동
+                  onNavLink?.({ href: '/donation' })
+                } else {
+                  // 로그인되어 있지 않으면 회원가입 페이지로 이동
+                  onSignup()
+                }
+              }}
+            >
               기부 이야기 시작하기
             </button>
             <button className="btn secondary" onClick={() => onNavLink?.({ href: '/donation-status' })}>

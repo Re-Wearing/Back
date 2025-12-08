@@ -62,6 +62,12 @@ public class DonationApiController {
         Map<String, Object> response = new HashMap<>();
         
         try {
+            // 요청 데이터 로깅 (디버깅용)
+            log.info("기부 신청 API - 요청 데이터: itemType={}, itemDetail={}, itemSize={}, itemCondition={}, itemDescription={}, donationMethod={}, donationOrganizationId={}, images={}",
+                    requestDto.getItemType(), requestDto.getItemDetail(), requestDto.getItemSize(), 
+                    requestDto.getItemCondition(), requestDto.getItemDescription(), 
+                    requestDto.getDonationMethod(), requestDto.getDonationOrganizationId(),
+                    requestDto.getImages() != null ? requestDto.getImages().size() : 0);
             // 사용자 조회
             User donor = userService.findByUsername(principal.getUsername())
                     .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
@@ -79,19 +85,37 @@ public class DonationApiController {
                         .orElseThrow(() -> new IllegalStateException("선택한 기관을 찾을 수 없습니다."));
             }
             
-            // base64 이미지를 파일로 저장
+            // 이미지 처리: base64 또는 이미 업로드된 파일명
             List<String> savedImageUrls = new ArrayList<>();
             if (requestDto.getImages() != null && !requestDto.getImages().isEmpty()) {
-                for (String base64Image : requestDto.getImages()) {
+                for (String imageData : requestDto.getImages()) {
                     try {
-                        String imageUrl = saveBase64Image(base64Image);
+                        String imageUrl;
+                        // 이미 업로드된 파일명인지 확인 (UUID 형식 또는 파일명 형식)
+                        if (isAlreadyUploadedFileName(imageData)) {
+                            // 이미 업로드된 파일명이면 /uploads/ 접두사 제거하고 파일명만 사용
+                            if (imageData.startsWith("/uploads/")) {
+                                imageUrl = imageData.substring("/uploads/".length());
+                            } else {
+                                imageUrl = imageData;
+                            }
+                            log.info("기부 신청 API - 이미 업로드된 이미지 사용: {}", imageUrl);
+                        } else {
+                            // base64 이미지면 디코딩해서 저장
+                            imageUrl = saveBase64Image(imageData);
+                            log.info("기부 신청 API - base64 이미지 저장 완료: {}", imageUrl);
+                        }
                         savedImageUrls.add(imageUrl);
-                        log.info("기부 신청 API - 이미지 저장 완료: {}", imageUrl);
                     } catch (IOException e) {
                         log.error("이미지 저장 실패", e);
                         response.put("success", false);
-                        response.put("message", "이미지 저장에 실패했습니다.");
+                        response.put("message", "이미지 저장에 실패했습니다: " + e.getMessage());
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    } catch (IllegalArgumentException e) {
+                        log.error("이미지 처리 실패", e);
+                        response.put("success", false);
+                        response.put("message", "이미지 처리에 실패했습니다: " + e.getMessage());
+                        return ResponseEntity.badRequest().body(response);
                     }
                 }
             }
@@ -315,6 +339,125 @@ public class DonationApiController {
     }
     
     /**
+     * REST API: 기부 상세 정보 조회
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> getDonationDetail(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long id) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // 사용자 조회
+            User user = userService.findByUsername(principal.getUsername())
+                    .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+            
+            // 기부 조회
+            Donation donation = donationService.getDonationById(id);
+            if (donation == null) {
+                response.put("success", false);
+                response.put("message", "기부를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            // 본인의 기부인지 확인
+            if (!donation.getDonor().getId().equals(user.getId())) {
+                response.put("success", false);
+                response.put("message", "본인의 기부만 조회할 수 있습니다.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            
+            // 기부 상세 정보 구성
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("id", donation.getId());
+            detail.put("status", DonationStatusConverter.convertToFrontStatus(donation));
+            detail.put("createdAt", DonationStatusConverter.formatDate(donation.getCreatedAt()));
+            detail.put("matchType", donation.getMatchType() != null ? donation.getMatchType().name() : null);
+            
+            // 물품 정보
+            if (donation.getDonationItem() != null) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("name", donation.getDonationItem().getDetailCategory() != null 
+                    ? donation.getDonationItem().getDetailCategory() 
+                    : (donation.getDonationItem().getMainCategory() != null 
+                        ? donation.getDonationItem().getMainCategory().name() 
+                        : "등록한 기부 물품"));
+                // 카테고리는 프론트엔드에서 표시하지 않으므로 제거
+                // item.put("category", convertClothTypeToCategory(donation.getDonationItem().getMainCategory()));
+                item.put("size", donation.getDonationItem().getSize() != null ? donation.getDonationItem().getSize().name() : null);
+                item.put("genderType", donation.getDonationItem().getGenderType() != null ? donation.getDonationItem().getGenderType().name() : null);
+                item.put("description", donation.getDonationItem().getDescription());
+                String singleImageUrl = donation.getDonationItem().getImageUrl();
+                String multipleImageUrls = donation.getDonationItem().getImageUrls();
+                
+                log.info("기부 상세 조회 - 이미지 URL 정보: imageUrl={}, imageUrls={}", singleImageUrl, multipleImageUrls);
+                
+                item.put("imageUrl", singleImageUrl);
+                
+                // 이미지 URL 리스트 (여러 이미지 처리)
+                List<String> imageUrls = new ArrayList<>();
+                if (multipleImageUrls != null && !multipleImageUrls.isEmpty()) {
+                    // 쉼표로 구분된 이미지 URL 파싱
+                    String[] urlArray = multipleImageUrls.split(",");
+                    for (String url : urlArray) {
+                        String trimmedUrl = url.trim();
+                        if (!trimmedUrl.isEmpty()) {
+                            imageUrls.add(trimmedUrl);
+                        }
+                    }
+                    log.info("기부 상세 조회 - 파싱된 이미지 URL 개수: {}", imageUrls.size());
+                } else if (singleImageUrl != null && !singleImageUrl.isEmpty()) {
+                    // 단일 이미지 URL 사용
+                    imageUrls.add(singleImageUrl);
+                    log.info("기부 상세 조회 - 단일 이미지 URL 사용: {}", singleImageUrl);
+                }
+                item.put("imageUrls", imageUrls);
+                log.info("기부 상세 조회 - 최종 imageUrls: {}", imageUrls);
+                
+                detail.put("item", item);
+            }
+            
+            // 기관 정보
+            if (donation.getOrgan() != null) {
+                Map<String, Object> organ = new HashMap<>();
+                organ.put("id", donation.getOrgan().getId());
+                organ.put("name", donation.getOrgan().getOrgName());
+                detail.put("organization", organ);
+            }
+            
+            // 매칭 정보
+            detail.put("matchingInfo", DonationStatusConverter.generateMatchingInfo(donation, DonationStatusConverter.convertToFrontStatus(donation)));
+            
+            // 배송 정보
+            if (donation.getDelivery() != null) {
+                Map<String, Object> delivery = new HashMap<>();
+                delivery.put("status", donation.getDelivery().getStatus() != null ? donation.getDelivery().getStatus().name() : null);
+                delivery.put("carrier", donation.getDelivery().getCarrier());
+                delivery.put("trackingNumber", donation.getDelivery().getTrackingNumber());
+                detail.put("delivery", delivery);
+            }
+            
+            response.put("success", true);
+            response.put("donation", detail);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalStateException e) {
+            log.error("기부 상세 조회 API - 상태 오류", e);
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            log.error("기부 상세 조회 API - 오류 발생", e);
+            response.put("success", false);
+            response.put("message", "기부 상세 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    /**
      * REST API: 기부 취소
      */
     @PutMapping("/{id}/cancel")
@@ -371,6 +514,46 @@ public class DonationApiController {
             response.put("message", "기부 취소 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+    
+    /**
+     * 이미지가 이미 업로드된 파일명인지 확인
+     * /uploads/ 접두사가 있거나, UUID 형식 파일명, 또는 일반 파일명 형식
+     */
+    private boolean isAlreadyUploadedFileName(String imageData) {
+        if (imageData == null || imageData.isEmpty()) {
+            return false;
+        }
+        
+        // base64 데이터 URL 형식인지 확인
+        if (imageData.startsWith("data:image/")) {
+            return false;
+        }
+        
+        // /uploads/ 접두사가 있으면 이미 업로드된 파일
+        if (imageData.startsWith("/uploads/")) {
+            return true;
+        }
+        
+        // base64 문자열은 보통 매우 길고 (수백~수천 자) 특정 문자만 포함 (A-Z, a-z, 0-9, +, /, =)
+        // 파일명은 상대적으로 짧고 (보통 100자 미만) 확장자를 가짐
+        if (imageData.length() < 200 && imageData.contains(".")) {
+            // base64 디코딩 시도해서 실패하면 파일명으로 간주
+            try {
+                // base64 데이터 URL 형식인지 확인
+                String testData = imageData;
+                if (imageData.contains(",")) {
+                    testData = imageData.split(",")[1];
+                }
+                // base64 디코딩 시도
+                java.util.Base64.getDecoder().decode(testData);
+                return false; // 디코딩 성공하면 base64
+            } catch (IllegalArgumentException e) {
+                return true; // 디코딩 실패하면 파일명으로 간주
+            }
+        }
+        
+        return false;
     }
     
     /**

@@ -44,6 +44,11 @@ public class DonationServiceImpl implements DonationService {
         }
         
         log.info("기부 생성 시작 - DonationItemForm에서 가져온 이미지 URL: {}, 여러 이미지: {}", imageUrl, imageUrls);
+        
+        // 이미지 URL 검증
+        if (imageUrl == null && (itemForm.getImageUrls() == null || itemForm.getImageUrls().isEmpty())) {
+            throw new IllegalArgumentException("물품 이미지를 최소 1개 이상 업로드해주세요.");
+        }
 
         DonationItem item = DonationItem.builder()
                 .owner(donor)
