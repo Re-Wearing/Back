@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시물 목록 | RE-WEAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bd: #e5e7eb;
+            --txt: #111827;
+            --sub: #6b7280;
+            --ok: #065f46;
+            --warn: #b91c1c;
+            --bg: #f7f7fb;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--txt);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+        .wrap {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--bd);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--bd);
+        }
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sub);
+            margin-bottom: -2px;
+            text-decoration: none;
+        }
+        .tab.active {
+            color: var(--ok);
+            border-bottom-color: var(--ok);
+        }
+        .actions {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn {
+            padding: 10px 16px;
+            background: #065f46;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #047857;
+        }
+        .post-list {
+            display: grid;
+            gap: 16px;
+        }
+        .post-item {
+            border: 1px solid var(--bd);
+            border-radius: 12px;
+            padding: 16px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .post-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .post-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--txt);
+            margin: 0;
+        }
+        .post-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .post-badge.review {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .post-content {
+            color: var(--sub);
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--sub);
+        }
+        .post-meta {
+            display: flex;
+            gap: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--sub);
+        }
+        .error-msg {
+            padding: 12px 16px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: #991b1b;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .success-msg {
+            padding: 12px 16px;
+            background: #d1fae5;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            color: #065f46;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+        <div class="card">
+            <h1>게시물 목록</h1>
+
+            <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+            <div th:if="${success}" class="success-msg" th:text="${success}"></div>
+
+            <div class="tabs">
+                <a th:href="@{/posts/reviews}"
+                   class="tab"
+                   th:classappend="${postType != null && postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? 'active' : ''}">
+                    기부 후기
+                </a>
+                <a th:href="@{/posts/requests}"
+                   class="tab"
+                   th:classappend="${postType != null && postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST ? 'active' : ''}">
+                    요청 게시물
+                </a>
+            </div>
+
+        <div class="actions">
+            <div></div>
+            <div style="display: flex; gap: 8px;">
+                <a th:if="${postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW || postType == null}"
+                   sec:authorize="isAuthenticated()"
+                   th:href="@{'/posts/new?type=' + ${postType != null ? postType.name() : 'DONATION_REVIEW'}}"
+                   class="btn">기부 후기 작성</a>
+                <a th:if="${postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST}" 
+                   sec:authorize="hasRole('ORGAN')"
+                   th:href="@{'/posts/new?type=' + ${postType.name()}}"
+                   class="btn">요청 게시물 작성</a>
+            </div>
+        </div>
+
+        <div th:if="${posts == null || #lists.isEmpty(posts)}" class="empty-state">
+            <p>게시물이 없습니다.</p>
+        </div>
+
+        <div th:if="${posts != null && !#lists.isEmpty(posts)}" class="post-list">
+            <div th:each="post : ${posts}" class="post-item" th:onclick="|window.location.href='/posts/' + ${post.id}|">
+                <div class="post-header">
+                    <h3 class="post-title" th:text="${post.title}">제목</h3>
+                    <span class="post-badge"
+                          th:classappend="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? 'review' : ''}"
+                          th:text="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW ? '기부 후기' : '요청 게시물'}">
+                        타입
+                    </span>
+                </div>
+                <div class="post-content" th:text="${post.content}">내용</div>
+                <div class="post-footer">
+                    <div class="post-meta">
+                        <!-- 기부 후기: 익명 처리 -->
+                        <span th:if="${post.postType == T(com.rewear.common.enums.PostType).DONATION_REVIEW}">
+                            <span th:if="${post.isAnonymous != null && post.isAnonymous}">익명</span>
+                            <span th:unless="${post.isAnonymous != null && post.isAnonymous}" th:text="${post.authorUser != null ? post.authorUser.name : '작성자'}">작성자</span>
+                        </span>
+                        <!-- 요청 게시물: 기관명 -->
+                        <span th:if="${post.postType == T(com.rewear.common.enums.PostType).ORGAN_REQUEST && post.authorOrgan != null}" th:text="${post.authorOrgan.orgName}">기관명</span>
+                        <span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
