@@ -291,6 +291,55 @@
 .small-btn.ghost {
   background: transparent;
   border: 1px solid #ddd;
+}
+
+/* 배송 관리 페이지 배경 */
+.admin-delivery-manage-page {
+  background: #ffffff !important;
+}
+
+.admin-delivery-manage-shell {
+  background: #ffffff;
+}
+
+.admin-delivery-manage-content {
+  background: #ffffff;
+  padding: 32px;
+}
+
+/* 택배 정보 입력 페이지 배경 */
+.admin-delivery-input-page {
+  background: #ffffff !important;
+}
+
+.admin-delivery-input-shell {
+  background: #ffffff;
+}
+
+.admin-delivery-input-content {
+  background: #ffffff;
+  padding: 32px;
+}
+
+.admin-delivery-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.admin-delivery-input-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #2f261c;
+}
+
+.admin-delivery-input-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
   color: #555;
 }
 

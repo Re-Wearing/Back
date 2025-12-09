@@ -19,6 +19,8 @@ export default function AdminFaqPage({
   const [loading, setLoading] = useState(true)
   const [editingFAQ, setEditingFAQ] = useState(null) // 수정 중인 FAQ ID
   const [editForm, setEditForm] = useState({ question: '', answer: '' }) // 수정 폼 데이터
+  const [showCreateForm, setShowCreateForm] = useState(false) // FAQ 생성 폼 표시 여부
+  const [createForm, setCreateForm] = useState({ question: '', answer: '' }) // FAQ 생성 폼 데이터
 
   // API에서 사용자 질문 목록과 공개 FAQ 가져오기
   useEffect(() => {
@@ -325,6 +327,69 @@ export default function AdminFaqPage({
     }
   }
 
+  // 관리자 FAQ 생성 핸들러
+  const handleCreateFAQ = async () => {
+    if (!createForm.question.trim() || !createForm.answer.trim()) {
+      window.alert('질문과 답변을 모두 입력해주세요.')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/admin/faq', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          question: createForm.question.trim(),
+          answer: createForm.answer.trim(),
+          displayOrder: 0,
+          isActive: true
+        })
+      })
+
+      if (response.ok) {
+        window.alert('FAQ가 생성되었습니다.')
+        setShowCreateForm(false)
+        setCreateForm({ question: '', answer: '' })
+        
+        // 목록 새로고침
+        const refreshResponse = await fetch('/api/admin/faq/all', {
+          credentials: 'include'
+        })
+        if (refreshResponse.ok) {
+          const allData = await refreshResponse.json()
+          const publishedData = allData.filter(q => !q.authorName && q.isActive)
+          const publishedList = publishedData.map(q => ({
+            id: q.id,
+            question: q.question,
+            answer: q.answer,
+            description: q.question,
+            submittedAt: q.createdAt ? new Date(q.createdAt).toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).replace(/\s/g, '.') : '',
+            status: 'published',
+            requester: '관리자',
+            nickname: '관리자',
+            role: '관리자',
+            email: null,
+            isPublished: true
+          }))
+          setPublishedFAQs(publishedList)
+        }
+      } else {
+        const errorData = await response.json()
+        window.alert(errorData.error || 'FAQ 생성에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('FAQ 생성 실패:', error)
+      window.alert('FAQ 생성 중 오류가 발생했습니다.')
+    }
+  }
+
   return (
     <section className="main-page admin-faq-page">
       <div className="main-shell admin-faq-shell">
@@ -344,7 +409,74 @@ export default function AdminFaqPage({
               <p className="eyebrow">관리자 전용</p>
               <h2>문의 답변 관리</h2>
             <p>접수된 문의를 확인하고 답변을 등록해 이용자에게 빠르게 안내해 주세요.</p>
+            <div style={{ marginTop: '1rem' }}>
+              <button 
+                type="button" 
+                className="btn primary" 
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                style={{ 
+                  padding: '0.5rem 1rem',
+                  fontSize: '14px'
+                }}
+              >
+                {showCreateForm ? 'FAQ 생성 취소' : '+ FAQ 직접 생성'}
+              </button>
+            </div>
           </header>
+
+          {/* FAQ 생성 폼 */}
+          {showCreateForm && (
+            <div style={{ 
+              marginBottom: '2rem', 
+              padding: '1.5rem', 
+              background: '#f9f9f9', 
+              borderRadius: '8px',
+              border: '1px solid #ddd'
+            }}>
+              <h3 style={{ marginBottom: '1rem', fontSize: '1.2rem', fontWeight: '600' }}>새 FAQ 생성</h3>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>질문 *</label>
+                <textarea
+                  className="admin-answer"
+                  value={createForm.question}
+                  onChange={(e) => setCreateForm({ ...createForm, question: e.target.value })}
+                  placeholder="자주 묻는 질문을 입력하세요"
+                  rows={2}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>답변 *</label>
+                <textarea
+                  className="admin-answer"
+                  value={createForm.answer}
+                  onChange={(e) => setCreateForm({ ...createForm, answer: e.target.value })}
+                  placeholder="질문에 대한 답변을 입력하세요"
+                  rows={4}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div className="admin-inquiry-actions">
+                <button 
+                  type="button" 
+                  className="btn primary" 
+                  onClick={handleCreateFAQ}
+                >
+                  FAQ 등록하기
+                </button>
+                <button 
+                  type="button" 
+                  className="btn secondary" 
+                  onClick={() => {
+                    setShowCreateForm(false)
+                    setCreateForm({ question: '', answer: '' })
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <p className="admin-empty">질문 목록을 불러오는 중...</p>

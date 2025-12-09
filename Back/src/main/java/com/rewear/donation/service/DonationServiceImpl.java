@@ -337,15 +337,9 @@ public class DonationServiceImpl implements DonationService {
             throw new IllegalStateException("해당 기관에 할당된 기부만 승인할 수 있습니다.");
         }
 
-        // 직접 매칭인 경우: 기관 수락 후에도 IN_PROGRESS 상태 유지 (관리자가 택배 정보 입력 후 완료)
-        // 간접 매칭인 경우: COMPLETED 상태로 변경하여 "받은 기부" 목록에 표시
-        if (donation.getMatchType() == MatchType.DIRECT) {
-            // 직접 매칭은 IN_PROGRESS 상태 유지 (관리자가 택배 정보 입력 후 완료 처리)
-            // 상태는 그대로 유지
-        } else {
-            // 간접 매칭은 COMPLETED로 변경
-            donation.setStatus(DonationStatus.COMPLETED);
-        }
+        // 기관이 수락한 기부는 모두 COMPLETED 상태로 변경하여 "기부 내역 조회"에 표시
+        // (직접 매칭과 간접 매칭 모두 동일하게 처리)
+        donation.setStatus(DonationStatus.COMPLETED);
 
         Donation savedDonation = donationRepository.save(donation);
 

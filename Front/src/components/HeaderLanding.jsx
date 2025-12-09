@@ -46,12 +46,14 @@ export default function HeaderLanding({
       )}
 
       <div className="header_actions">
-        <button type="button" className="header_icon bell" aria-label="알림" onClick={onNotifications}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 21a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Zm8-5h-1V10a7 7 0 0 0-6-6.92V2a1 1 0 0 0-2 0v1.08A7 7 0 0 0 5 10v6H4a1 1 0 0 0 0 2h16a1 1 0 1 0 0-2Z" />
-          </svg>
-          {unreadCount > 0 ? <span className="header_badge">{unreadCount}</span> : null}
-        </button>
+        {role !== '관리자 회원' && (
+          <button type="button" className="header_icon bell" aria-label="알림" onClick={onNotifications}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Zm8-5h-1V10a7 7 0 0 0-6-6.92V2a1 1 0 0 0-2 0v1.08A7 7 0 0 0 5 10v6H4a1 1 0 0 0 0 2h16a1 1 0 1 0 0-2Z" />
+            </svg>
+            {unreadCount > 0 ? <span className="header_badge">{unreadCount}</span> : null}
+          </button>
+        )}
 
         <button
           type="button"
@@ -59,12 +61,6 @@ export default function HeaderLanding({
           onClick={isLoggedIn ? onLogout : onLogin}
         >
           {isLoggedIn ? '로그아웃' : '로그인'}
-        </button>
-
-        <button type="button" className="header_icon menu" aria-label="메뉴 열기" onClick={onMenu}>
-          <span />
-          <span />
-          <span />
         </button>
       </div>
     </header>
