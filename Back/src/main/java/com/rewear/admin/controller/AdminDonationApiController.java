@@ -174,31 +174,31 @@ public class AdminDonationApiController {
     @GetMapping("/direct-match")
     public ResponseEntity<?> getDirectMatchDonations() {
         try {
-            // PENDING 상태의 직접 매칭 기부
-            List<Donation> pendingDirect = donationService.getDonationsByStatus(DonationStatus.PENDING).stream()
-                    .filter(d -> d.getMatchType() == MatchType.DIRECT 
+            // PENDING 상태의 직접 매칭 기부 (관리자 승인 대기)
+            List<Donation> pendingAdminDecision = donationService.getDonationsByStatus(DonationStatus.PENDING).stream()
+                    .filter(d -> d.getMatchType() == MatchType.DIRECT
                             && d.getAdminDecision() == AdminDecision.PENDING)
                     .collect(Collectors.toList());
-            
-            // IN_PROGRESS 상태의 직접 매칭 기부 (기관이 할당되었고, 기관이 수락한 것도 포함)
-            List<Donation> inProgressDirect = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
-                    .filter(d -> d.getMatchType() == MatchType.DIRECT 
-                            && d.getOrgan() != null)
+
+            // IN_PROGRESS 상태의 직접 매칭 기부 (기관이 할당되었고, 기관이 승인했지만 아직 관리자가 택배 정보를 입력하지 않은 상태)
+            List<Donation> inProgressOrganApproved = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
+                    .filter(d -> d.getMatchType() == MatchType.DIRECT
+                            && d.getOrgan() != null
+                            && d.getAdminDecision() == AdminDecision.APPROVED) // 관리자 승인 완료
                     .collect(Collectors.toList());
-            
-            // 두 리스트 합치기
+
             List<Donation> allDirectMatch = new ArrayList<>();
-            allDirectMatch.addAll(pendingDirect);
-            allDirectMatch.addAll(inProgressDirect);
-            
+            allDirectMatch.addAll(pendingAdminDecision);
+            allDirectMatch.addAll(inProgressOrganApproved);
+
             List<Map<String, Object>> donationList = allDirectMatch.stream()
                     .map(this::convertToAdminDonationDto)
                     .collect(Collectors.toList());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("donations", donationList);
             response.put("count", donationList.size());
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("직접 매칭 대기 기부 목록 조회 오류", e);
@@ -574,8 +574,12 @@ public class AdminDonationApiController {
         // 배송 정보 ID (택배 정보 입력 시 사용)
         if (donation.getDelivery() != null) {
             dto.put("deliveryId", donation.getDelivery().getId());
+            dto.put("carrier", donation.getDelivery().getCarrier());
+            dto.put("trackingNumber", donation.getDelivery().getTrackingNumber());
         } else {
             dto.put("deliveryId", null);
+            dto.put("carrier", null);
+            dto.put("trackingNumber", null);
         }
         
         return dto;

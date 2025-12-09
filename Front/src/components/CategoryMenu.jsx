@@ -17,8 +17,7 @@ const getMenuCategories = role => {
       {
         title: '기부 관리',
         items: [
-          { label: '자동 매칭', href: '/admin/manage/matching' },
-          { label: '직접 매칭', href: '/admin/manage/matching/direct' },
+          { label: '자동매칭', href: '/admin/manage/matching' },
           { label: '배송 관리', href: '/admin/manage/delivery' }
         ]
       },

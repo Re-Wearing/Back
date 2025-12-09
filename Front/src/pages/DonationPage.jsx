@@ -417,12 +417,16 @@ export default function DonationPage({
       setDesiredDate(today)
       setMemo('')
       
-      // 기부 현황 조회로 이동 (currentUser 확인 후)
+      // 기부 현황 조회로 이동 (goToDonationStatus가 currentUser를 다시 가져오는 로직 포함)
       try {
-        if (onGoToDonationStatus && isLoggedIn && currentUser) {
+        if (onGoToDonationStatus && isLoggedIn) {
+          // currentUser가 없어도 goToDonationStatus가 내부에서 다시 가져오도록 함
           onGoToDonationStatus()
-        } else {
+        } else if (!isLoggedIn) {
           // 로그인 상태가 아니면 메인으로 이동
+          onNavigateHome()
+        } else {
+          // isLoggedIn이 true인데 onGoToDonationStatus가 없으면 메인으로
           onNavigateHome()
         }
       } catch (navError) {

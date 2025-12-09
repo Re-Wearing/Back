@@ -887,6 +887,12 @@ export default function App() {
     }
   }
   const goToDeliveryCheck = (deliveryId = null, options = {}) => {
+    // 로그인 상태 확인
+    if (!currentUser && !isLoggedIn) {
+      goToLogin(options)
+      return
+    }
+    
     const { push = true, replace = false } = options
     setShowLanding(false)
     setActivePage('deliveryCheck')
@@ -906,6 +912,12 @@ export default function App() {
   };
 
   const goToDonation = (options = {}) => {
+    // 로그인 상태 확인
+    if (!currentUser && !isLoggedIn) {
+      goToLogin(options)
+      return
+    }
+    
     const { push = true, replace = false } = options;
     setShowLanding(false);
     setActivePage('donation');

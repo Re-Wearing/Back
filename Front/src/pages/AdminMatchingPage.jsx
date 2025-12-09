@@ -215,10 +215,6 @@ export default function AdminMatchingPage({
         }));
         setApiDonationItems(refreshedItems);
       }
-      
-      if (typeof onSendMatchingInvite === 'function') {
-        onSendMatchingInvite(item.owner, item.id, selectedOrg);
-      }
     } catch (err) {
       console.error('기관 할당 오류:', err);
       showToast(err.message || '기관 할당에 실패했습니다.');
