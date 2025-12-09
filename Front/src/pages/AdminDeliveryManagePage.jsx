@@ -245,7 +245,6 @@ export default function AdminDeliveryManagePage({
               <option value="대기">대기</option>
               <option value="배송중">배송중</option>
               <option value="완료">완료</option>
-              <option value="취소">취소</option>
             </select>
           </div>
 
