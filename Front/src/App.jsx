@@ -442,6 +442,7 @@ export default function App() {
   const isLoggedIn = Boolean(currentUser)
   const [currentPath, setCurrentPath] = useState('/main')
   const [recoveryContext, setRecoveryContext] = useState(null)
+  const [selectedDeliveryId, setSelectedDeliveryId] = useState(null)
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
   const [unreadCount, setUnreadCount] = useState(0)
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS)
@@ -862,10 +863,14 @@ export default function App() {
     if (push) updatePath('/donation-status', { replace })
     else if (replace) updatePath('/donation-status', { replace: true })
   }
-  const goToDeliveryCheck = (options = {}) => {
+  const goToDeliveryCheck = (deliveryId = null, options = {}) => {
     const { push = true, replace = false } = options
     setShowLanding(false)
     setActivePage('deliveryCheck')
+    // 배송 ID를 상태로 저장 (DeliveryCheckPage에서 사용)
+    if (deliveryId) {
+      setSelectedDeliveryId(deliveryId)
+    }
     if (push) updatePath('/delivery-check', { replace })
     else if (replace) updatePath('/delivery-check', { replace: true })
   }
@@ -2397,7 +2402,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2433,7 +2438,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2456,7 +2461,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2476,7 +2481,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2500,7 +2505,7 @@ export default function App() {
               navLinks={getNavLinksForRole(currentUser?.role)}
               role={currentUser?.role}
               onLogoClick={goToMain}
-              onLogin={() => {}}
+              onLogin={goToLogin}
               onNavClick={handleNavRedirection}
               isLoggedIn={isLoggedIn}
               onLogout={handleLogout}
@@ -2623,6 +2628,7 @@ export default function App() {
           onInquiry={goToInquiry}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           hasInquiries={userInquiries.length > 0}
@@ -2638,6 +2644,7 @@ export default function App() {
           onBack={() => goToFaq()}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onSubmitInquiry={handleInquirySubmit}
@@ -2650,6 +2657,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}
@@ -2666,6 +2674,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}
@@ -2674,6 +2683,8 @@ export default function App() {
           shipments={shipments}
           donorProfile={profiles.user}
           organizationProfile={currentUser ? profiles[currentUser.username] : null}
+          selectedDeliveryId={selectedDeliveryId}
+          onDeliveryIdProcessed={() => setSelectedDeliveryId(null)}
         />
       ) : activePage === 'organizationDonationStatus' ? (
         <OrganizationDonationStatusPage
@@ -2681,6 +2692,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}
@@ -2690,6 +2702,7 @@ export default function App() {
           shipments={shipments}
           matchingInvites={matchingInvites}
           onRespondMatchingInvite={handleRespondMatchingInvite}
+          onNavigateDeliveryStatus={(deliveryId) => goToDeliveryCheck(deliveryId)}
         />
       ) : activePage === 'businessIntro' ? (
         <BusinessIntroPage
@@ -2709,6 +2722,7 @@ export default function App() {
           onNavLink={handleNavRedirection}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          onLogin={goToLogin}
           onNotifications={goToNotifications}
           unreadCount={unreadCount}
           onMenu={() => setIsMenuOpen(true)}

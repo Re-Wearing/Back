@@ -118,8 +118,15 @@ export default function BoardWritePage({
         // 목록 페이지로 돌아가면 API에서 최신 목록을 가져옴
         onGoBack()
       } else {
-        const errorData = await response.json()
-        window.alert(errorData.error || '게시글 작성에 실패했습니다.')
+        let errorMessage = '게시글 작성에 실패했습니다.'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorData.message || errorMessage
+        } catch (e) {
+          // JSON 파싱 실패 시 상태 코드 기반 메시지
+          errorMessage = `게시글 작성에 실패했습니다. (${response.status})`
+        }
+        window.alert(errorMessage)
       }
     } catch (error) {
       console.error('게시글 작성 실패:', error)

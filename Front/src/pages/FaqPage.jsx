@@ -47,7 +47,8 @@ export default function FaqPage({
   answeredCount = 0,
   onViewAnswers = () => {},
   onMenu = () => {},
-  currentUser = null
+  currentUser = null,
+  onLogin = () => {}
 }) {
   const [openIndexes, setOpenIndexes] = useState(() => new Set())
   const [faqs, setFaqs] = useState([])
@@ -61,7 +62,7 @@ export default function FaqPage({
       setLoading(true)
       try {
         console.log('FAQ 목록 조회 시작...')
-        const response = await fetch('http://localhost:8080/api/faq', {
+        const response = await fetch('/api/faq', {
           credentials: 'include'
         })
         
@@ -116,7 +117,7 @@ export default function FaqPage({
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/faq/question', {
+      const response = await fetch('/api/faq/question', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -163,6 +164,7 @@ export default function FaqPage({
           onNotifications={onNotifications}
           isLoggedIn={isLoggedIn}
           onLogout={onLogout}
+          onLogin={onLogin}
           unreadCount={unreadCount}
           onMenu={onMenu}
         />
@@ -239,33 +241,65 @@ export default function FaqPage({
               )}
             </div>
             
-            {/* 질문 등록 폼 */}
+            {/* 질문 등록 모달 */}
             {showQuestionForm && isLoggedIn && (
-              <form className="faq-question-form" onSubmit={handleSubmitQuestion}>
-                <textarea
-                  className="faq-question-input"
-                  placeholder="궁금한 점을 입력해주세요..."
-                  value={questionInput}
-                  onChange={(e) => setQuestionInput(e.target.value)}
-                  rows={4}
-                  required
-                />
-                <div className="faq-question-actions">
-                  <button 
-                    type="button" 
-                    className="btn-cancel"
-                    onClick={() => {
-                      setShowQuestionForm(false)
-                      setQuestionInput('')
-                    }}
-                  >
-                    취소
-                  </button>
-                  <button type="submit" className="btn-submit">
-                    등록하기
-                  </button>
+              <div 
+                className="faq-question-modal-overlay"
+                onClick={() => {
+                  setShowQuestionForm(false)
+                  setQuestionInput('')
+                }}
+              >
+                <div 
+                  className="faq-question-modal"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="faq-question-modal-header">
+                    <h3>질문 등록</h3>
+                    <button 
+                      type="button"
+                      className="faq-question-modal-close"
+                      onClick={() => {
+                        setShowQuestionForm(false)
+                        setQuestionInput('')
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <form className="faq-question-form" onSubmit={handleSubmitQuestion}>
+                    <div className="faq-question-form-content">
+                      <label htmlFor="question-input" className="faq-question-label">
+                        궁금한 점을 입력해주세요
+                      </label>
+                      <textarea
+                        id="question-input"
+                        className="faq-question-input"
+                        placeholder="예: 기부 물품은 어떻게 접수하나요?"
+                        value={questionInput}
+                        onChange={(e) => setQuestionInput(e.target.value)}
+                        rows={6}
+                        required
+                      />
+                    </div>
+                    <div className="faq-question-actions">
+                      <button 
+                        type="button" 
+                        className="btn-cancel"
+                        onClick={() => {
+                          setShowQuestionForm(false)
+                          setQuestionInput('')
+                        }}
+                      >
+                        취소
+                      </button>
+                      <button type="submit" className="btn-submit">
+                        등록하기
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              </form>
+              </div>
             )}
           </div>
         </article>

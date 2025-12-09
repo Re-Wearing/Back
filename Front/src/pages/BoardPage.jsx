@@ -40,7 +40,7 @@ export default function BoardPage({
     setLoading(true)
     try {
       // 기부 후기 목록 (DONATION_REVIEW 타입만)
-      const reviewResponse = await fetch('http://localhost:8080/api/posts?type=DONATION_REVIEW&page=0&size=100')
+      const reviewResponse = await fetch('/api/posts?type=DONATION_REVIEW&page=0&size=100')
       if (reviewResponse.ok) {
         const reviewData = await reviewResponse.json()
         const reviewPosts = (reviewData.content || []).map(post => ({
@@ -62,7 +62,7 @@ export default function BoardPage({
       }
 
       // 요청 게시판 목록 (ORGAN_REQUEST 타입만, 모든 기관의 게시물)
-      const requestResponse = await fetch('http://localhost:8080/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
+      const requestResponse = await fetch('/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
         credentials: 'include'
       })
       if (requestResponse.ok) {
