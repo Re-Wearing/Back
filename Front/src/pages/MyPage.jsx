@@ -33,8 +33,14 @@ export default function MyPage({
     confirm: ''
   })
   const [passwordMessage, setPasswordMessage] = useState('')
-  const [withdrawInput, setWithdrawInput] = useState('')
-  const [withdrawMessage, setWithdrawMessage] = useState('')
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
+  const [withdrawAgreed, setWithdrawAgreed] = useState(false)
+  const [withdrawVerification, setWithdrawVerification] = useState({
+    code: '',
+    isSending: false,
+    isVerified: false,
+    message: ''
+  })
 
   const isOrganization = Boolean(user?.role === '기관 회원')
 
@@ -79,7 +85,6 @@ export default function MyPage({
 
   const memberName = profile.fullName || user.name
   const displayNickname = isOrganization ? memberName : profile.nickname || memberName
-  const withdrawToken = `${displayNickname}/탈퇴한다.`
 
   const handleProfileChange = event => {
     const { name, value, type, checked } = event.target
@@ -116,13 +121,137 @@ export default function MyPage({
     }
   }
 
-  const handleWithdrawSubmit = () => {
-    if (withdrawInput !== withdrawToken) {
-      setWithdrawMessage(`"${withdrawToken}" 문구를 정확히 입력해주세요.`)
+  const handleOpenWithdrawModal = () => {
+    setShowWithdrawModal(true)
+    setWithdrawAgreed(false)
+    setWithdrawVerification({
+      code: '',
+      isSending: false,
+      isVerified: false,
+      message: ''
+    })
+  }
+
+  const handleCloseWithdrawModal = () => {
+    setShowWithdrawModal(false)
+    setWithdrawAgreed(false)
+    setWithdrawVerification({
+      code: '',
+      isSending: false,
+      isVerified: false,
+      message: ''
+    })
+  }
+
+  const handleSendWithdrawVerification = async () => {
+    setWithdrawVerification(prev => ({ ...prev, isSending: true, message: '' }))
+
+    try {
+      const response = await fetch('/api/users/me/withdraw/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      const data = await response.json()
+
+      if (data.ok === true) {
+        setWithdrawVerification(prev => ({
+          ...prev,
+          isSending: false,
+          message: '인증코드가 발송되었습니다. 이메일을 확인해주세요.'
+        }))
+      } else {
+        setWithdrawVerification(prev => ({
+          ...prev,
+          isSending: false,
+          message: data.message || '인증코드 전송에 실패했습니다.'
+        }))
+      }
+    } catch (error) {
+      console.error('Withdraw verification send error:', error)
+      setWithdrawVerification(prev => ({
+        ...prev,
+        isSending: false,
+        message: '인증코드 전송 중 오류가 발생했습니다.'
+      }))
+    }
+  }
+
+  const handleVerifyWithdrawCode = async () => {
+    if (!withdrawVerification.code || withdrawVerification.code.trim().length !== 6) {
+      setWithdrawVerification(prev => ({
+        ...prev,
+        message: '인증코드 6자리를 입력해주세요.'
+      }))
       return
     }
-    const result = onWithdraw()
-    setWithdrawMessage(result.message || (result.success ? '회원 탈퇴가 완료되었습니다.' : '실패했습니다.'))
+
+    try {
+      const response = await fetch('/api/users/me/withdraw/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          code: withdrawVerification.code.trim()
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.ok === true) {
+        setWithdrawVerification(prev => ({
+          ...prev,
+          isVerified: true,
+          message: '인증이 완료되었습니다.'
+        }))
+      } else {
+        setWithdrawVerification(prev => ({
+          ...prev,
+          isVerified: false,
+          message: data.message || '인증코드가 올바르지 않습니다.'
+        }))
+      }
+    } catch (error) {
+      console.error('Withdraw verification error:', error)
+      setWithdrawVerification(prev => ({
+        ...prev,
+        isVerified: false,
+        message: '인증코드 확인 중 오류가 발생했습니다.'
+      }))
+    }
+  }
+
+  const handleWithdrawSubmit = async () => {
+    if (!withdrawAgreed) {
+      setWithdrawVerification(prev => ({
+        ...prev,
+        message: '약관에 동의해주세요.'
+      }))
+      return
+    }
+
+    if (!withdrawVerification.isVerified) {
+      setWithdrawVerification(prev => ({
+        ...prev,
+        message: '이메일 인증을 완료해주세요.'
+      }))
+      return
+    }
+
+    const result = await onWithdraw()
+    if (result.success) {
+      handleCloseWithdrawModal()
+    } else {
+      setWithdrawVerification(prev => ({
+        ...prev,
+        message: result.message || '회원 탈퇴에 실패했습니다.'
+      }))
+    }
   }
 
   const handleSendEmailVerification = async () => {
@@ -237,20 +366,9 @@ export default function MyPage({
             <button type="button" className="outline">
               비밀번호 변경
             </button>
-            <button type="button" className="danger" onClick={handleWithdrawSubmit}>
+            <button type="button" className="danger" onClick={handleOpenWithdrawModal}>
               회원탈퇴
             </button>
-          </div>
-          <div className="mypage-withdraw-info">
-            <p>회원탈퇴를 진행하려면 아래 문구를 입력해주세요.</p>
-            <code>{withdrawToken}</code>
-            <input
-              type="text"
-              value={withdrawInput}
-              onChange={event => setWithdrawInput(event.target.value)}
-              placeholder="확인 문구 입력"
-            />
-            {withdrawMessage ? <p className="helper danger">{withdrawMessage}</p> : null}
           </div>
         </aside>
 
@@ -413,6 +531,183 @@ export default function MyPage({
           </form>
         </section>
       </div>
+
+      {/* 회원탈퇴 모달 */}
+      {showWithdrawModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={handleCloseWithdrawModal}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '2rem',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
+              회원탈퇴
+            </h2>
+
+            {/* 약관 동의 */}
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: '600' }}>
+                회원탈퇴 약관
+              </h3>
+              <div style={{
+                padding: '1rem',
+                backgroundColor: '#f9f9f9',
+                borderRadius: '8px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                fontSize: '0.9rem',
+                lineHeight: '1.6',
+                marginBottom: '1rem'
+              }}>
+                <p style={{ margin: '0.5rem 0' }}>
+                  <strong>제1조 (회원탈퇴의 효과)</strong><br />
+                  회원탈퇴 시 회원님의 모든 개인정보는 즉시 삭제되며, 복구할 수 없습니다.
+                </p>
+                <p style={{ margin: '0.5rem 0' }}>
+                  <strong>제2조 (기부 내역)</strong><br />
+                  회원탈퇴 시 진행 중인 기부 내역은 모두 취소되며, 완료된 기부 내역은 삭제됩니다.
+                </p>
+                <p style={{ margin: '0.5rem 0' }}>
+                  <strong>제3조 (게시물)</strong><br />
+                  회원탈퇴 시 작성한 게시물과 댓글은 모두 삭제됩니다.
+                </p>
+                <p style={{ margin: '0.5rem 0' }}>
+                  <strong>제4조 (재가입)</strong><br />
+                  탈퇴 후 동일한 이메일로 재가입이 가능하나, 이전 데이터는 복구되지 않습니다.
+                </p>
+                <p style={{ margin: '0.5rem 0' }}>
+                  <strong>제5조 (면책)</strong><br />
+                  회원탈퇴로 인해 발생하는 모든 불이익에 대해 RE:WEAR는 책임을 지지 않습니다.
+                </p>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={withdrawAgreed}
+                  onChange={(e) => setWithdrawAgreed(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <span>위 약관을 읽었으며, 회원탈퇴에 동의합니다.</span>
+              </label>
+            </div>
+
+            {/* 이메일 인증 */}
+            {withdrawAgreed && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: '600' }}>
+                  이메일 인증
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+                  회원탈퇴를 위해 등록된 이메일({form.email})로 인증코드를 발송합니다.
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={handleSendWithdrawVerification}
+                    disabled={withdrawVerification.isSending || withdrawVerification.isVerified}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    {withdrawVerification.isSending ? '전송 중...' : '인증코드 전송'}
+                  </button>
+                </div>
+                {(withdrawVerification.message && withdrawVerification.message.includes('발송')) || withdrawVerification.code ? (
+                  <label style={{ display: 'block', marginTop: '1rem' }}>
+                    인증코드
+                    <input
+                      type="text"
+                      value={withdrawVerification.code}
+                      onChange={(e) => setWithdrawVerification(prev => ({ 
+                        ...prev, 
+                        code: e.target.value.replace(/\D/g, '').slice(0, 6)
+                        // message는 유지 (입력 필드가 사라지지 않도록)
+                      }))}
+                      placeholder="인증코드 6자리 입력"
+                      maxLength={6}
+                      disabled={withdrawVerification.isVerified}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        marginTop: '0.5rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </label>
+                ) : null}
+                {withdrawVerification.code && withdrawVerification.code.length === 6 && !withdrawVerification.isVerified && (
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={handleVerifyWithdrawCode}
+                    style={{ marginTop: '0.5rem', width: '100%' }}
+                  >
+                    인증코드 확인
+                  </button>
+                )}
+                {withdrawVerification.message && (
+                  <p className={`helper ${withdrawVerification.isVerified ? '' : 'danger'}`} style={{ marginTop: '0.5rem' }}>
+                    {withdrawVerification.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 버튼 */}
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={handleCloseWithdrawModal}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={handleWithdrawSubmit}
+                disabled={!withdrawAgreed || !withdrawVerification.isVerified}
+                style={{
+                  borderColor: '#f26363',
+                  color: '#f26363',
+                  background: '#fff5f5',
+                  border: '1px solid #f26363',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  opacity: (!withdrawAgreed || !withdrawVerification.isVerified) ? 0.5 : 1,
+                  cursor: (!withdrawAgreed || !withdrawVerification.isVerified) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                회원 탈퇴
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
