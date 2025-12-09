@@ -20,6 +20,7 @@ import AdminMatchingSelectPage from './pages/AdminMatchingSelectPage'
 import AdminDirectMatchingPage from './pages/AdminDirectMatchingPage'
 import AdminPostManagePage from './pages/AdminPostManagePage'
 import AdminDeliveryManagePage from './pages/AdminDeliveryManagePage'
+import AdminDeliveryInputPage from './pages/AdminDeliveryInputPage'
 import AdminFaqPage from './pages/AdminFaqPage'
 import FaqPage from './pages/FaqPage'
 import InquiryPage from './pages/InquiryPage'
@@ -2185,6 +2186,8 @@ export default function App() {
       setActivePage('adminPostManage')
     } else if (href === '/admin/manage/delivery') {
       setActivePage('adminDeliveryManage')
+    } else if (href === '/admin/manage/delivery-input') {
+      setActivePage('adminDeliveryInput')
     } else if (href === '/admin/faq') {
       goToAdminFaq()
     } else if (href === '/admin/delivery') {
@@ -2283,6 +2286,12 @@ export default function App() {
         break
       case '/admin/manage/posts':
         setActivePage('adminPostManage')
+        break
+      case '/admin/manage/delivery':
+        setActivePage('adminDeliveryManage')
+        break
+      case '/admin/manage/delivery-input':
+        setActivePage('adminDeliveryInput')
         break
       case '/notification':
         goToNotifications({ push: false, replace: true }, userOverride)
@@ -2622,6 +2631,34 @@ export default function App() {
           onMenu={() => setIsMenuOpen(true)}
           currentUser={currentUser}
         />
+      ) : activePage === 'adminDeliveryInput' ? (
+        <section className="main-page">
+          <div className="main-shell">
+            <HeaderLanding
+              navLinks={getNavLinksForRole(currentUser?.role)}
+              role={currentUser?.role}
+              onLogoClick={goToMain}
+              onLogin={goToLogin}
+              onNavClick={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+            />
+            <AdminDeliveryInputPage
+              onNavigateHome={goToMain}
+              onNavLink={handleNavRedirection}
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onLogin={goToLogin}
+              onNotifications={goToNotifications}
+              unreadCount={unreadCount}
+              onMenu={() => setIsMenuOpen(true)}
+              currentUser={currentUser}
+            />
+          </div>
+        </section>
       ) : activePage === 'inquiryAnswers' ? (
         <InquiryAnswersPage
           onNavigateHome={goToMain}

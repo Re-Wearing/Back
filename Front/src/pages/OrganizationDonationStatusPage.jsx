@@ -52,6 +52,7 @@ export default function OrganizationDonationStatusPage({
   const [loadingCompleted, setLoadingCompleted] = useState(false)
   const [error, setError] = useState(null)
   const [deliveryModal, setDeliveryModal] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // API에서 기관에 할당된 기부 목록 조회 (매칭 관리용)
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function OrganizationDonationStatusPage({
   }, [])
 
   // 완료된 기부 목록 (API 데이터 우선 사용)
-  const donations = useMemo(() => {
+  const allDonations = useMemo(() => {
     if (completedDonations.length > 0) {
       return completedDonations.map(donation => ({
         id: donation.id,
@@ -149,6 +150,24 @@ export default function OrganizationDonationStatusPage({
         status: '완료'
       }))
   }, [completedDonations, shipments, currentUser.name, currentUser.nickname])
+
+  // 검색어로 필터링된 기부 목록
+  const donations = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allDonations
+    }
+    
+    const query = searchQuery.toLowerCase().trim()
+    return allDonations.filter(donation => {
+      return (
+        (donation.items && donation.items.toLowerCase().includes(query)) ||
+        (donation.sender && donation.sender.toLowerCase().includes(query)) ||
+        (donation.date && donation.date.includes(query)) ||
+        (donation.organization && donation.organization.toLowerCase().includes(query))
+      )
+    })
+  }, [allDonations, searchQuery])
+
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -434,14 +453,13 @@ export default function OrganizationDonationStatusPage({
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                   </svg>
-                  <input type="search" placeholder="검색..." />
+                  <input 
+                    type="search" 
+                    placeholder="검색..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <button type="button" className="btn-filter">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                  </svg>
-                  Filters
-                </button>
               </div>
 
               {loadingCompleted ? (

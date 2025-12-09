@@ -5,7 +5,6 @@ import com.rewear.common.enums.DonationStatus;
 import com.rewear.common.enums.MatchType;
 import com.rewear.common.enums.OrganStatus;
 import com.rewear.donation.entity.Donation;
-import com.rewear.donation.repository.DonationRepository;
 import com.rewear.donation.service.DonationService;
 import com.rewear.donation.util.DonationStatusConverter;
 import com.rewear.organ.entity.Organ;
@@ -37,6 +36,7 @@ public class AdminDonationApiController {
     private final DonationService donationService;
     private final OrganService organService;
     private final com.rewear.donation.repository.DonationRepository donationRepository;
+    private final com.rewear.delivery.repository.DeliveryRepository deliveryRepository;
     
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -143,13 +143,14 @@ public class AdminDonationApiController {
     @GetMapping("/auto-match")
     public ResponseEntity<?> getAutoMatchDonations() {
         try {
-            List<Donation> donations = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
+            // 기관이 할당되지 않은 기부만 표시 (기관 할당 대기)
+            List<Donation> unassignedDonations = donationService.getDonationsByStatus(DonationStatus.IN_PROGRESS).stream()
                     .filter(d -> d.getMatchType() == MatchType.INDIRECT 
                             && d.getAdminDecision() == AdminDecision.APPROVED 
                             && d.getOrgan() == null)
                     .collect(Collectors.toList());
             
-            List<Map<String, Object>> donationList = donations.stream()
+            List<Map<String, Object>> donationList = unassignedDonations.stream()
                     .map(this::convertToAdminDonationDto)
                     .collect(Collectors.toList());
             
@@ -164,6 +165,151 @@ public class AdminDonationApiController {
             errorResponse.put("error", true);
             errorResponse.put("message", "기부 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 택배 정보 입력 대기 기부 목록 조회
+     * 기관이 할당되고 기관이 승인한 기부 중 택배 배송인 경우 (COMPLETED 상태, 배송 정보 없음)
+     */
+    @GetMapping("/delivery/input")
+    public ResponseEntity<?> getDeliveryInputDonations() {
+        try {
+            // 기관이 할당되고 기관이 승인한 기부 (COMPLETED 상태, 택배 정보 입력 필요)
+            List<Donation> organApprovedDonations = donationService.getDonationsByStatus(DonationStatus.COMPLETED).stream()
+                    .filter(d -> {
+                        // 기본 조건 확인
+                        if (d.getMatchType() != MatchType.INDIRECT) {
+                            return false;
+                        }
+                        if (d.getOrgan() == null) {
+                            return false;
+                        }
+                        if (d.getDeliveryMethod() != com.rewear.common.enums.DeliveryMethod.PARCEL_DELIVERY) {
+                            return false;
+                        }
+                        // 배송 정보가 없거나 택배 정보가 없는 경우
+                        if (d.getDelivery() == null) {
+                            return true; // 배송 정보가 없으면 택배 정보 입력 필요
+                        }
+                        // 배송 정보는 있지만 택배사나 운송장 번호가 없는 경우
+                        return d.getDelivery().getCarrier() == null || 
+                               d.getDelivery().getCarrier().isEmpty() ||
+                               d.getDelivery().getTrackingNumber() == null || 
+                               d.getDelivery().getTrackingNumber().isEmpty();
+                    })
+                    .collect(Collectors.toList());
+            
+            List<Map<String, Object>> donationList = organApprovedDonations.stream()
+                    .map(this::convertToAdminDonationDto)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("donations", donationList);
+            response.put("count", donationList.size());
+            
+            log.info("택배 정보 입력 대기 기부 목록 조회 성공 - 개수: {}", donationList.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("택배 정보 입력 대기 기부 목록 조회 오류", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", true);
+            errorResponse.put("message", "기부 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("donations", new ArrayList<>());
+            errorResponse.put("count", 0);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 택배 정보 업데이트 (기관이 승인한 기부에 대해)
+     */
+    @PutMapping("/{id}/delivery-info")
+    public ResponseEntity<Map<String, Object>> updateDeliveryInfo(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> requestBody) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Donation donation = donationService.getDonationById(id);
+            if (donation == null) {
+                response.put("success", false);
+                response.put("message", "기부를 찾을 수 없습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // 기관이 할당되고 승인한 기부인지 확인
+            if (donation.getOrgan() == null) {
+                response.put("success", false);
+                response.put("message", "기관이 할당되지 않은 기부입니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (donation.getStatus() != DonationStatus.COMPLETED) {
+                response.put("success", false);
+                response.put("message", "기관이 승인하지 않은 기부입니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // 택배 회사와 운송장 번호 추출
+            String carrier = null;
+            String trackingNumber = null;
+            if (requestBody.containsKey("carrier")) {
+                Object carrierObj = requestBody.get("carrier");
+                if (carrierObj instanceof String && !((String) carrierObj).isEmpty()) {
+                    carrier = (String) carrierObj;
+                }
+            }
+            if (requestBody.containsKey("trackingNumber")) {
+                Object trackingNumberObj = requestBody.get("trackingNumber");
+                if (trackingNumberObj instanceof String && !((String) trackingNumberObj).isEmpty()) {
+                    trackingNumber = (String) trackingNumberObj;
+                }
+            }
+            
+            if (carrier == null || trackingNumber == null) {
+                response.put("success", false);
+                response.put("message", "택배사와 운송장 번호를 모두 입력해주세요.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            // 배송 정보 업데이트
+            if (donation.getDelivery() != null) {
+                com.rewear.delivery.entity.Delivery delivery = donation.getDelivery();
+                delivery.setCarrier(carrier);
+                delivery.setTrackingNumber(trackingNumber);
+                deliveryRepository.save(delivery);
+            } else {
+                // 배송 정보가 없으면 생성
+                com.rewear.delivery.entity.Delivery delivery = com.rewear.delivery.entity.Delivery.builder()
+                        .donation(donation)
+                        .carrier(carrier)
+                        .trackingNumber(trackingNumber)
+                        .senderName(donation.getDonor() != null && donation.getDonor().getName() != null 
+                                ? donation.getDonor().getName() : "미정")
+                        .senderPhone(donation.getDonor() != null && donation.getDonor().getPhone() != null 
+                                ? donation.getDonor().getPhone() : "010-0000-0000")
+                        .senderAddress(donation.getDonor() != null && donation.getDonor().getAddress() != null 
+                                ? donation.getDonor().getAddress() : "주소 미정")
+                        .receiverName(donation.getOrgan().getOrgName())
+                        .receiverPhone(donation.getOrgan().getUser() != null && donation.getOrgan().getUser().getPhone() != null
+                                ? donation.getOrgan().getUser().getPhone() : "010-0000-0000")
+                        .receiverAddress(donation.getOrgan().getUser() != null && donation.getOrgan().getUser().getAddress() != null
+                                ? donation.getOrgan().getUser().getAddress() : "주소 미정")
+                        .status(com.rewear.common.enums.DeliveryStatus.PENDING)
+                        .build();
+                deliveryRepository.save(delivery);
+            }
+            
+            response.put("success", true);
+            response.put("message", "택배 정보가 업데이트되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("택배 정보 업데이트 오류", e);
+            response.put("success", false);
+            response.put("message", "택배 정보 업데이트 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
@@ -403,23 +549,8 @@ public class AdminDonationApiController {
                     .filter(o -> o.getStatus() == OrganStatus.APPROVED)
                     .orElseThrow(() -> new IllegalArgumentException("유효한 기관을 선택해주세요."));
             
-            // 택배 회사와 운송장 번호 추출
-            String carrier = null;
-            String trackingNumber = null;
-            if (requestBody.containsKey("carrier")) {
-                Object carrierObj = requestBody.get("carrier");
-                if (carrierObj instanceof String && !((String) carrierObj).isEmpty()) {
-                    carrier = (String) carrierObj;
-                }
-            }
-            if (requestBody.containsKey("trackingNumber")) {
-                Object trackingNumberObj = requestBody.get("trackingNumber");
-                if (trackingNumberObj instanceof String && !((String) trackingNumberObj).isEmpty()) {
-                    trackingNumber = (String) trackingNumberObj;
-                }
-            }
-            
-            donationService.assignDonationToOrgan(id, organ, carrier, trackingNumber);
+            // 기관 할당만 수행 (택배 정보는 별도 페이지에서 입력)
+            donationService.assignDonationToOrgan(id, organ, null, null);
             response.put("success", true);
             response.put("message", "선택한 기관으로 기부를 할당했습니다. 이제 매칭 승인을 진행해주세요.");
             return ResponseEntity.ok(response);
@@ -548,9 +679,12 @@ public class AdminDonationApiController {
         if (donation.getOrgan() != null) {
             dto.put("pendingOrganization", donation.getOrgan().getOrgName());
             dto.put("matchedOrganization", frontStatus.equals("매칭됨") ? donation.getOrgan().getOrgName() : null);
+            // 기관이 승인한 경우 (COMPLETED 상태) 표시
+            dto.put("organApproved", donation.getStatus() == DonationStatus.COMPLETED);
         } else {
             dto.put("pendingOrganization", null);
             dto.put("matchedOrganization", null);
+            dto.put("organApproved", false);
         }
         
         // 반려 사유

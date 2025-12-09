@@ -14,7 +14,6 @@ export default function AdminMatchingPage({
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [matchSelections, setMatchSelections] = useState({});
-  const [deliveryInfo, setDeliveryInfo] = useState({}); // 택배 회사, 운송장 번호 저장
   const [detailModal, setDetailModal] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -49,8 +48,8 @@ export default function AdminMatchingPage({
             });
           }
           return {
-            ...item,
-            owner: item.owner || 'unknown'
+          ...item,
+          owner: item.owner || 'unknown'
           };
         });
         
@@ -88,12 +87,14 @@ export default function AdminMatchingPage({
     return Array.isArray(organizationOptions) ? organizationOptions : [];
   }, [apiOrganizations, organizationOptions]);
 
-  // 간접 매칭으로 신청되고 승인이 완료된 항목만 표시
+  // 간접 매칭으로 신청되고 승인이 완료되었으며, 아직 기관이 할당되지 않은 항목만 표시
+  // (기관이 승인한 항목은 택배 정보 입력 페이지로 분리)
   const autoMatchingQueue = useMemo(() => {
     return apiDonationItems.filter(
       item => item.donationMethod === '자동 매칭' 
               && (item.status === '매칭대기' || item.status === 'IN_PROGRESS')
               && !item.pendingOrganization
+              && !item.matchedOrganization // 기관이 승인한 항목은 제외
     );
   }, [apiDonationItems]);
 
@@ -157,20 +158,7 @@ export default function AdminMatchingPage({
         throw new Error('선택한 기관을 찾을 수 없습니다.');
       }
       
-      // 택배 배송인 경우 택배 회사와 운송장 번호 확인
-      const isParcelDelivery = item.deliveryMethod === '택배 배송' || item.deliveryMethod === 'PARCEL_DELIVERY';
-      const deliveryData = deliveryInfo[item.id] || {};
-      
-      if (isParcelDelivery) {
-        // 택배 배송인 경우 택배 회사와 운송장 번호가 입력되었는지 확인 (선택사항이므로 경고만)
-        if (!deliveryData.carrier && !deliveryData.trackingNumber) {
-          const confirm = window.confirm('택배 배송인데 택배 회사와 운송장 번호가 입력되지 않았습니다. 계속하시겠습니까?');
-          if (!confirm) {
-            return;
-          }
-        }
-      }
-      
+      // 기관 할당만 수행 (택배 정보는 별도 페이지에서 입력)
       const response = await fetch(`/api/admin/donations/${item.id}/assign`, {
         method: 'POST',
         headers: {
@@ -178,9 +166,7 @@ export default function AdminMatchingPage({
         },
         credentials: 'include',
         body: JSON.stringify({
-          organId: selectedOrgan.id,
-          carrier: isParcelDelivery ? (deliveryData.carrier || null) : null,
-          trackingNumber: isParcelDelivery ? (deliveryData.trackingNumber || null) : null
+          organId: selectedOrgan.id
         })
       });
       
@@ -192,11 +178,6 @@ export default function AdminMatchingPage({
       
       showToast(result.message || '기관에 할당되었습니다.');
       setMatchSelections(prev => ({ ...prev, [item.id]: '' }));
-      setDeliveryInfo(prev => {
-        const newInfo = { ...prev };
-        delete newInfo[item.id];
-        return newInfo;
-      });
       
       // 목록 새로고침 (할당된 항목은 자동으로 제외됨)
       const refreshResponse = await fetch('/api/admin/donations/auto-match', {
@@ -279,11 +260,11 @@ export default function AdminMatchingPage({
                         기관 선택
                       </label>
                     </div>
-                    <select
-                      value={matchSelections[item.id] || ''}
-                      onChange={(event) =>
-                        setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
-                      }
+                  <select
+                    value={matchSelections[item.id] || ''}
+                    onChange={(event) =>
+                      setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
+                    }
                       style={{
                         width: '100%',
                         padding: '1rem',
@@ -296,129 +277,14 @@ export default function AdminMatchingPage({
                       }}
                     >
                       <option value="">기관을 선택해주세요</option>
-                      {mergedOrganizationOptions.map((org) => (
-                        <option key={org.username || org.id} value={org.username || org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
+                    {mergedOrganizationOptions.map((org) => (
+                      <option key={org.username || org.id} value={org.username || org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
                   </div>
                   
-                  {/* 택배 배송인 경우 택배 정보 입력 필드 표시 */}
-                  {(() => {
-                    const isParcelDelivery = item.deliveryMethod === '택배 배송' || 
-                                            item.deliveryMethod === 'PARCEL_DELIVERY' ||
-                                            (item.deliveryMethod && item.deliveryMethod.includes('택배'));
-                    
-                    // 디버깅용 로그 (개발 환경에서만)
-                    if (process.env.NODE_ENV === 'development') {
-                      console.log('배송 방법 확인:', {
-                        itemId: item.id,
-                        deliveryMethod: item.deliveryMethod,
-                        isParcelDelivery: isParcelDelivery
-                      });
-                    }
-                    
-                    return isParcelDelivery ? (
-                      <div style={{ 
-                        marginTop: '1.5rem',
-                        padding: '1.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid #ddd'
-                      }}>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          marginBottom: '1rem'
-                        }}>
-                          <label style={{ 
-                            fontSize: '15px', 
-                            fontWeight: '600', 
-                            color: '#2f261c',
-                            margin: 0
-                          }}>
-                            택배 정보 (택배 배송인 경우)
-                          </label>
-                        </div>
-                        <div style={{ 
-                          display: 'flex', 
-                          gap: '1rem', 
-                          flexWrap: 'wrap'
-                        }}>
-                          <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ 
-                              display: 'block', 
-                              fontSize: '13px', 
-                              fontWeight: '600', 
-                              color: '#666',
-                              marginBottom: '0.75rem'
-                            }}>
-                              택배사
-                            </label>
-                            <select
-                              value={deliveryInfo[item.id]?.carrier || ''}
-                              onChange={(e) =>
-                                setDeliveryInfo((prev) => ({
-                                  ...prev,
-                                  [item.id]: { ...prev[item.id], carrier: e.target.value }
-                                }))
-                              }
-                              style={{ 
-                                width: '100%',
-                                padding: '1rem', 
-                                fontSize: '15px',
-                                border: '1px solid #ddd',
-                                borderRadius: '6px',
-                                backgroundColor: 'white',
-                                fontWeight: '500',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <option value="">택배사를 선택해주세요</option>
-                              <option value="CJ대한통운">CJ대한통운</option>
-                              <option value="한진택배">한진택배</option>
-                              <option value="로젠택배">로젠택배</option>
-                              <option value="롯데택배">롯데택배</option>
-                              <option value="우체국택배">우체국택배</option>
-                              <option value="쿠팡">쿠팡</option>
-                              <option value="기타">기타</option>
-                            </select>
-                          </div>
-                          <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ 
-                              display: 'block', 
-                              fontSize: '13px', 
-                              fontWeight: '600', 
-                              color: '#666',
-                              marginBottom: '0.75rem'
-                            }}>
-                              운송장 번호
-                            </label>
-                            <input
-                              type="text"
-                              value={deliveryInfo[item.id]?.trackingNumber || ''}
-                              onChange={(e) =>
-                                setDeliveryInfo((prev) => ({
-                                  ...prev,
-                                  [item.id]: { ...prev[item.id], trackingNumber: e.target.value }
-                                }))
-                              }
-                              placeholder="운송장 번호를 입력해주세요"
-                              style={{ 
-                                width: '100%',
-                                padding: '1rem', 
-                                fontSize: '15px',
-                                border: '1px solid #ddd',
-                                borderRadius: '6px',
-                                backgroundColor: 'white',
-                                fontWeight: '500'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ) : null;
-                  })()}
                   
                   <button 
                     type="button" 
