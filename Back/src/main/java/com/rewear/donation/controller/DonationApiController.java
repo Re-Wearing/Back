@@ -263,6 +263,12 @@ public class DonationApiController {
                         // 참조 코드 생성 (ID 기반)
                         String referenceCode = "REQ-" + donation.getId();
                         
+                        // 배송 ID 가져오기
+                        Long deliveryId = null;
+                        if (donation.getDelivery() != null) {
+                            deliveryId = donation.getDelivery().getId();
+                        }
+                        
                         DonationStatusResponseDto.ApprovalItemDto item = DonationStatusResponseDto.ApprovalItemDto.builder()
                                 .id(donation.getId())
                                 .name(itemName)
@@ -272,6 +278,7 @@ public class DonationApiController {
                                 .matchingInfo(matchingInfo)
                                 .matchedOrganization(matchedOrg)
                                 .referenceCode(referenceCode)
+                                .deliveryId(deliveryId)
                                 .build();
                         
                         log.info("기부 변환 완료 - ID: {}, name: {}, status: {}", 

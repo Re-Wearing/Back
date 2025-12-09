@@ -26,7 +26,7 @@ export default function InquiryAnswersPage({
 
       setLoading(true)
       try {
-        const response = await fetch('http://localhost:8080/api/faq/my-questions', {
+        const response = await fetch('/api/faq/my-questions', {
           credentials: 'include'
         })
         

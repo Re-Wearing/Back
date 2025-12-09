@@ -26,12 +26,12 @@ export default function AdminFaqPage({
       setLoading(true)
       try {
         // 사용자 질문 목록 조회
-        const questionsResponse = await fetch('http://localhost:8080/api/admin/faq/questions', {
+        const questionsResponse = await fetch('/api/admin/faq/questions', {
           credentials: 'include'
         })
         
         // 공개 FAQ 목록 조회 (published 엔드포인트가 작동하지 않으면 all에서 필터링)
-        const publishedResponse = await fetch('http://localhost:8080/api/admin/faq/all', {
+        const publishedResponse = await fetch('/api/admin/faq/all', {
           credentials: 'include'
         })
         
@@ -116,7 +116,7 @@ export default function AdminFaqPage({
 
     try {
       // API로 답변 등록
-      const response = await fetch(`http://localhost:8080/api/admin/faq/${id}/answer`, {
+      const response = await fetch(`/api/admin/faq/${id}/answer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -134,7 +134,7 @@ export default function AdminFaqPage({
         setResponses(prev => ({ ...prev, [id]: '' }))
         
         // 목록 새로고침
-        const refreshResponse = await fetch('http://localhost:8080/api/admin/faq/questions', {
+        const refreshResponse = await fetch('/api/admin/faq/questions', {
           credentials: 'include'
         })
         if (refreshResponse.ok) {
@@ -175,7 +175,7 @@ export default function AdminFaqPage({
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/admin/faq/${id}`, {
+      const response = await fetch(`/api/admin/faq/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -195,7 +195,7 @@ export default function AdminFaqPage({
         setEditForm({ question: '', answer: '' })
         
         // 목록 새로고침
-        const refreshResponse = await fetch('http://localhost:8080/api/admin/faq/all', {
+        const refreshResponse = await fetch('/api/admin/faq/all', {
           credentials: 'include'
         })
         if (refreshResponse.ok) {
@@ -237,7 +237,7 @@ export default function AdminFaqPage({
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/admin/faq/${id}`, {
+      const response = await fetch(`/api/admin/faq/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       })
@@ -246,7 +246,7 @@ export default function AdminFaqPage({
         window.alert('FAQ가 삭제되었습니다.')
         
         // 목록 새로고침
-        const refreshResponse = await fetch('http://localhost:8080/api/admin/faq/all', {
+        const refreshResponse = await fetch('/api/admin/faq/all', {
           credentials: 'include'
         })
         if (refreshResponse.ok) {
@@ -284,7 +284,7 @@ export default function AdminFaqPage({
   // FAQ 등록 핸들러
   const handleRegister = async id => {
     try {
-      const response = await fetch(`http://localhost:8080/api/admin/faq/${id}/register`, {
+      const response = await fetch(`/api/admin/faq/${id}/register`, {
         method: 'POST',
         credentials: 'include'
       })
@@ -292,7 +292,7 @@ export default function AdminFaqPage({
       if (response.ok) {
         window.alert('FAQ에 등록되었습니다.')
         // 목록 새로고침
-        const refreshResponse = await fetch('http://localhost:8080/api/admin/faq/questions', {
+        const refreshResponse = await fetch('/api/admin/faq/questions', {
           credentials: 'include'
         })
         if (refreshResponse.ok) {

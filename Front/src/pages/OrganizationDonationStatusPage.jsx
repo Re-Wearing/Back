@@ -10,11 +10,13 @@ export default function OrganizationDonationStatusPage({
   unreadCount,
   onMenu = () => {},
   currentUser,
+  onLogin = () => {},
   onRequireLogin,
   isBootstrapped = true,
   shipments = [],
   matchingInvites = [],
-  onRespondMatchingInvite
+  onRespondMatchingInvite,
+  onNavigateDeliveryStatus
 }) {
   if (!isBootstrapped) {
     return null
@@ -40,29 +42,113 @@ export default function OrganizationDonationStatusPage({
     return normalized === '배송완료' || normalized === '완료' || normalized.endsWith('완료')
   }
 
-  const [activeTab, setActiveTab] = useState('shipments')
+  const [activeTab, setActiveTab] = useState('matching')
   const [imageModal, setImageModal] = useState(null)
   const [reasonModal, setReasonModal] = useState(null)
   const [reasonText, setReasonText] = useState('')
+  const [apiDonations, setApiDonations] = useState([])
+  const [completedDonations, setCompletedDonations] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [loadingCompleted, setLoadingCompleted] = useState(false)
+  const [error, setError] = useState(null)
+  const [deliveryModal, setDeliveryModal] = useState(null)
 
-  const donations = useMemo(
-    () =>
-      (shipments || [])
-        .filter(
-          shipment =>
-            (shipment.receiver === currentUser.name || shipment.receiver === currentUser.nickname) &&
-            isCompleted(shipment.status)
-        )
-        .map(shipment => ({
-          id: shipment.id,
-          date: shipment.startDate,
-          items: shipment.product,
-          organization: shipment.receiver,
-          sender: shipment.sender || '익명 기부자',
-          status: '완료'
-        })),
-    [shipments, currentUser.name, currentUser.nickname]
-  )
+  // API에서 기관에 할당된 기부 목록 조회 (매칭 관리용)
+  useEffect(() => {
+    const fetchOrganDonations = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const response = await fetch('/api/organs/donations', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error('기부 목록 조회에 실패했습니다.')
+        }
+        
+        const data = await response.json()
+        if (data.donations) {
+          setApiDonations(data.donations)
+        }
+      } catch (err) {
+        console.error('기부 목록 조회 오류:', err)
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchOrganDonations()
+  }, [])
+
+  // API에서 완료된 기부 목록 조회 (기부 내역 조회용)
+  useEffect(() => {
+    const fetchCompletedDonations = async () => {
+      try {
+        setLoadingCompleted(true)
+        
+        const response = await fetch('/api/organs/donations/completed', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error('완료된 기부 목록 조회에 실패했습니다.')
+        }
+        
+        const data = await response.json()
+        if (data.donations) {
+          setCompletedDonations(data.donations)
+        }
+      } catch (err) {
+        console.error('완료된 기부 목록 조회 오류:', err)
+      } finally {
+        setLoadingCompleted(false)
+      }
+    }
+    
+    fetchCompletedDonations()
+  }, [])
+
+  // 완료된 기부 목록 (API 데이터 우선 사용)
+  const donations = useMemo(() => {
+    if (completedDonations.length > 0) {
+      return completedDonations.map(donation => ({
+        id: donation.id,
+        date: donation.date || new Date().toISOString().split('T')[0],
+        items: donation.itemName || '기부 물품',
+        organization: donation.organization || currentUser.name,
+        sender: donation.donorName || '익명 기부자',
+        status: donation.status || '완료',
+        delivery: donation.delivery
+      }))
+    }
+    
+    // 기존 shipments 데이터 (하위 호환성)
+    return (shipments || [])
+      .filter(
+        shipment =>
+          (shipment.receiver === currentUser.name || shipment.receiver === currentUser.nickname) &&
+          isCompleted(shipment.status)
+      )
+      .map(shipment => ({
+        id: shipment.id,
+        date: shipment.startDate,
+        items: shipment.product,
+        organization: shipment.receiver,
+        sender: shipment.sender || '익명 기부자',
+        status: '완료'
+      }))
+  }, [completedDonations, shipments, currentUser.name, currentUser.nickname])
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -105,10 +191,40 @@ export default function OrganizationDonationStatusPage({
   const currentDonations = donations.slice(startIndex, endIndex)
   const totalPages = Math.ceil(donations.length / itemsPerPage)
 
-  const organizationInviteList = useMemo(
-    () => (matchingInvites || []).filter(invite => invite.organizationUsername === currentUser.username),
-    [matchingInvites, currentUser.username]
-  )
+  // API에서 가져온 기부 목록과 기존 matchingInvites 병합
+  const organizationInviteList = useMemo(() => {
+    const apiInvites = (apiDonations || []).map(donation => ({
+      id: `api-${donation.id}`,
+      itemId: donation.itemId || donation.id.toString(),
+      itemName: donation.itemName || '기부 물품',
+      itemDescription: donation.itemDescription,
+      donorName: donation.donorName || '익명',
+      organizationUsername: donation.organizationUsername || currentUser.username,
+      organizationName: donation.organizationName,
+      status: donation.status || 'pending',
+      message: donation.message || '관리자가 귀하의 기관에 할당한 기부입니다.',
+      deliveryMethod: donation.deliveryMethod,
+      desiredDate: donation.desiredDate,
+      contact: donation.contact,
+      memo: donation.memo,
+      images: donation.images || []
+    }))
+    
+    // 기존 matchingInvites와 병합 (중복 제거)
+    const existingInvites = (matchingInvites || []).filter(invite => invite.organizationUsername === currentUser.username)
+    const combined = [...apiInvites, ...existingInvites]
+    
+    // 중복 제거 (itemId 기준)
+    const uniqueMap = new Map()
+    combined.forEach(invite => {
+      const key = invite.itemId || invite.id
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, invite)
+      }
+    })
+    
+    return Array.from(uniqueMap.values())
+  }, [apiDonations, matchingInvites, currentUser.username])
   const pendingInviteCount = organizationInviteList.filter(invite => invite.status === 'pending').length
 
   const getStatusColor = status => {
@@ -126,21 +242,143 @@ export default function OrganizationDonationStatusPage({
     }
   }
 
-  const handleInviteResponse = (inviteId, decision) => {
-    if (typeof onRespondMatchingInvite !== 'function') return
+  const handleInviteResponse = async (inviteId, decision) => {
+    // API 기반 invite인지 확인
+    const invite = organizationInviteList.find(inv => inv.id === inviteId)
+    if (!invite) {
+      // 기존 방식 (하위 호환성)
+      if (typeof onRespondMatchingInvite !== 'function') return
+      if (decision === 'reject') {
+        setReasonModal({ inviteId })
+        setReasonText('')
+      } else {
+        onRespondMatchingInvite(inviteId, 'accept')
+      }
+      return
+    }
+
+    // API 기반 invite 처리
     if (decision === 'reject') {
-      setReasonModal({ inviteId })
+      setReasonModal({ inviteId, donationId: invite.itemId })
       setReasonText('')
     } else {
-      onRespondMatchingInvite(inviteId, 'accept')
+      // 기관은 수락만 함 (택배 정보는 관리자가 입력)
+      handleApproveDonation(invite.itemId)
     }
   }
 
-  const handleReasonConfirm = () => {
+  const handleApproveDonation = async (donationId) => {
+    try {
+      const response = await fetch(`/api/organs/donations/${donationId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: '{}'
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '기부 승인에 실패했습니다.')
+      }
+
+      // 목록 새로고침
+      const refreshResponse = await fetch('/api/organs/donations', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json()
+        if (refreshData.donations) {
+          setApiDonations(refreshData.donations)
+        }
+      }
+
+      // 완료된 기부 목록도 새로고침
+      const completedResponse = await fetch('/api/organs/donations/completed', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+
+      if (completedResponse.ok) {
+        const completedData = await completedResponse.json()
+        if (completedData.donations) {
+          setCompletedDonations(completedData.donations)
+        }
+      }
+
+      alert(result.message || '기부를 승인했습니다.')
+    } catch (err) {
+      console.error('기부 승인 오류:', err)
+      alert(err.message || '기부 승인에 실패했습니다.')
+    }
+  }
+
+  const handleReasonConfirm = async () => {
     if (!reasonModal || !reasonText.trim()) return
-    onRespondMatchingInvite(reasonModal.inviteId, 'reject', reasonText.trim())
-    setReasonModal(null)
-    setReasonText('')
+    
+    const invite = organizationInviteList.find(inv => inv.id === reasonModal.inviteId)
+    
+    if (invite && invite.itemId) {
+      // API 기반 invite 처리
+      try {
+        const response = await fetch(`/api/organs/donations/${invite.itemId}/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            reason: reasonText.trim()
+          })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || '기부 거부에 실패했습니다.')
+        }
+
+        // 목록 새로고침
+        const refreshResponse = await fetch('/api/organs/donations', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json()
+          if (refreshData.donations) {
+            setApiDonations(refreshData.donations)
+          }
+        }
+
+        alert(result.message || '기부를 거부했습니다.')
+        setReasonModal(null)
+        setReasonText('')
+      } catch (err) {
+        console.error('기부 거부 오류:', err)
+        alert(err.message || '기부 거부에 실패했습니다.')
+      }
+    } else {
+      // 기존 방식 (하위 호환성)
+      if (typeof onRespondMatchingInvite === 'function') {
+        onRespondMatchingInvite(reasonModal.inviteId, 'reject', reasonText.trim())
+      }
+      setReasonModal(null)
+      setReasonText('')
+    }
   }
 
   return (
@@ -152,6 +390,7 @@ export default function OrganizationDonationStatusPage({
           onNavClick={onNavLink}
           isLoggedIn={isLoggedIn}
           onLogout={onLogout}
+          onLogin={onLogin}
           onNotifications={onNotifications}
           unreadCount={unreadCount}
           onMenu={onMenu}
@@ -205,10 +444,14 @@ export default function OrganizationDonationStatusPage({
                 </button>
               </div>
 
-              {donations.length === 0 ? (
+              {loadingCompleted ? (
                 <div className="donation-status-empty">
-                  <p>아직 받은 기부가 없습니다.</p>
-                  <p>기부를 받은 후 조회할 수 있습니다.</p>
+                  <p>기부 내역을 불러오는 중...</p>
+                </div>
+              ) : donations.length === 0 ? (
+                <div className="donation-status-empty">
+                  <p>아직 승인한 기부가 없습니다.</p>
+                  <p>매칭 관리에서 기부를 승인하면 이곳에서 확인할 수 있습니다.</p>
                 </div>
               ) : (
                 <>
@@ -231,6 +474,7 @@ export default function OrganizationDonationStatusPage({
                           <th>수혜 기관 ↓</th>
                           <th>기부자</th>
                           <th>기부 진행 상태 ↓</th>
+                          <th>배송 조회</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -254,6 +498,28 @@ export default function OrganizationDonationStatusPage({
                               >
                                 {donation.status}
                               </span>
+                            </td>
+                            <td>
+                              {donation.delivery ? (
+                                <button
+                                  type="button"
+                                  className="btn-filter"
+                                  onClick={() => {
+                                    if (onNavigateDeliveryStatus) {
+                                      // 배송 조회 페이지로 이동하고 배송 ID 전달
+                                      onNavigateDeliveryStatus(donation.delivery.id)
+                                    } else {
+                                      // 기존 모달 방식 (하위 호환성)
+                                      setDeliveryModal(donation.delivery)
+                                    }
+                                  }}
+                                  style={{ fontSize: '12px', padding: '4px 8px' }}
+                                >
+                                  배송 조회
+                                </button>
+                              ) : (
+                                <span style={{ color: '#999', fontSize: '12px' }}>배송 정보 없음</span>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -441,6 +707,74 @@ export default function OrganizationDonationStatusPage({
                 확인
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {deliveryModal && (
+        <div className="donation-modal-overlay" onClick={() => setDeliveryModal(null)}>
+          <div className="donation-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <h2>배송 정보</h2>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>배송 상태</h3>
+              <div style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                <p style={{ margin: '0.25rem 0' }}>
+                  <strong>상태:</strong>{' '}
+                  <span style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    background: deliveryModal.status === 'DELIVERED' ? '#d1fae5' :
+                                deliveryModal.status === 'IN_TRANSIT' ? '#dbeafe' :
+                                (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '#fef3c7' : '#f3f4f6',
+                    color: deliveryModal.status === 'DELIVERED' ? '#065f46' :
+                           deliveryModal.status === 'IN_TRANSIT' ? '#1e40af' :
+                           (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '#92400e' : '#6b7280'
+                  }}>
+                    {deliveryModal.status === 'DELIVERED' ? '완료' :
+                     deliveryModal.status === 'IN_TRANSIT' ? '배송중' :
+                     (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '대기' : deliveryModal.status}
+                  </span>
+                </p>
+                {deliveryModal.trackingNumber && (
+                  <p style={{ margin: '0.25rem 0' }}>
+                    <strong>운송장 번호:</strong> {deliveryModal.trackingNumber}
+                  </p>
+                )}
+                {deliveryModal.carrier && (
+                  <p style={{ margin: '0.25rem 0' }}>
+                    <strong>택배사:</strong> {deliveryModal.carrier}
+                  </p>
+                )}
+                {deliveryModal.shippedAt && (
+                  <p style={{ margin: '0.25rem 0' }}>
+                    <strong>발송일:</strong> {new Date(deliveryModal.shippedAt).toLocaleString('ko-KR')}
+                  </p>
+                )}
+                {deliveryModal.deliveredAt && (
+                  <p style={{ margin: '0.25rem 0' }}>
+                    <strong>배송완료일:</strong> {new Date(deliveryModal.deliveredAt).toLocaleString('ko-KR')}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>발송인 정보</h3>
+              <div style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                <p style={{ margin: '0.25rem 0' }}><strong>이름:</strong> {deliveryModal.senderName || '-'}</p>
+                <p style={{ margin: '0.25rem 0' }}><strong>연락처:</strong> {deliveryModal.senderPhone || '-'}</p>
+                <p style={{ margin: '0.25rem 0' }}><strong>주소:</strong> {deliveryModal.senderAddress || '-'}</p>
+              </div>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>수령인 정보</h3>
+              <div style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: '8px' }}>
+                <p style={{ margin: '0.25rem 0' }}><strong>이름:</strong> {deliveryModal.receiverName || '-'}</p>
+                <p style={{ margin: '0.25rem 0' }}><strong>연락처:</strong> {deliveryModal.receiverPhone || '-'}</p>
+                <p style={{ margin: '0.25rem 0' }}><strong>주소:</strong> {deliveryModal.receiverAddress || '-'}</p>
+              </div>
+            </div>
+            <button type="button" className="btn-cancel" onClick={() => setDeliveryModal(null)}>
+              닫기
+            </button>
           </div>
         </div>
       )}

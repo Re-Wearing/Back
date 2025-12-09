@@ -15,12 +15,12 @@ public interface DonationService {
     List<Donation> getAllDonations();
     List<Donation> getDonationsByStatus(DonationStatus status);
     Donation matchDonation(Long donationId, Organ organ);
-    Donation assignDonationToOrgan(Long donationId, Organ organ);
+    Donation assignDonationToOrgan(Long donationId, Organ organ, String carrier, String trackingNumber);
     List<Donation> getMatchedDonationsByOrgan(Organ organ);
     Donation getDonationById(Long donationId);
     Donation approveDonation(Long donationId);
     Donation rejectDonation(Long donationId, String reason);
     Donation cancelDonation(Long donationId, String reason);
-    Donation organApproveDonation(Long donationId, Organ organ);
+    Donation organApproveDonation(Long donationId, Organ organ, String carrier, String trackingNumber);
     Donation organRejectDonation(Long donationId, Organ organ);
 }

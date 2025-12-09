@@ -40,7 +40,7 @@ export default function BoardPage({
     setLoading(true)
     try {
       // 기부 후기 목록 (DONATION_REVIEW 타입만)
-      const reviewResponse = await fetch('http://localhost:8080/api/posts?type=DONATION_REVIEW&page=0&size=100')
+      const reviewResponse = await fetch('/api/posts?type=DONATION_REVIEW&page=0&size=100')
       if (reviewResponse.ok) {
         const reviewData = await reviewResponse.json()
         const reviewPosts = (reviewData.content || []).map(post => ({
@@ -62,7 +62,7 @@ export default function BoardPage({
       }
 
       // 요청 게시판 목록 (ORGAN_REQUEST 타입만, 모든 기관의 게시물)
-      const requestResponse = await fetch('http://localhost:8080/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
+      const requestResponse = await fetch('/api/posts?type=ORGAN_REQUEST&page=0&size=100', {
         credentials: 'include'
       })
       if (requestResponse.ok) {
@@ -91,6 +91,7 @@ export default function BoardPage({
     }
   }
 
+  // 컴포넌트 마운트 시 및 isLoggedIn, refreshKey 변경 시 게시글 목록 로드
   useEffect(() => {
     fetchPosts()
   }, [isLoggedIn, refreshKey])
@@ -146,10 +147,11 @@ export default function BoardPage({
       posts = [...requestPostsWithNew]
     }
     
-    // 조회수 업데이트 적용
+    // 조회수 업데이트 적용 (API에서 가져온 조회수가 최신이므로, 로컬 증가분은 제거)
+    // API에서 가져온 조회수가 항상 최신 상태이므로 boardViews는 사용하지 않음
     posts = posts.map(post => ({
       ...post,
-      views: boardViews[post.id] !== undefined ? (post.views || 0) + boardViews[post.id] : post.views
+      views: post.views || 0 // API에서 가져온 조회수 그대로 사용
     }))
     
     if (searchQuery.trim()) {
@@ -199,7 +201,7 @@ export default function BoardPage({
     })
     
     return posts
-  }, [selectedBoardType, selectedSort, searchQuery, searchScope, boardPosts, boardViews])
+  }, [selectedBoardType, selectedSort, searchQuery, searchScope, apiPosts, boardViews])
 
   const totalPages = Math.ceil(filteredAndSortedPosts.length / POSTS_PER_PAGE)
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE

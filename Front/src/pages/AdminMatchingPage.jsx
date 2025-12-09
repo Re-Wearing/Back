@@ -14,6 +14,7 @@ export default function AdminMatchingPage({
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [matchSelections, setMatchSelections] = useState({});
+  const [deliveryInfo, setDeliveryInfo] = useState({}); // 택배 회사, 운송장 번호 저장
   const [detailModal, setDetailModal] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -37,10 +38,21 @@ export default function AdminMatchingPage({
         }
         
         const autoMatchData = await autoMatchResponse.json();
-        const autoMatchItems = (autoMatchData.donations || []).map(item => ({
-          ...item,
-          owner: item.owner || 'unknown'
-        }));
+        const autoMatchItems = (autoMatchData.donations || []).map(item => {
+          // 디버깅: deliveryMethod 확인
+          if (process.env.NODE_ENV === 'development') {
+            console.log('기부 항목 데이터:', {
+              id: item.id,
+              name: item.name,
+              deliveryMethod: item.deliveryMethod,
+              donationMethod: item.donationMethod
+            });
+          }
+          return {
+            ...item,
+            owner: item.owner || 'unknown'
+          };
+        });
         
         setApiDonationItems(autoMatchItems);
         
@@ -145,6 +157,20 @@ export default function AdminMatchingPage({
         throw new Error('선택한 기관을 찾을 수 없습니다.');
       }
       
+      // 택배 배송인 경우 택배 회사와 운송장 번호 확인
+      const isParcelDelivery = item.deliveryMethod === '택배 배송' || item.deliveryMethod === 'PARCEL_DELIVERY';
+      const deliveryData = deliveryInfo[item.id] || {};
+      
+      if (isParcelDelivery) {
+        // 택배 배송인 경우 택배 회사와 운송장 번호가 입력되었는지 확인 (선택사항이므로 경고만)
+        if (!deliveryData.carrier && !deliveryData.trackingNumber) {
+          const confirm = window.confirm('택배 배송인데 택배 회사와 운송장 번호가 입력되지 않았습니다. 계속하시겠습니까?');
+          if (!confirm) {
+            return;
+          }
+        }
+      }
+      
       const response = await fetch(`/api/admin/donations/${item.id}/assign`, {
         method: 'POST',
         headers: {
@@ -152,7 +178,9 @@ export default function AdminMatchingPage({
         },
         credentials: 'include',
         body: JSON.stringify({
-          organId: selectedOrgan.id
+          organId: selectedOrgan.id,
+          carrier: isParcelDelivery ? (deliveryData.carrier || null) : null,
+          trackingNumber: isParcelDelivery ? (deliveryData.trackingNumber || null) : null
         })
       });
       
@@ -164,6 +192,11 @@ export default function AdminMatchingPage({
       
       showToast(result.message || '기관에 할당되었습니다.');
       setMatchSelections(prev => ({ ...prev, [item.id]: '' }));
+      setDeliveryInfo(prev => {
+        const newInfo = { ...prev };
+        delete newInfo[item.id];
+        return newInfo;
+      });
       
       // 목록 새로고침 (할당된 항목은 자동으로 제외됨)
       const refreshResponse = await fetch('/api/admin/donations/auto-match', {
@@ -181,10 +214,6 @@ export default function AdminMatchingPage({
           owner: i.owner || 'unknown'
         }));
         setApiDonationItems(refreshedItems);
-      }
-      
-      if (typeof onSendMatchingInvite === 'function') {
-        onSendMatchingInvite(item.owner, item.id, selectedOrg);
       }
     } catch (err) {
       console.error('기관 할당 오류:', err);
@@ -228,22 +257,187 @@ export default function AdminMatchingPage({
                   <span className="status-chip status-pending">대기</span>
                 </div>
                 <p className="admin-card-memo">{item.items}</p>
-                <div className="match-select" onClick={(e) => e.stopPropagation()}>
-                  <select
-                    value={matchSelections[item.id] || ''}
-                    onChange={(event) =>
-                      setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
+                <div onClick={(e) => e.stopPropagation()}>
+                  {/* 기관 선택 영역 */}
+                  <div style={{
+                    marginTop: '1.5rem',
+                    padding: '1.5rem',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      marginBottom: '1rem'
+                    }}>
+                      <label style={{ 
+                        fontSize: '15px', 
+                        fontWeight: '600', 
+                        color: '#2f261c',
+                        margin: 0
+                      }}>
+                        기관 선택
+                      </label>
+                    </div>
+                    <select
+                      value={matchSelections[item.id] || ''}
+                      onChange={(event) =>
+                        setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
+                      }
+                      style={{
+                        width: '100%',
+                        padding: '1rem',
+                        fontSize: '15px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        backgroundColor: 'white',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="">기관을 선택해주세요</option>
+                      {mergedOrganizationOptions.map((org) => (
+                        <option key={org.username || org.id} value={org.username || org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* 택배 배송인 경우 택배 정보 입력 필드 표시 */}
+                  {(() => {
+                    const isParcelDelivery = item.deliveryMethod === '택배 배송' || 
+                                            item.deliveryMethod === 'PARCEL_DELIVERY' ||
+                                            (item.deliveryMethod && item.deliveryMethod.includes('택배'));
+                    
+                    // 디버깅용 로그 (개발 환경에서만)
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('배송 방법 확인:', {
+                        itemId: item.id,
+                        deliveryMethod: item.deliveryMethod,
+                        isParcelDelivery: isParcelDelivery
+                      });
                     }
+                    
+                    return isParcelDelivery ? (
+                      <div style={{ 
+                        marginTop: '1.5rem',
+                        padding: '1.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid #ddd'
+                      }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center',
+                          marginBottom: '1rem'
+                        }}>
+                          <label style={{ 
+                            fontSize: '15px', 
+                            fontWeight: '600', 
+                            color: '#2f261c',
+                            margin: 0
+                          }}>
+                            택배 정보 (택배 배송인 경우)
+                          </label>
+                        </div>
+                        <div style={{ 
+                          display: 'flex', 
+                          gap: '1rem', 
+                          flexWrap: 'wrap'
+                        }}>
+                          <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label style={{ 
+                              display: 'block', 
+                              fontSize: '13px', 
+                              fontWeight: '600', 
+                              color: '#666',
+                              marginBottom: '0.75rem'
+                            }}>
+                              택배사
+                            </label>
+                            <select
+                              value={deliveryInfo[item.id]?.carrier || ''}
+                              onChange={(e) =>
+                                setDeliveryInfo((prev) => ({
+                                  ...prev,
+                                  [item.id]: { ...prev[item.id], carrier: e.target.value }
+                                }))
+                              }
+                              style={{ 
+                                width: '100%',
+                                padding: '1rem', 
+                                fontSize: '15px',
+                                border: '1px solid #ddd',
+                                borderRadius: '6px',
+                                backgroundColor: 'white',
+                                fontWeight: '500',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value="">택배사를 선택해주세요</option>
+                              <option value="CJ대한통운">CJ대한통운</option>
+                              <option value="한진택배">한진택배</option>
+                              <option value="로젠택배">로젠택배</option>
+                              <option value="롯데택배">롯데택배</option>
+                              <option value="우체국택배">우체국택배</option>
+                              <option value="쿠팡">쿠팡</option>
+                              <option value="기타">기타</option>
+                            </select>
+                          </div>
+                          <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label style={{ 
+                              display: 'block', 
+                              fontSize: '13px', 
+                              fontWeight: '600', 
+                              color: '#666',
+                              marginBottom: '0.75rem'
+                            }}>
+                              운송장 번호
+                            </label>
+                            <input
+                              type="text"
+                              value={deliveryInfo[item.id]?.trackingNumber || ''}
+                              onChange={(e) =>
+                                setDeliveryInfo((prev) => ({
+                                  ...prev,
+                                  [item.id]: { ...prev[item.id], trackingNumber: e.target.value }
+                                }))
+                              }
+                              placeholder="운송장 번호를 입력해주세요"
+                              style={{ 
+                                width: '100%',
+                                padding: '1rem', 
+                                fontSize: '15px',
+                                border: '1px solid #ddd',
+                                borderRadius: '6px',
+                                backgroundColor: 'white',
+                                fontWeight: '500'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                  
+                  <button 
+                    type="button" 
+                    className="small-btn primary" 
+                    onClick={() => handleSendInvite(item)}
+                    style={{
+                      width: '100%',
+                      marginTop: '1.5rem',
+                      padding: '1rem',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      backgroundColor: '#2f261c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
                   >
-                    <option value="">기관 선택</option>
-                    {mergedOrganizationOptions.map((org) => (
-                      <option key={org.username || org.id} value={org.username || org.id}>
-                        {org.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" className="small-btn primary" onClick={() => handleSendInvite(item)}>
-                    매칭 제안
+                    매칭 제안하기
                   </button>
                 </div>
               </article>
@@ -295,21 +489,21 @@ export default function AdminMatchingPage({
               maxHeight: '90vh',
               overflow: 'hidden',
               display: 'flex',
-              flexDirection: 'row',
-              padding: 0
+              flexDirection: 'column',
+              padding: 0,
+              background: 'white',
+              borderRadius: '12px'
             }}
           >
-            {/* 왼쪽: 제목 영역 */}
+            {/* 위쪽: 제목 영역 */}
             <div style={{
-              width: '200px',
-              minWidth: '200px',
+              width: '100%',
               background: '#f5f5f5',
-              padding: '2rem 1.5rem',
+              padding: '1.5rem 2rem',
               display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              alignItems: 'flex-start',
-              borderRight: '1px solid #ddd',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid #ddd',
               position: 'relative'
             }}>
               <h2 style={{ 
@@ -317,11 +511,7 @@ export default function AdminMatchingPage({
                 padding: 0,
                 fontSize: '1.5rem',
                 fontWeight: '600',
-                color: '#2f261c',
-                writingMode: 'vertical-rl',
-                textOrientation: 'mixed',
-                transform: 'rotate(180deg)',
-                whiteSpace: 'nowrap'
+                color: '#2f261c'
               }}>
                 기부 상세 정보
               </h2>
@@ -329,9 +519,6 @@ export default function AdminMatchingPage({
                 type="button"
                 onClick={() => setDetailModal(null)}
                 style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
                   background: 'transparent',
                   border: 'none',
                   fontSize: '1.8rem',
@@ -359,12 +546,12 @@ export default function AdminMatchingPage({
               </button>
             </div>
 
-            {/* 오른쪽: 내용 영역 */}
+            {/* 아래쪽: 내용 영역 */}
             <div style={{
               flex: 1,
               padding: '2rem',
               overflowY: 'auto',
-              maxHeight: '90vh'
+              maxHeight: 'calc(90vh - 80px)'
             }}>
 
             {detailLoading ? (
@@ -392,9 +579,9 @@ export default function AdminMatchingPage({
                             if (imageUrl && typeof imageUrl === 'string') {
                               if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
                                 if (imageUrl.startsWith('/uploads/')) {
-                                  imageUrl = `http://localhost:8080${imageUrl}`;
+                                  imageUrl = imageUrl;
                                 } else {
-                                  imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                                  imageUrl = `/uploads/${imageUrl}`;
                                 }
                               }
                             }

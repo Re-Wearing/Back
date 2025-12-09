@@ -10,12 +10,14 @@ import com.rewear.donation.entity.DonationItem;
 import com.rewear.donation.repository.DonationRepository;
 import com.rewear.organ.entity.Organ;
 import com.rewear.user.entity.User;
+import com.rewear.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,6 +28,7 @@ public class DonationServiceImpl implements DonationService {
     private final DonationRepository donationRepository;
     private final com.rewear.notification.service.NotificationService notificationService;
     private final com.rewear.delivery.repository.DeliveryRepository deliveryRepository;
+    private final UserService userService;
 
     @Override
     public Donation createDonation(User donor, DonationForm form, DonationItemForm itemForm, Organ organ) {
@@ -138,7 +141,7 @@ public class DonationServiceImpl implements DonationService {
     }
 
     @Override
-    public Donation assignDonationToOrgan(Long donationId, Organ organ) {
+    public Donation assignDonationToOrgan(Long donationId, Organ organ, String carrier, String trackingNumber) {
         Donation donation = donationRepository.findById(donationId)
                 .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
 
@@ -151,7 +154,41 @@ public class DonationServiceImpl implements DonationService {
         }
 
         donation.setOrgan(organ);
-        return donationRepository.save(donation);
+        Donation savedDonation = donationRepository.save(donation);
+        
+        // 택배 배송인 경우 배송 정보 생성 또는 업데이트
+        if (donation.getDeliveryMethod() == com.rewear.common.enums.DeliveryMethod.PARCEL_DELIVERY) {
+            Optional<com.rewear.delivery.entity.Delivery> existingDelivery = deliveryRepository.findByDonation(savedDonation);
+            
+            if (existingDelivery.isPresent()) {
+                // 배송 정보가 있으면 택배사와 운송장 번호 업데이트
+                com.rewear.delivery.entity.Delivery delivery = existingDelivery.get();
+                if (carrier != null && !carrier.isEmpty()) {
+                    delivery.setCarrier(carrier);
+                }
+                if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                    delivery.setTrackingNumber(trackingNumber);
+                }
+                deliveryRepository.save(delivery);
+            } else {
+                // 배송 정보가 없으면 생성 (기관 정보는 나중에 기관 승인 시 업데이트됨)
+                com.rewear.delivery.entity.Delivery delivery = com.rewear.delivery.entity.Delivery.builder()
+                        .donation(savedDonation)
+                        .senderName(savedDonation.getDonor() != null && savedDonation.getDonor().getName() != null ? savedDonation.getDonor().getName() : "미정")
+                        .senderPhone(savedDonation.getDonor() != null && savedDonation.getDonor().getPhone() != null ? savedDonation.getDonor().getPhone() : "010-0000-0000")
+                        .senderAddress(savedDonation.getDonor() != null && savedDonation.getDonor().getAddress() != null ? savedDonation.getDonor().getAddress() : "주소 미정")
+                        .receiverName(organ.getOrgName() != null ? organ.getOrgName() : "미정")
+                        .receiverPhone("010-0000-0000")
+                        .receiverAddress("주소 미정")
+                        .carrier(carrier != null && !carrier.isEmpty() ? carrier : null)
+                        .trackingNumber(trackingNumber != null && !trackingNumber.isEmpty() ? trackingNumber : null)
+                        .status(com.rewear.common.enums.DeliveryStatus.PENDING)
+                        .build();
+                deliveryRepository.save(delivery);
+            }
+        }
+        
+        return savedDonation;
     }
 
     @Override
@@ -292,7 +329,7 @@ public class DonationServiceImpl implements DonationService {
     }
 
     @Override
-    public Donation organApproveDonation(Long donationId, Organ organ) {
+    public Donation organApproveDonation(Long donationId, Organ organ, String carrier, String trackingNumber) {
         Donation donation = donationRepository.findById(donationId)
                 .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
 
@@ -300,27 +337,152 @@ public class DonationServiceImpl implements DonationService {
             throw new IllegalStateException("해당 기관에 할당된 기부만 승인할 수 있습니다.");
         }
 
-        // 최종 승인 시 COMPLETED 상태로 변경하여 "받은 기부" 목록에 표시
-        donation.setStatus(DonationStatus.COMPLETED);
+        // 직접 매칭인 경우: 기관 수락 후에도 IN_PROGRESS 상태 유지 (관리자가 택배 정보 입력 후 완료)
+        // 간접 매칭인 경우: COMPLETED 상태로 변경하여 "받은 기부" 목록에 표시
+        if (donation.getMatchType() == MatchType.DIRECT) {
+            // 직접 매칭은 IN_PROGRESS 상태 유지 (관리자가 택배 정보 입력 후 완료 처리)
+            // 상태는 그대로 유지
+        } else {
+            // 간접 매칭은 COMPLETED로 변경
+            donation.setStatus(DonationStatus.COMPLETED);
+        }
 
         Donation savedDonation = donationRepository.save(donation);
 
         // 배송 정보가 없으면 기본 배송 정보 생성 (배송 상태: 대기)
         if (savedDonation.getDelivery() == null) {
-            com.rewear.delivery.entity.Delivery delivery = com.rewear.delivery.entity.Delivery.builder()
+            // 기관의 User 정보 가져오기 (LAZY 로딩 문제 해결을 위해 명시적으로 조회)
+            User organUser = null;
+            try {
+                // organ을 다시 조회하여 User 정보를 확실히 로드
+                if (organ.getUser() != null && organ.getUser().getId() != null) {
+                    organUser = userService.getUserById(organ.getUser().getId());
+                    log.info("기관 User 정보 조회 성공 - organId: {}, userId: {}, phone: {}, address: {}", 
+                        organ.getId(), organUser.getId(), organUser.getPhone(), organUser.getAddress());
+                }
+            } catch (Exception e) {
+                log.warn("기관 User 정보 조회 실패: {}", e.getMessage());
+            }
+            
+            String receiverPhone = "010-0000-0000";
+            String receiverAddress = "주소 미정";
+            String receiverPostalCode = null;
+            
+            if (organUser != null) {
+                // 전화번호 포맷팅 (01012345678 -> 010-1234-5678)
+                if (organUser.getPhone() != null && !organUser.getPhone().isEmpty()) {
+                    String phoneDigits = organUser.getPhone().replaceAll("\\D", "");
+                    if (phoneDigits.length() == 11) {
+                        receiverPhone = phoneDigits.substring(0, 3) + "-" + 
+                                      phoneDigits.substring(3, 7) + "-" + 
+                                      phoneDigits.substring(7);
+                    } else if (phoneDigits.length() == 10) {
+                        receiverPhone = phoneDigits.substring(0, 3) + "-" + 
+                                      phoneDigits.substring(3, 6) + "-" + 
+                                      phoneDigits.substring(6);
+                    } else {
+                        receiverPhone = organUser.getPhone();
+                    }
+                }
+                
+                // 주소 정보 가져오기
+                if (organUser.getAddress() != null && !organUser.getAddress().isEmpty() && !organUser.getAddress().equals("주소 미입력")) {
+                    receiverAddress = organUser.getAddress();
+                }
+                if (organUser.getAddressPostcode() != null && !organUser.getAddressPostcode().isEmpty()) {
+                    receiverPostalCode = organUser.getAddressPostcode();
+                }
+                
+                log.info("기관 배송 정보 설정 - 기관명: {}, 전화번호: {}, 주소: {}, 우편번호: {}", 
+                    organ.getOrgName(), receiverPhone, receiverAddress, receiverPostalCode);
+            } else {
+                log.warn("기관 User 정보를 찾을 수 없습니다. organId: {}", organ.getId());
+            }
+            
+            com.rewear.delivery.entity.Delivery.DeliveryBuilder deliveryBuilder = com.rewear.delivery.entity.Delivery.builder()
                     .donation(savedDonation)
                     .senderName(savedDonation.getDonor() != null && savedDonation.getDonor().getName() != null ? savedDonation.getDonor().getName() : "미정")
                     .senderPhone(savedDonation.getDonor() != null && savedDonation.getDonor().getPhone() != null ? savedDonation.getDonor().getPhone() : "010-0000-0000")
                     .senderAddress(savedDonation.getDonor() != null && savedDonation.getDonor().getAddress() != null ? savedDonation.getDonor().getAddress() : "주소 미정")
                     .receiverName(organ.getOrgName() != null ? organ.getOrgName() : "미정")
-                    .receiverPhone("010-0000-0000")
-                    .receiverAddress("주소 미정")
-                    .status(com.rewear.common.enums.DeliveryStatus.PENDING)
-                    .build();
+                    .receiverPhone(receiverPhone)
+                    .receiverAddress(receiverAddress)
+                    .receiverPostalCode(receiverPostalCode)
+                    .status(com.rewear.common.enums.DeliveryStatus.PENDING);
             
+            // 택배 정보가 있으면 추가
+            if (carrier != null && !carrier.isEmpty()) {
+                deliveryBuilder.carrier(carrier);
+            }
+            if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                deliveryBuilder.trackingNumber(trackingNumber);
+            }
+            
+            com.rewear.delivery.entity.Delivery delivery = deliveryBuilder.build();
             deliveryRepository.save(delivery);
         } else {
-            // 배송 정보가 이미 있으면 상태를 대기로 설정
+            // 배송 정보가 이미 있으면 기관 정보로 업데이트
+            User organUser = null;
+            try {
+                // organ을 다시 조회하여 User 정보를 확실히 로드
+                if (organ.getUser() != null && organ.getUser().getId() != null) {
+                    organUser = userService.getUserById(organ.getUser().getId());
+                    log.info("기관 User 정보 조회 성공 (업데이트) - organId: {}, userId: {}, phone: {}, address: {}", 
+                        organ.getId(), organUser.getId(), organUser.getPhone(), organUser.getAddress());
+                }
+            } catch (Exception e) {
+                log.warn("기관 User 정보 조회 실패 (업데이트): {}", e.getMessage());
+            }
+            
+            if (organUser != null) {
+                // 전화번호 업데이트
+                if (organUser.getPhone() != null && !organUser.getPhone().isEmpty()) {
+                    String phoneDigits = organUser.getPhone().replaceAll("\\D", "");
+                    if (phoneDigits.length() == 11) {
+                        savedDonation.getDelivery().setReceiverPhone(
+                            phoneDigits.substring(0, 3) + "-" + 
+                            phoneDigits.substring(3, 7) + "-" + 
+                            phoneDigits.substring(7)
+                        );
+                    } else if (phoneDigits.length() == 10) {
+                        savedDonation.getDelivery().setReceiverPhone(
+                            phoneDigits.substring(0, 3) + "-" + 
+                            phoneDigits.substring(3, 6) + "-" + 
+                            phoneDigits.substring(6)
+                        );
+                    } else {
+                        savedDonation.getDelivery().setReceiverPhone(organUser.getPhone());
+                    }
+                }
+                
+                // 주소 업데이트
+                if (organUser.getAddress() != null && !organUser.getAddress().isEmpty() && !organUser.getAddress().equals("주소 미입력")) {
+                    savedDonation.getDelivery().setReceiverAddress(organUser.getAddress());
+                }
+                if (organUser.getAddressPostcode() != null && !organUser.getAddressPostcode().isEmpty()) {
+                    savedDonation.getDelivery().setReceiverPostalCode(organUser.getAddressPostcode());
+                }
+                
+                log.info("기관 배송 정보 업데이트 - 기관명: {}, 전화번호: {}, 주소: {}, 우편번호: {}", 
+                    organ.getOrgName(), savedDonation.getDelivery().getReceiverPhone(), 
+                    savedDonation.getDelivery().getReceiverAddress(), savedDonation.getDelivery().getReceiverPostalCode());
+            } else {
+                log.warn("기관 User 정보를 찾을 수 없습니다. organId: {}", organ.getId());
+            }
+            
+            // 택배 정보가 있으면 업데이트
+            if (carrier != null && !carrier.isEmpty()) {
+                savedDonation.getDelivery().setCarrier(carrier);
+            }
+            if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                savedDonation.getDelivery().setTrackingNumber(trackingNumber);
+            }
+            
+            if (carrier != null || trackingNumber != null) {
+                deliveryRepository.save(savedDonation.getDelivery());
+            }
+            
+            // 상태를 대기로 설정
             savedDonation.getDelivery().setStatus(com.rewear.common.enums.DeliveryStatus.PENDING);
             deliveryRepository.save(savedDonation.getDelivery());
         }
