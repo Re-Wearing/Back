@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>물품 정보 입력 | RE-WEAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+
+    <style>
+        :root {
+            --bd: #e5e7eb;
+            --txt: #111827;
+            --sub: #6b7280;
+            --ok: #065f46;
+            --warn: #b91c1c;
+            --bg: #f7f7fb;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--txt);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+        .wrap {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--bd);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px;
+            text-align: center;
+        }
+        .row {
+            margin: 16px 0;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        label .required {
+            color: var(--warn);
+        }
+        .muted {
+            color: var(--sub);
+            font-size: 12px;
+        }
+        select, input[type="text"], input[type="file"], textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--bd);
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fff;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .help {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--sub);
+            min-height: 16px;
+        }
+        .help.warn {
+            color: var(--warn);
+        }
+        .file-preview {
+            margin-top: 8px;
+        }
+        .file-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid var(--bd);
+        }
+        .actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--bd);
+            border-radius: 10px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #065f46;
+            color: #fff;
+            border-color: #065f46;
+        }
+        .btn-primary:hover {
+            background: #047857;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+    <div class="card">
+        <h1>물품 정보 입력</h1>
+
+        <form th:action="@{/donations/apply/item}" th:object="${itemForm}" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- 성별 -->
+            <div class="row">
+                <label>성별 <span class="required">*</span> 필수</label>
+                <select th:field="*{genderType}" required>
+                    <option value="">선택해주세요</option>
+                    <option value="MALE">남성</option>
+                    <option value="FEMALE">여성</option>
+                    <option value="CHILD">아동</option>
+                    <option value="UNISEX">유니섹스</option>
+                </select>
+                <small class="help warn" th:if="${#fields.hasErrors('genderType')}" th:errors="*{genderType}"></small>
+            </div>
+
+            <!-- 메인 카테고리 -->
+            <div class="row">
+                <label>메인 카테고리 <span class="required">*</span> 필수</label>
+                <select th:field="*{mainCategory}" required>
+                    <option value="">선택해주세요</option>
+                    <option value="TOP">상의</option>
+                    <option value="BOTTOM">하의</option>
+                    <option value="OUTERWEAR">아우터</option>
+                    <option value="SHOES">신발</option>
+                    <option value="ACCESSORY">액세서리</option>
+                    <option value="UNDERWEAR">속옷</option>
+                    <option value="ETC">기타</option>
+                </select>
+                <small class="help warn" th:if="${#fields.hasErrors('mainCategory')}" th:errors="*{mainCategory}"></small>
+            </div>
+
+            <!-- 상세 카테고리 -->
+            <div class="row">
+                <label>상세 카테고리 <span class="muted">(선택 사항)</span></label>
+                <input type="text" th:field="*{detailCategory}" placeholder="예: 반팔, 긴팔, 치마, 청바지 등" maxlength="50"/>
+                <small class="help">상세 카테고리를 입력해주세요. (예: 반팔, 긴팔, 치마, 청바지 등)</small>
+                <small class="help warn" th:if="${#fields.hasErrors('detailCategory')}" th:errors="*{detailCategory}"></small>
+            </div>
+
+            <!-- 사이즈 -->
+            <div class="row">
+                <label>사이즈 <span class="required">*</span> 필수</label>
+                <select th:field="*{size}" required>
+                    <option value="">선택해주세요</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="F">F (Free Size)</option>
+                </select>
+                <small class="help warn" th:if="${#fields.hasErrors('size')}" th:errors="*{size}"></small>
+            </div>
+
+            <!-- 상세설명 -->
+            <div class="row">
+                <label>상세설명 <span class="muted">(선택 사항)</span></label>
+                <textarea th:field="*{description}" placeholder="물품에 대한 상세 설명을 입력해주세요." maxlength="500"></textarea>
+                <small class="help">물품의 상태, 브랜드, 특징 등을 자유롭게 입력해주세요. (최대 500자)</small>
+                <small class="help warn" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small>
+            </div>
+
+            <!-- 이미지 첨부 -->
+            <div class="row">
+                <label>이미지 첨부 <span class="muted">(선택 사항, 여러 개 선택 가능)</span></label>
+                <input type="file" name="images" accept="image/*" id="imageInput" multiple/>
+                <div class="file-preview" id="imagePreview"></div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">다음 단계</button>
+                <a th:href="@{/main}" class="btn">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+
+    imageInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        imagePreview.innerHTML = '';
+        
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = '미리보기 ' + (i + 1);
+                        img.style.maxWidth = '200px';
+                        img.style.maxHeight = '200px';
+                        img.style.margin = '5px';
+                        img.style.objectFit = 'cover';
+                        imagePreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
+
