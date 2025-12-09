@@ -392,9 +392,9 @@ export default function AdminMatchingPage({
                             if (imageUrl && typeof imageUrl === 'string') {
                               if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
                                 if (imageUrl.startsWith('/uploads/')) {
-                                  imageUrl = `http://localhost:8080${imageUrl}`;
+                                  imageUrl = imageUrl;
                                 } else {
-                                  imageUrl = `http://localhost:8080/uploads/${imageUrl}`;
+                                  imageUrl = `/uploads/${imageUrl}`;
                                 }
                               }
                             }

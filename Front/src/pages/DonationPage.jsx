@@ -39,7 +39,8 @@ export default function DonationPage({
   onRequireLogin,
   onAddDonation,
   onGoToDonationStatus,
-  availableOrganizations = []
+  availableOrganizations = [],
+  onLogin = () => {}
 }) {
   const today = new Date().toISOString().split('T')[0]
   const [itemType, setItemType] = useState('')
@@ -359,11 +360,19 @@ export default function DonationPage({
         body: JSON.stringify(requestData)
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.message || '기부 신청에 실패했습니다.')
+        let errorMessage = '기부 신청에 실패했습니다.'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+        } catch (e) {
+          // JSON 파싱 실패 시 상태 코드 기반 메시지
+          errorMessage = `기부 신청에 실패했습니다. (${response.status})`
+        }
+        throw new Error(errorMessage)
       }
+
+      const result = await response.json()
 
       // 성공 시 기존 콜백 호출 (하위 호환성)
       if (onAddDonation) {
@@ -521,6 +530,7 @@ export default function DonationPage({
             onNavClick={onNavLink}
             isLoggedIn={isLoggedIn}
             onLogout={onLogout}
+            onLogin={onLogin}
             onNotifications={onNotifications}
             unreadCount={unreadCount}
             onMenu={onMenu}
