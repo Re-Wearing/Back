@@ -183,6 +183,37 @@
   margin-top: -0.25rem;
 }
 
+.anonymous-toggle-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(215, 199, 178, 0.7);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #6e5a45;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+}
+
+.anonymous-toggle-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #c9b596;
+}
+
+.anonymous-toggle-btn.active {
+  background: #987653;
+  color: #fff;
+  border-color: #987653;
+}
+
+.anonymous-toggle-btn.active:hover {
+  background: #866543;
+}
+
 .image-upload-section {
   display: flex;
   flex-direction: column;

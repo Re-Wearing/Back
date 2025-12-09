@@ -5,7 +5,12 @@ import com.rewear.common.enums.Role;
 import com.rewear.common.enums.WarnStatus;
 import com.rewear.user.entity.User;
 import com.rewear.user.repository.UserRepository;
+import com.rewear.notification.repository.NotificationRepository;
+import com.rewear.post.repository.PostRepository;
+import com.rewear.donation.repository.DonationRepository;
+import com.rewear.organ.repository.OrganRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
@@ -14,6 +19,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -21,6 +27,10 @@ public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final NotificationRepository notificationRepository;
+    private final PostRepository postRepository;
+    private final DonationRepository donationRepository;
+    private final OrganRepository organRepository;
 
     public Optional<User> findByUsername(String username) {
         if (username == null) return Optional.empty();
@@ -111,10 +121,49 @@ public class UserServiceImpl implements UserService{
 
     @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("삭제할 사용자가 존재하지 않습니다.");
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("삭제할 사용자가 존재하지 않습니다."));
+        
+        log.info("회원 탈퇴 시작 - userId: {}, username: {}", id, user.getUsername());
+        
+        try {
+            // 1. 알림 삭제
+            List<com.rewear.notification.entity.Notification> notifications = 
+                    notificationRepository.findByUserOrderByCreatedAtDesc(user);
+            if (!notifications.isEmpty()) {
+                notificationRepository.deleteAll(notifications);
+                log.info("알림 삭제 완료 - 개수: {}", notifications.size());
+            }
+            
+            // 2. 게시글 삭제
+            List<com.rewear.post.entity.Post> posts = postRepository.findByAuthorUser(user);
+            if (!posts.isEmpty()) {
+                postRepository.deleteAll(posts);
+                log.info("게시글 삭제 완료 - 개수: {}", posts.size());
+            }
+            
+            // 3. 기부 삭제 (DonationItem과 Delivery는 CASCADE로 자동 삭제됨)
+            List<com.rewear.donation.entity.Donation> donations = donationRepository.findByDonor(user);
+            if (!donations.isEmpty()) {
+                donationRepository.deleteAll(donations);
+                log.info("기부 삭제 완료 - 개수: {}", donations.size());
+            }
+            
+            // 4. 기관 정보 삭제 (기관 회원인 경우)
+            Optional<com.rewear.organ.entity.Organ> organOpt = organRepository.findByUserId(id);
+            if (organOpt.isPresent()) {
+                organRepository.delete(organOpt.get());
+                log.info("기관 정보 삭제 완료 - organId: {}", organOpt.get().getId());
+            }
+            
+            // 5. 사용자 삭제
+            userRepository.deleteById(id);
+            log.info("사용자 삭제 완료 - userId: {}, username: {}", id, user.getUsername());
+            
+        } catch (Exception e) {
+            log.error("회원 탈퇴 중 오류 발생 - userId: {}, username: {}", id, user.getUsername(), e);
+            throw new RuntimeException("회원 탈퇴 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
-        userRepository.deleteById(id);
     }
 
     @Override
