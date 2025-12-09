@@ -12,8 +12,10 @@ export const getNavLinksForRole = role => {
       { label: '기관 가입 승인', href: '/admin/manage/orgs' },
       { label: '물품 승인', href: '/admin/manage/items' },
       { label: '자동매칭', href: '/admin/manage/matching' },
-      { label: 'FAQ 답변', href: '/admin/faq' },
-      { label: '게시판', href: '#board' }
+      { label: '택배 관리', href: '/admin/manage/delivery-input' },
+      { label: 'FAQ', href: '/admin/faq' },
+      { label: '게시판', href: '#board' },
+      { label: '배송 관리', href: '/admin/manage/delivery' }
     ]
   }
   if (role === '기관 회원') {
