@@ -107,10 +107,6 @@ export default function NotificationPage({
 
   // 전체 알림 읽음 처리
   const handleMarkAllRead = async () => {
-    if (!window.confirm('모든 알림을 읽음 처리하시겠습니까?')) {
-      return
-    }
-
     try {
       const response = await fetch('/api/notifications/read-all', {
         method: 'POST',
@@ -160,17 +156,21 @@ export default function NotificationPage({
         <div className="notification-body">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h1>알림</h1>
-            {notifications.length > 0 && notifications.some(n => !n.read) && (
+            {notifications.length > 0 && (
               <button 
                 type="button" 
                 onClick={handleMarkAllRead}
+                disabled={notifications.every(n => n.read === true || n.read === 'true')}
                 style={{ 
                   padding: '0.5rem 1rem', 
-                  background: 'var(--primary)', 
+                  background: notifications.every(n => n.read === true || n.read === 'true') ? '#ccc' : '#2f261c', 
                   color: 'white', 
                   border: 'none', 
                   borderRadius: '4px',
-                  cursor: 'pointer'
+                  cursor: notifications.every(n => n.read === true || n.read === 'true') ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  opacity: notifications.every(n => n.read === true || n.read === 'true') ? 0.6 : 1
                 }}
               >
                 모두 읽음
