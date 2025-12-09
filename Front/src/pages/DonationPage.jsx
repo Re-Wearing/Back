@@ -399,7 +399,7 @@ export default function DonationPage({
 
       alert(result.message || '기부 신청이 완료되었습니다! 감사합니다.')
       
-      // 초기화 및 기부 현황 조회로 이동
+      // 초기화
       setStep('item')
       setItemType('')
       setItemDetail('')
@@ -417,9 +417,21 @@ export default function DonationPage({
       setDesiredDate(today)
       setMemo('')
       
-      if (onGoToDonationStatus) {
-        onGoToDonationStatus()
-      } else {
+      // 기부 현황 조회로 이동 (goToDonationStatus가 currentUser를 다시 가져오는 로직 포함)
+      try {
+        if (onGoToDonationStatus && isLoggedIn) {
+          // currentUser가 없어도 goToDonationStatus가 내부에서 다시 가져오도록 함
+          onGoToDonationStatus()
+        } else if (!isLoggedIn) {
+          // 로그인 상태가 아니면 메인으로 이동
+          onNavigateHome()
+        } else {
+          // isLoggedIn이 true인데 onGoToDonationStatus가 없으면 메인으로
+          onNavigateHome()
+        }
+      } catch (navError) {
+        console.error('페이지 이동 오류:', navError)
+        // 에러 발생 시 메인으로 이동
         onNavigateHome()
       }
     } catch (error) {

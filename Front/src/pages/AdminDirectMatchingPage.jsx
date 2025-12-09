@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import '../styles/admin-manage.css';
 
-export default function AdminMatchingPage({
+export default function AdminDirectMatchingPage({
   donationItems = [],
   organizationOptions = [],
   matchingInvites = [],
@@ -13,65 +13,97 @@ export default function AdminMatchingPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
-  const [matchSelections, setMatchSelections] = useState({});
-  const [deliveryInfo, setDeliveryInfo] = useState({}); // 택배 회사, 운송장 번호 저장
   const [detailModal, setDetailModal] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deliveryInfo, setDeliveryInfo] = useState({}); // 택배 정보 저장 (item.id를 키로 사용)
 
-  // API에서 자동 매칭 대기 목록 조회
+  // API에서 직접 매칭 대기 목록 조회
   useEffect(() => {
     const fetchDonationData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const autoMatchResponse = await fetch('/api/admin/donations/auto-match', {
+        // 직접 매칭 목록 조회
+        const response = await fetch('/api/admin/donations/direct-match', {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           credentials: 'include'
         });
         
-        if (!autoMatchResponse.ok) {
-          throw new Error('자동 매칭 목록 조회에 실패했습니다.');
+        const contentType = response.headers.get('content-type');
+        const responseText = await response.text();
+        
+        // Content-Type이 JSON이 아니거나 HTML 응답인지 확인
+        if (contentType && !contentType.includes('application/json')) {
+          console.error('JSON이 아닌 응답을 받았습니다. Content-Type:', contentType);
+          if (responseText.trim().startsWith('<') || responseText.trim().startsWith('<!')) {
+            console.error('HTML 응답이 반환되었습니다:', responseText.substring(0, 300));
+            throw new Error('서버 오류: API 엔드포인트를 찾을 수 없습니다. 백엔드 서버를 재시작해주세요.');
+          }
+          throw new Error(`예상하지 못한 응답 형식입니다. (Content-Type: ${contentType})`);
         }
         
-        const autoMatchData = await autoMatchResponse.json();
-        const autoMatchItems = (autoMatchData.donations || []).map(item => {
-          // 디버깅: deliveryMethod 확인
-          if (process.env.NODE_ENV === 'development') {
-            console.log('기부 항목 데이터:', {
-              id: item.id,
-              name: item.name,
-              deliveryMethod: item.deliveryMethod,
-              donationMethod: item.donationMethod
-            });
-          }
-          return {
-            ...item,
-            owner: item.owner || 'unknown'
-          };
-        });
+        // HTML 응답인지 확인 (서버 오류 페이지나 로그인 페이지가 반환된 경우)
+        if (responseText.trim().startsWith('<') || responseText.trim().startsWith('<!')) {
+          console.error('HTML 응답이 반환되었습니다. API 엔드포인트를 확인하세요:', responseText.substring(0, 300));
+          throw new Error('서버 오류: API 엔드포인트를 찾을 수 없습니다. 백엔드 서버를 재시작해주세요.');
+        }
         
-        setApiDonationItems(autoMatchItems);
+        if (!response.ok) {
+          console.error('직접 매칭 목록 조회 실패:', response.status, responseText);
+          throw new Error(`직접 매칭 목록 조회에 실패했습니다. (상태 코드: ${response.status})`);
+        }
+        
+        if (!responseText || responseText.trim() === '') {
+          console.warn('직접 매칭 목록 응답이 비어있습니다.');
+          setApiDonationItems([]);
+        } else {
+          try {
+            const data = JSON.parse(responseText);
+            const directMatchItems = (data.donations || []).map(item => ({
+              ...item,
+              owner: item.owner || 'unknown'
+            }));
+            setApiDonationItems(directMatchItems);
+          } catch (parseError) {
+            console.error('JSON 파싱 오류:', parseError, '응답 내용:', responseText.substring(0, 200));
+            throw new Error('서버 응답 형식이 올바르지 않습니다.');
+          }
+        }
         
         // 기관 목록 조회
-        const organsResponse = await fetch('/api/admin/donations/organs', {
+        const orgResponse = await fetch('/api/admin/donations/organs', {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           credentials: 'include'
         });
         
-        if (organsResponse.ok) {
-          const organsData = await organsResponse.json();
-          setApiOrganizations(organsData.organs || []);
+        if (orgResponse.ok) {
+          const orgResponseText = await orgResponse.text();
+          if (orgResponseText && orgResponseText.trim() !== '') {
+            // HTML 응답인지 확인
+            if (orgResponseText.trim().startsWith('<') || orgResponseText.trim().startsWith('<!')) {
+              console.warn('기관 목록 API가 HTML을 반환했습니다. 기본 기관 목록을 사용합니다.');
+            } else {
+              try {
+                const orgData = JSON.parse(orgResponseText);
+                setApiOrganizations(orgData.organs || orgData.organizations || []);
+              } catch (parseError) {
+                console.error('기관 목록 JSON 파싱 오류:', parseError);
+              }
+            }
+          }
         }
       } catch (err) {
-        console.error('기부 데이터 조회 오류:', err);
-        setError(err.message);
+        console.error('직접 매칭 목록 조회 오류:', err);
+        setError(err.message || '직접 매칭 목록을 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
       }
@@ -80,36 +112,69 @@ export default function AdminMatchingPage({
     fetchDonationData();
   }, []);
 
-  // 기관 옵션 병합
-  const mergedOrganizationOptions = useMemo(() => {
-    if (apiOrganizations.length > 0) {
-      return apiOrganizations;
-    }
-    return Array.isArray(organizationOptions) ? organizationOptions : [];
-  }, [apiOrganizations, organizationOptions]);
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
 
-  // 간접 매칭으로 신청되고 승인이 완료된 항목만 표시
-  const autoMatchingQueue = useMemo(() => {
+  // 직접 매칭 대기 목록 필터링 (승인 대기 + 기관 수락 완료)
+  const directMatchingQueue = useMemo(() => {
     return apiDonationItems.filter(
-      item => item.donationMethod === '자동 매칭' 
-              && (item.status === '매칭대기' || item.status === 'IN_PROGRESS')
-              && !item.pendingOrganization
+      item => (item.donationMethod === '직접 매칭' || item.donationMethod === 'DIRECT_MATCH')
     );
   }, [apiDonationItems]);
 
-  const pendingInviteList = Array.isArray(matchingInvites) ? matchingInvites : [];
+  // 기관 옵션 병합
+  const mergedOrganizationOptions = useMemo(() => {
+    if (apiOrganizations.length > 0) {
+      return apiOrganizations.map(org => ({
+        username: org.username || org.id.toString(),
+        name: org.name || org.username,
+        id: org.id
+      }));
+    }
+    return organizationOptions;
+  }, [apiOrganizations, organizationOptions]);
 
-  const showToast = (message) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 2000);
+  const handleApprove = async (item) => {
+    try {
+      const response = await fetch(`/api/admin/donations/${item.id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      const responseText = await response.text();
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('서버 응답이 비어있습니다.');
+      }
+      
+      const result = JSON.parse(responseText);
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '기부 승인에 실패했습니다.');
+      }
+      
+      showToast(result.message || '기부가 승인되었습니다.');
+      
+      // 목록에서 제거
+      setApiDonationItems(prev => prev.filter(i => i.id !== item.id));
+    } catch (err) {
+      console.error('기부 승인 오류:', err);
+      showToast(err.message || '기부 승인에 실패했습니다.');
+    }
   };
 
   const handleCardClick = async (item, event) => {
-    // 버튼이나 select 클릭 시에는 모달을 열지 않음
+    // 버튼이나 select, input 클릭 시에는 모달을 열지 않음
     if (event.target.tagName === 'BUTTON' || 
         event.target.tagName === 'SELECT' || 
+        event.target.tagName === 'INPUT' ||
         event.target.closest('button') || 
-        event.target.closest('select')) {
+        event.target.closest('select') ||
+        event.target.closest('input')) {
       return;
     }
 
@@ -141,65 +206,44 @@ export default function AdminMatchingPage({
     }
   };
 
-  const handleSendInvite = async item => {
-    const selectedOrg = matchSelections[item.id];
-    if (!selectedOrg) {
-      window.alert('매칭할 기관을 선택해주세요.');
-      return;
-    }
-    
+  const handleReject = async (item, reason) => {
     try {
-      const selectedOrgan = apiOrganizations.find(org => 
-        org.username === selectedOrg || org.name === selectedOrg || org.id.toString() === selectedOrg
-      );
-      
-      if (!selectedOrgan) {
-        throw new Error('선택한 기관을 찾을 수 없습니다.');
-      }
-      
-      // 택배 배송인 경우 택배 회사와 운송장 번호 확인
-      const isParcelDelivery = item.deliveryMethod === '택배 배송' || item.deliveryMethod === 'PARCEL_DELIVERY';
-      const deliveryData = deliveryInfo[item.id] || {};
-      
-      if (isParcelDelivery) {
-        // 택배 배송인 경우 택배 회사와 운송장 번호가 입력되었는지 확인 (선택사항이므로 경고만)
-        if (!deliveryData.carrier && !deliveryData.trackingNumber) {
-          const confirm = window.confirm('택배 배송인데 택배 회사와 운송장 번호가 입력되지 않았습니다. 계속하시겠습니까?');
-          if (!confirm) {
-            return;
-          }
-        }
-      }
-      
-      const response = await fetch(`/api/admin/donations/${item.id}/assign`, {
+      const response = await fetch(`/api/admin/donations/${item.id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({
-          organId: selectedOrgan.id,
-          carrier: isParcelDelivery ? (deliveryData.carrier || null) : null,
-          trackingNumber: isParcelDelivery ? (deliveryData.trackingNumber || null) : null
-        })
+        body: JSON.stringify({ reason })
       });
       
-      const result = await response.json();
-      
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || '기관 할당에 실패했습니다.');
+      const responseText = await response.text();
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('서버 응답이 비어있습니다.');
       }
       
-      showToast(result.message || '기관에 할당되었습니다.');
-      setMatchSelections(prev => ({ ...prev, [item.id]: '' }));
-      setDeliveryInfo(prev => {
-        const newInfo = { ...prev };
-        delete newInfo[item.id];
-        return newInfo;
-      });
+      const result = JSON.parse(responseText);
       
-      // 목록 새로고침 (할당된 항목은 자동으로 제외됨)
-      const refreshResponse = await fetch('/api/admin/donations/auto-match', {
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '기부 거절에 실패했습니다.');
+      }
+      
+      showToast(result.message || '기부가 거절되었습니다.');
+      
+      // 목록에서 제거
+      setApiDonationItems(prev => prev.filter(i => i.id !== item.id));
+    } catch (err) {
+      console.error('기부 거절 오류:', err);
+      showToast(err.message || '기부 거절에 실패했습니다.');
+    }
+  };
+
+  const openDetailModal = async (item) => {
+    setDetailModal(item);
+    setDetailLoading(true);
+    
+    try {
+      const response = await fetch(`/api/admin/donations/${item.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -207,119 +251,122 @@ export default function AdminMatchingPage({
         credentials: 'include'
       });
       
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        const refreshedItems = (refreshData.donations || []).map(i => ({
-          ...i,
-          owner: i.owner || 'unknown'
-        }));
-        setApiDonationItems(refreshedItems);
+      if (response.ok) {
+        const responseText = await response.text();
+        if (responseText && responseText.trim() !== '') {
+          try {
+            const data = JSON.parse(responseText);
+            setDetailModal(data.donation || data || item);
+          } catch (parseError) {
+            console.error('JSON 파싱 오류:', parseError);
+            setDetailModal(item);
+          }
+        } else {
+          setDetailModal(item);
+        }
       }
     } catch (err) {
-      console.error('기관 할당 오류:', err);
-      showToast(err.message || '기관 할당에 실패했습니다.');
+      console.error('상세 정보 조회 오류:', err);
+    } finally {
+      setDetailLoading(false);
     }
   };
 
   return (
-    <div className="admin-manage-page">
+    <div className="admin-manage-container">
       {toast && <div className="toast">{toast}</div>}
 
       <div className="admin-manage-header">
-        <h1>자동 매칭</h1>
-        <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
-          메인으로
-        </button>
+        <h1>직접 매칭</h1>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            type="button" 
+            className="btn secondary" 
+            onClick={() => window.location.href = '/admin/manage/matching/select'}
+          >
+            매칭 선택으로
+          </button>
+          <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
+            메인으로
+          </button>
+        </div>
       </div>
 
       <section className="admin-panel">
-        <h2>자동 매칭 대기 물품</h2>
+        <h2>직접 매칭 대기 물품</h2>
         {loading ? (
-          <p className="empty-hint">자동 매칭 목록을 불러오는 중...</p>
+          <p className="empty-hint">직접 매칭 목록을 불러오는 중...</p>
         ) : error ? (
           <p className="empty-hint" style={{ color: 'red' }}>오류: {error}</p>
-        ) : autoMatchingQueue.length === 0 ? (
-          <p className="empty-hint">자동 매칭이 필요한 물품이 없습니다.</p>
+        ) : directMatchingQueue.length === 0 ? (
+          <p className="empty-hint">직접 매칭이 필요한 물품이 없습니다.</p>
         ) : (
           <div className="admin-card-list">
-            {autoMatchingQueue.map((item) => (
-              <article 
-                key={item.id} 
-                className="admin-card"
-                onClick={(e) => handleCardClick(item, e)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="admin-card-header">
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>{item.ownerName || item.owner}</p>
-                  </div>
-                  <span className="status-chip status-pending">대기</span>
-                </div>
-                <p className="admin-card-memo">{item.items}</p>
-                <div onClick={(e) => e.stopPropagation()}>
-                  {/* 기관 선택 영역 */}
-                  <div style={{
-                    marginTop: '1.5rem',
-                    padding: '1.5rem',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd'
-                  }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      marginBottom: '1rem'
-                    }}>
-                      <label style={{ 
-                        fontSize: '15px', 
-                        fontWeight: '600', 
-                        color: '#2f261c',
-                        margin: 0
-                      }}>
-                        기관 선택
-                      </label>
+            {directMatchingQueue.map((item) => {
+              const isParcelDelivery = item.deliveryMethod === '택배 배송' || 
+                                      item.deliveryMethod === 'PARCEL_DELIVERY' ||
+                                      (item.deliveryMethod && item.deliveryMethod.includes('택배'));
+              
+              return (
+                <article 
+                  key={item.id} 
+                  className="admin-card"
+                  onClick={(e) => handleCardClick(item, e)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="admin-card-header">
+                    <div>
+                      <strong>{item.name || item.items || '물품명 없음'}</strong>
+                      <p>{item.ownerName || item.owner || '알 수 없음'}</p>
                     </div>
-                    <select
-                      value={matchSelections[item.id] || ''}
-                      onChange={(event) =>
-                        setMatchSelections((prev) => ({ ...prev, [item.id]: event.target.value }))
-                      }
-                      style={{
-                        width: '100%',
-                        padding: '1rem',
-                        fontSize: '15px',
-                        border: '1px solid #ddd',
-                        borderRadius: '6px',
-                        backgroundColor: 'white',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="">기관을 선택해주세요</option>
-                      {mergedOrganizationOptions.map((org) => (
-                        <option key={org.username || org.id} value={org.username || org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
+                    <span className="status-chip status-pending">대기</span>
                   </div>
+                  <p className="admin-card-memo">{item.items}</p>
                   
-                  {/* 택배 배송인 경우 택배 정보 입력 필드 표시 */}
-                  {(() => {
-                    const isParcelDelivery = item.deliveryMethod === '택배 배송' || 
-                                            item.deliveryMethod === 'PARCEL_DELIVERY' ||
-                                            (item.deliveryMethod && item.deliveryMethod.includes('택배'));
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {/* 기관 선택 영역 (읽기 전용) */}
+                    <div style={{
+                      marginTop: '1.5rem',
+                      padding: '1.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid #ddd',
+                      backgroundColor: '#f9f9f9'
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        marginBottom: '1rem'
+                      }}>
+                        <label style={{ 
+                          fontSize: '15px', 
+                          fontWeight: '600', 
+                          color: '#2f261c',
+                          margin: 0
+                        }}>
+                          선택된 기관
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        value={item.donationOrganization || item.organization || '미정'}
+                        readOnly
+                        disabled
+                        style={{
+                          width: '100%',
+                          padding: '1rem',
+                          fontSize: '15px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          backgroundColor: '#f5f5f5',
+                          fontWeight: '500',
+                          color: '#666',
+                          cursor: 'not-allowed'
+                        }}
+                      />
+                    </div>
                     
-                    // 디버깅용 로그 (개발 환경에서만)
-                    if (process.env.NODE_ENV === 'development') {
-                      console.log('배송 방법 확인:', {
-                        itemId: item.id,
-                        deliveryMethod: item.deliveryMethod,
-                        isParcelDelivery: isParcelDelivery
-                      });
-                    }
-                    
-                    return isParcelDelivery ? (
+                    {/* 택배 배송인 경우 택배 정보 입력 필드 표시 */}
+                    {isParcelDelivery && (
                       <div style={{ 
                         marginTop: '1.5rem',
                         padding: '1.5rem',
@@ -337,7 +384,7 @@ export default function AdminMatchingPage({
                             color: '#2f261c',
                             margin: 0
                           }}>
-                            택배 정보 (택배 배송인 경우)
+                            택배 정보
                           </label>
                         </div>
                         <div style={{ 
@@ -417,61 +464,38 @@ export default function AdminMatchingPage({
                           </div>
                         </div>
                       </div>
-                    ) : null;
-                  })()}
-                  
-                  <button 
-                    type="button" 
-                    className="small-btn primary" 
-                    onClick={() => handleSendInvite(item)}
-                    style={{
-                      width: '100%',
-                      marginTop: '1.5rem',
-                      padding: '1rem',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      backgroundColor: '#2f261c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    매칭 제안하기
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-
-        <h2>기관 응답 현황</h2>
-        {pendingInviteList.length === 0 ? (
-          <p className="empty-hint">최근 매칭 제안 내역이 없습니다.</p>
-        ) : (
-          <div className="admin-table-wrapper mini">
-            <table>
-              <thead>
-                <tr>
-                  <th>물품</th>
-                  <th>기관</th>
-                  <th>상태</th>
-                  <th>비고</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingInviteList.map((invite) => (
-                  <tr key={invite.id}>
-                    <td>
-                      {invite.donorName} / {invite.itemName || invite.itemId}
-                    </td>
-                    <td>{invite.organizationName}</td>
-                    <td>{invite.status}</td>
-                    <td>{invite.responseReason || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                    
+                    {/* 승인/거절 버튼 (기관이 아직 수락하지 않은 경우) */}
+                    {item.status !== '매칭됨' && item.status !== 'IN_PROGRESS' && (
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                        <button
+                          type="button"
+                          className="btn primary"
+                          style={{ flex: 1 }}
+                          onClick={() => handleApprove(item)}
+                        >
+                          승인
+                        </button>
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          style={{ flex: 1 }}
+                          onClick={() => {
+                            const reason = window.prompt('거절 사유를 입력해주세요:');
+                            if (reason) {
+                              handleReject(item, reason);
+                            }
+                          }}
+                        >
+                          거절
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -553,7 +577,7 @@ export default function AdminMatchingPage({
               overflowY: 'auto',
               maxHeight: 'calc(90vh - 80px)'
             }}>
-
+            
             {detailLoading ? (
               <p>상세 정보를 불러오는 중...</p>
             ) : (
@@ -637,7 +661,8 @@ export default function AdminMatchingPage({
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h3 style={{ marginBottom: '0.75rem', color: '#2f261c' }}>기부 방법 및 배송 정보</h3>
                   <div style={{ padding: '1rem', background: '#f9f9f9', borderRadius: '8px' }}>
-                    <p style={{ margin: '0.5rem 0' }}><strong>기부 방법:</strong> {detailModal.donationMethod || '자동 매칭'}</p>
+                    <p style={{ margin: '0.5rem 0' }}><strong>기부 방법:</strong> {detailModal.donationMethod || '직접 매칭'}</p>
+                    <p style={{ margin: '0.5rem 0' }}><strong>선택한 기관:</strong> {detailModal.donationOrganization || detailModal.organization || '미정'}</p>
                     {detailModal.deliveryMethod && <p style={{ margin: '0.5rem 0' }}><strong>배송 방식:</strong> {detailModal.deliveryMethod}</p>}
                     {detailModal.desiredDate && <p style={{ margin: '0.5rem 0' }}><strong>희망일:</strong> {detailModal.desiredDate}</p>}
                     {detailModal.memo && <p style={{ margin: '0.5rem 0' }}><strong>메모:</strong> {detailModal.memo}</p>}

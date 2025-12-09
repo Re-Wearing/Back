@@ -305,6 +305,7 @@ public class OrganApiController {
     @PreAuthorize("hasRole('ORGAN')")
     public ResponseEntity<Map<String, Object>> approveDonation(
             @PathVariable("donationId") Long donationId,
+            @RequestBody(required = false) Map<String, Object> requestBody,
             @AuthenticationPrincipal CustomUserDetails principal) {
         Map<String, Object> response = new HashMap<>();
         
@@ -320,7 +321,20 @@ public class OrganApiController {
             }
 
             Organ organ = organOpt.get();
-            donationService.organApproveDonation(donationId, organ);
+            
+            // 택배 정보 추출
+            String carrier = null;
+            String trackingNumber = null;
+            if (requestBody != null) {
+                if (requestBody.containsKey("carrier")) {
+                    carrier = (String) requestBody.get("carrier");
+                }
+                if (requestBody.containsKey("trackingNumber")) {
+                    trackingNumber = (String) requestBody.get("trackingNumber");
+                }
+            }
+            
+            donationService.organApproveDonation(donationId, organ, carrier, trackingNumber);
             
             response.put("success", true);
             response.put("message", "기부를 최종 승인하여 완료되었습니다.");

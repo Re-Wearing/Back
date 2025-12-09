@@ -58,20 +58,23 @@ public class DeliveryApiController {
                 Organ organ = organOpt.get();
                 log.info("기관 배송 목록 조회 시작 - 기관명: {}, organId: {}", organ.getOrgName(), organ.getId());
                 
-                // 해당 기관이 승인한 기부(COMPLETED 상태) 조회
-                List<Donation> completedDonations = donationRepository.findAllWithDetails().stream()
+                // 해당 기관에 할당된 기부 중 배송 정보가 있는 모든 기부 조회
+                // 상태 제한 없이 배송 정보가 있는 모든 기부를 조회
+                List<Donation> organDonations = donationRepository.findAllWithDetails().stream()
                         .filter(d -> {
                             boolean hasOrgan = d.getOrgan() != null;
                             boolean isSameOrgan = hasOrgan && d.getOrgan().getId().equals(organ.getId());
-                            boolean isCompleted = d.getStatus() == DonationStatus.COMPLETED;
-                            return isSameOrgan && isCompleted;
+                            boolean hasDelivery = d.getDelivery() != null;
+                            // 취소된 기부는 제외
+                            boolean isNotCancelled = d.getStatus() != DonationStatus.CANCELLED;
+                            return isSameOrgan && hasDelivery && isNotCancelled;
                         })
                         .collect(Collectors.toList());
                 
-                log.info("기관이 승인한 완료된 기부 개수: {}", completedDonations.size());
+                log.info("기관에 할당된 배송 정보가 있는 기부 개수: {}", organDonations.size());
                 
                 // 해당 기부들과 연결된 배송 정보만 조회 (기부 생성일 기준 내림차순 정렬)
-                deliveryList = completedDonations.stream()
+                deliveryList = organDonations.stream()
                         .sorted((d1, d2) -> {
                             // 기부 생성일 기준 내림차순 (최신순)
                             if (d1.getCreatedAt() != null && d2.getCreatedAt() != null) {

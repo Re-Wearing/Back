@@ -14,6 +14,11 @@ export default function ExperienceLanding({
   currentUser = null
 }) {
   const [localUser, setLocalUser] = useState(currentUser)
+  const [statistics, setStatistics] = useState({
+    donationCount: 0,
+    organCount: 0,
+    participantCount: 0
+  })
   
   // 컴포넌트 마운트 시 로그인 상태 확인 및 사용자 정보 가져오기
   useEffect(() => {
@@ -54,6 +59,36 @@ export default function ExperienceLanding({
     
     fetchUser()
   }, [currentUser])
+
+  // 통계 정보 가져오기
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const response = await fetch('/api/statistics/public', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setStatistics({
+              donationCount: data.donationCount || 0,
+              organCount: data.organCount || 0,
+              participantCount: data.participantCount || 0
+            })
+          }
+        }
+      } catch (error) {
+        console.error('통계 정보 조회 오류:', error)
+      }
+    }
+
+    fetchStatistics()
+  }, [])
   
   const navLinks = getNavLinksForRole(localUser?.role)
   
@@ -70,6 +105,12 @@ export default function ExperienceLanding({
           onNotifications={onNotifications}
           unreadCount={unreadCount}
           onMenu={onMenu}
+          onLogoClick={() => {
+            // 초기 화면에서 로고 클릭 시 새로고침
+            if (typeof window !== 'undefined') {
+              window.location.reload()
+            }
+          }}
         />
 
         <section className="warm-hero">
@@ -91,27 +132,39 @@ export default function ExperienceLanding({
                 <li>
                   <span>👕</span>
                   <div>
-                    <strong>000벌</strong>
+                    <strong>{statistics.donationCount.toLocaleString()}벌</strong>
                     <p>지금까지 기부된 옷</p>
                   </div>
                 </li>
                 <li>
                   <span>🏫</span>
                   <div>
-                    <strong>00곳</strong>
+                    <strong>{statistics.organCount.toLocaleString()}곳</strong>
                     <p>함께하는 기관</p>
                   </div>
                 </li>
                 <li>
                   <span>🧑‍🤝‍🧑</span>
                   <div>
-                    <strong>00명</strong>
+                    <strong>{statistics.participantCount.toLocaleString()}명</strong>
                     <p>누적 참여자</p>
                   </div>
                 </li>
               </ul>
               <div className="hero-cta">
-                <button className="hero-btn light" onClick={() => onNavLink?.({ href: '/donation-status' })}>
+                <button 
+                  className="hero-btn light" 
+                  onClick={() => {
+                    // 로그인 상태 확인
+                    const loggedIn = Boolean(localUser) || isLoggedIn
+                    if (loggedIn) {
+                      onNavLink?.({ href: '/donation-status' })
+                    } else {
+                      // 로그인되어 있지 않으면 로그인 페이지로 이동
+                      onLogin()
+                    }
+                  }}
+                >
                   나의 기부 현황 조회
                 </button>
                 <button 
@@ -123,8 +176,8 @@ export default function ExperienceLanding({
                       // 로그인되어 있으면 기부 페이지로 이동
                       onNavLink?.({ href: '/donation' })
                     } else {
-                      // 로그인되어 있지 않으면 회원가입 페이지로 이동
-                      onSignup()
+                      // 로그인되어 있지 않으면 로그인 페이지로 이동
+                      onLogin()
                     }
                   }}
                 >

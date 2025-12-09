@@ -106,21 +106,20 @@ export default function DeliveryCheckPage({
     fetchDeliveries()
   }, [isLoggedIn, currentUser, selectedDeliveryId])
 
-  // 배송 상태 변환
+  // 배송 상태 변환 (3단계: 대기, 배송중, 완료)
   const convertStatus = (status) => {
     switch (status) {
       case 'DELIVERED':
-        return '배송완료'
+        return '완료'
       case 'IN_TRANSIT':
         return '배송중'
       case 'PREPARING':
-        return '배송준비중'
       case 'PENDING':
-        return '배송대기'
+        return '대기'
       case 'CANCELLED':
-        return '배송취소'
+        return '취소'
       default:
-        return '배송대기'
+        return '대기'
     }
   }
 
@@ -150,14 +149,13 @@ export default function DeliveryCheckPage({
 
   const statusColor = status => {
     switch (status) {
-      case "배송완료":
+      case "완료":
         return "status-complete"
       case "배송중":
-      case "배송준비중":
         return "status-progress"
-      case "배송대기":
+      case "대기":
         return "status-wait"
-      case "배송취소":
+      case "취소":
         return "status-cancelled"
       default:
         return ""
@@ -171,7 +169,11 @@ export default function DeliveryCheckPage({
 
   // 기존 shipments 데이터와 API 데이터 병합 (하위 호환성)
   const tableData = filteredDeliveries.length > 0 
-    ? filteredDeliveries
+    ? filteredDeliveries.map((item, index) => ({
+        ...item,
+        // 기관 회원인 경우 순서 번호 추가 (최신순이므로 1번부터)
+        orderNumber: !isDonorView ? index + 1 : null
+      }))
     : (Array.isArray(shipments) && shipments.length > 0
         ? shipments
             .filter(item => {
@@ -190,10 +192,12 @@ export default function DeliveryCheckPage({
                 item.receiver === currentUser?.name || item.receiver === currentUser?.nickname
               )
             })
-            .map(item => ({
+            .map((item, index) => ({
               ...item,
               sender: item.sender || senderName,
-              receiver: item.receiver || receiverName
+              receiver: item.receiver || receiverName,
+              // 기관 회원인 경우 순서 번호 추가
+              orderNumber: !isDonorView ? index + 1 : null
             }))
         : [])
 
@@ -219,7 +223,7 @@ export default function DeliveryCheckPage({
           <table className="delivery-table">
             <thead>
               <tr>
-                <th>송장번호</th>
+                <th>{isDonorView ? '송장번호' : 'No.'}</th>
                 <th>보내는 사람</th>
                 <th>배송 시작</th>
                 <th>받는 곳</th>
@@ -237,7 +241,12 @@ export default function DeliveryCheckPage({
               ) : (
                 tableData.map((row, idx) => (
                   <tr key={idx} style={selectedDeliveryId === row.id ? { backgroundColor: '#fff9e6' } : {}}>
-                    <td>{row.id}</td>
+                    <td>
+                      {isDonorView 
+                        ? row.id 
+                        : (row.orderNumber ? `No. ${row.orderNumber}` : `No. ${idx + 1}`)
+                      }
+                    </td>
                     <td>{row.sender}</td>
                     <td>{row.startDate}</td>
                     <td>{row.receiver}</td>
