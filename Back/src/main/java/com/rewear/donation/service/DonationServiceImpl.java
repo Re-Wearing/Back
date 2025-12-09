@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -140,7 +141,7 @@ public class DonationServiceImpl implements DonationService {
     }
 
     @Override
-    public Donation assignDonationToOrgan(Long donationId, Organ organ) {
+    public Donation assignDonationToOrgan(Long donationId, Organ organ, String carrier, String trackingNumber) {
         Donation donation = donationRepository.findById(donationId)
                 .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
 
@@ -153,7 +154,41 @@ public class DonationServiceImpl implements DonationService {
         }
 
         donation.setOrgan(organ);
-        return donationRepository.save(donation);
+        Donation savedDonation = donationRepository.save(donation);
+        
+        // 택배 배송인 경우 배송 정보 생성 또는 업데이트
+        if (donation.getDeliveryMethod() == com.rewear.common.enums.DeliveryMethod.PARCEL_DELIVERY) {
+            Optional<com.rewear.delivery.entity.Delivery> existingDelivery = deliveryRepository.findByDonation(savedDonation);
+            
+            if (existingDelivery.isPresent()) {
+                // 배송 정보가 있으면 택배사와 운송장 번호 업데이트
+                com.rewear.delivery.entity.Delivery delivery = existingDelivery.get();
+                if (carrier != null && !carrier.isEmpty()) {
+                    delivery.setCarrier(carrier);
+                }
+                if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                    delivery.setTrackingNumber(trackingNumber);
+                }
+                deliveryRepository.save(delivery);
+            } else {
+                // 배송 정보가 없으면 생성 (기관 정보는 나중에 기관 승인 시 업데이트됨)
+                com.rewear.delivery.entity.Delivery delivery = com.rewear.delivery.entity.Delivery.builder()
+                        .donation(savedDonation)
+                        .senderName(savedDonation.getDonor() != null && savedDonation.getDonor().getName() != null ? savedDonation.getDonor().getName() : "미정")
+                        .senderPhone(savedDonation.getDonor() != null && savedDonation.getDonor().getPhone() != null ? savedDonation.getDonor().getPhone() : "010-0000-0000")
+                        .senderAddress(savedDonation.getDonor() != null && savedDonation.getDonor().getAddress() != null ? savedDonation.getDonor().getAddress() : "주소 미정")
+                        .receiverName(organ.getOrgName() != null ? organ.getOrgName() : "미정")
+                        .receiverPhone("010-0000-0000")
+                        .receiverAddress("주소 미정")
+                        .carrier(carrier != null && !carrier.isEmpty() ? carrier : null)
+                        .trackingNumber(trackingNumber != null && !trackingNumber.isEmpty() ? trackingNumber : null)
+                        .status(com.rewear.common.enums.DeliveryStatus.PENDING)
+                        .build();
+                deliveryRepository.save(delivery);
+            }
+        }
+        
+        return savedDonation;
     }
 
     @Override
@@ -294,7 +329,7 @@ public class DonationServiceImpl implements DonationService {
     }
 
     @Override
-    public Donation organApproveDonation(Long donationId, Organ organ) {
+    public Donation organApproveDonation(Long donationId, Organ organ, String carrier, String trackingNumber) {
         Donation donation = donationRepository.findById(donationId)
                 .orElseThrow(() -> new IllegalArgumentException("기부 정보를 찾을 수 없습니다."));
 
@@ -302,8 +337,15 @@ public class DonationServiceImpl implements DonationService {
             throw new IllegalStateException("해당 기관에 할당된 기부만 승인할 수 있습니다.");
         }
 
-        // 최종 승인 시 COMPLETED 상태로 변경하여 "받은 기부" 목록에 표시
-        donation.setStatus(DonationStatus.COMPLETED);
+        // 직접 매칭인 경우: 기관 수락 후에도 IN_PROGRESS 상태 유지 (관리자가 택배 정보 입력 후 완료)
+        // 간접 매칭인 경우: COMPLETED 상태로 변경하여 "받은 기부" 목록에 표시
+        if (donation.getMatchType() == MatchType.DIRECT) {
+            // 직접 매칭은 IN_PROGRESS 상태 유지 (관리자가 택배 정보 입력 후 완료 처리)
+            // 상태는 그대로 유지
+        } else {
+            // 간접 매칭은 COMPLETED로 변경
+            donation.setStatus(DonationStatus.COMPLETED);
+        }
 
         Donation savedDonation = donationRepository.save(donation);
 
@@ -357,7 +399,7 @@ public class DonationServiceImpl implements DonationService {
                 log.warn("기관 User 정보를 찾을 수 없습니다. organId: {}", organ.getId());
             }
             
-            com.rewear.delivery.entity.Delivery delivery = com.rewear.delivery.entity.Delivery.builder()
+            com.rewear.delivery.entity.Delivery.DeliveryBuilder deliveryBuilder = com.rewear.delivery.entity.Delivery.builder()
                     .donation(savedDonation)
                     .senderName(savedDonation.getDonor() != null && savedDonation.getDonor().getName() != null ? savedDonation.getDonor().getName() : "미정")
                     .senderPhone(savedDonation.getDonor() != null && savedDonation.getDonor().getPhone() != null ? savedDonation.getDonor().getPhone() : "010-0000-0000")
@@ -366,9 +408,17 @@ public class DonationServiceImpl implements DonationService {
                     .receiverPhone(receiverPhone)
                     .receiverAddress(receiverAddress)
                     .receiverPostalCode(receiverPostalCode)
-                    .status(com.rewear.common.enums.DeliveryStatus.PENDING)
-                    .build();
+                    .status(com.rewear.common.enums.DeliveryStatus.PENDING);
             
+            // 택배 정보가 있으면 추가
+            if (carrier != null && !carrier.isEmpty()) {
+                deliveryBuilder.carrier(carrier);
+            }
+            if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                deliveryBuilder.trackingNumber(trackingNumber);
+            }
+            
+            com.rewear.delivery.entity.Delivery delivery = deliveryBuilder.build();
             deliveryRepository.save(delivery);
         } else {
             // 배송 정보가 이미 있으면 기관 정보로 업데이트
@@ -418,6 +468,18 @@ public class DonationServiceImpl implements DonationService {
                     savedDonation.getDelivery().getReceiverAddress(), savedDonation.getDelivery().getReceiverPostalCode());
             } else {
                 log.warn("기관 User 정보를 찾을 수 없습니다. organId: {}", organ.getId());
+            }
+            
+            // 택배 정보가 있으면 업데이트
+            if (carrier != null && !carrier.isEmpty()) {
+                savedDonation.getDelivery().setCarrier(carrier);
+            }
+            if (trackingNumber != null && !trackingNumber.isEmpty()) {
+                savedDonation.getDelivery().setTrackingNumber(trackingNumber);
+            }
+            
+            if (carrier != null || trackingNumber != null) {
+                deliveryRepository.save(savedDonation.getDelivery());
             }
             
             // 상태를 대기로 설정

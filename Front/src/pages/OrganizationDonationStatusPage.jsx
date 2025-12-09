@@ -262,59 +262,64 @@ export default function OrganizationDonationStatusPage({
       setReasonModal({ inviteId, donationId: invite.itemId })
       setReasonText('')
     } else {
-      // 승인 API 호출
-      try {
-        const response = await fetch(`/api/organs/donations/${invite.itemId}/approve`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
+      // 기관은 수락만 함 (택배 정보는 관리자가 입력)
+      handleApproveDonation(invite.itemId)
+    }
+  }
 
-        const result = await response.json()
+  const handleApproveDonation = async (donationId) => {
+    try {
+      const response = await fetch(`/api/organs/donations/${donationId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: '{}'
+      })
 
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || '기부 승인에 실패했습니다.')
-        }
+      const result = await response.json()
 
-        // 목록 새로고침
-        const refreshResponse = await fetch('/api/organs/donations', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
-
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json()
-          if (refreshData.donations) {
-            setApiDonations(refreshData.donations)
-          }
-        }
-
-        // 완료된 기부 목록도 새로고침
-        const completedResponse = await fetch('/api/organs/donations/completed', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
-
-        if (completedResponse.ok) {
-          const completedData = await completedResponse.json()
-          if (completedData.donations) {
-            setCompletedDonations(completedData.donations)
-          }
-        }
-
-        alert(result.message || '기부를 승인했습니다.')
-      } catch (err) {
-        console.error('기부 승인 오류:', err)
-        alert(err.message || '기부 승인에 실패했습니다.')
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || '기부 승인에 실패했습니다.')
       }
+
+      // 목록 새로고침
+      const refreshResponse = await fetch('/api/organs/donations', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json()
+        if (refreshData.donations) {
+          setApiDonations(refreshData.donations)
+        }
+      }
+
+      // 완료된 기부 목록도 새로고침
+      const completedResponse = await fetch('/api/organs/donations/completed', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+
+      if (completedResponse.ok) {
+        const completedData = await completedResponse.json()
+        if (completedData.donations) {
+          setCompletedDonations(completedData.donations)
+        }
+      }
+
+      alert(result.message || '기부를 승인했습니다.')
+    } catch (err) {
+      console.error('기부 승인 오류:', err)
+      alert(err.message || '기부 승인에 실패했습니다.')
     }
   }
 
@@ -719,14 +724,14 @@ export default function OrganizationDonationStatusPage({
                     borderRadius: '4px',
                     background: deliveryModal.status === 'DELIVERED' ? '#d1fae5' :
                                 deliveryModal.status === 'IN_TRANSIT' ? '#dbeafe' :
-                                deliveryModal.status === 'PENDING' ? '#fef3c7' : '#f3f4f6',
+                                (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '#fef3c7' : '#f3f4f6',
                     color: deliveryModal.status === 'DELIVERED' ? '#065f46' :
                            deliveryModal.status === 'IN_TRANSIT' ? '#1e40af' :
-                           deliveryModal.status === 'PENDING' ? '#92400e' : '#6b7280'
+                           (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '#92400e' : '#6b7280'
                   }}>
-                    {deliveryModal.status === 'DELIVERED' ? '배송완료' :
+                    {deliveryModal.status === 'DELIVERED' ? '완료' :
                      deliveryModal.status === 'IN_TRANSIT' ? '배송중' :
-                     deliveryModal.status === 'PENDING' ? '배송대기' : deliveryModal.status}
+                     (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '대기' : deliveryModal.status}
                   </span>
                 </p>
                 {deliveryModal.trackingNumber && (

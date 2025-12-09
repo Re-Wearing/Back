@@ -39,34 +39,33 @@ export default function BoardDetailPage({
         return
       }
 
+      const postIdNum = Number(postId)
+      if (isNaN(postIdNum)) {
+        return
+      }
+
       // 이전에 본 게시글이 아니면 조회수 증가
       if (viewedPostId.current !== postId) {
-        const postIdNum = Number(postId)
-        if (isNaN(postIdNum)) {
-          return
-        }
-
         try {
           // API로 조회수 증가
-          await fetch(`/api/posts/${postIdNum}/view`, {
+          const response = await fetch(`/api/posts/${postIdNum}/view`, {
             method: 'PUT',
             credentials: 'include'
           })
 
-          // 게시글 타입 찾기 (ID 타입 통일)
-          let foundType = postType
-          if (boardPosts.review?.some(p => Number(p.id) === postIdNum)) {
-            foundType = 'review'
-          } else if (boardPosts.request?.some(p => Number(p.id) === postIdNum)) {
-            foundType = 'request'
-          } else if (reviewPosts.some(p => Number(p.id) === postIdNum)) {
-            foundType = 'review'
-          } else if (requestPosts.some(p => Number(p.id) === postIdNum)) {
-            foundType = 'request'
+          if (response.ok) {
+            const result = await response.json()
+            // API 응답에서 업데이트된 조회수 가져오기
+            const updatedViewCount = result.viewCount
+
+            viewedPostId.current = postId // 현재 게시글 ID 저장
+
+            // post 상태의 조회수 업데이트 (API에서 받은 최신 조회수 사용)
+            setPost(prev => prev ? { ...prev, views: updatedViewCount } : null)
+            
+            // 로컬 상태 업데이트는 하지 않음 (API에서 가져온 조회수가 항상 최신이므로)
+            // onUpdateViews 호출 제거하여 중복 증가 방지
           }
-          
-          onUpdateViews(postId, foundType)
-          viewedPostId.current = postId // 현재 게시글 ID 저장
         } catch (error) {
           console.error('조회수 증가 실패:', error)
         }
@@ -74,7 +73,8 @@ export default function BoardDetailPage({
     }
 
     incrementView()
-  }, [postId, postType, boardPosts, onUpdateViews])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]) // postId만 의존성으로 사용하여 postId가 변경될 때만 실행
 
   // 게시글 데이터 로드 및 조회수 표시 업데이트
   useEffect(() => {
@@ -116,12 +116,16 @@ export default function BoardDetailPage({
           const postData = await response.json()
           console.log('게시글 상세 데이터:', postData)
           console.log('이미지 데이터:', postData.images)
+          
+          // 조회수는 API에서 가져온 최신 값 사용 (조회수 증가 API 호출 후 업데이트됨)
+          const viewCount = postData.viewCount != null ? postData.viewCount : 0
+          
           setPost({
             id: postData.id,
             title: postData.title,
             content: postData.content,
             writer: postData.writer,
-            views: postData.viewCount || 0,
+            views: viewCount,
             date: postData.createdAt ? new Date(postData.createdAt).toLocaleDateString('ko-KR', {
               year: 'numeric',
               month: '2-digit',

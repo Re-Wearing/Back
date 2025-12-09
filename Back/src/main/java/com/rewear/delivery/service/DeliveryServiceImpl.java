@@ -1,10 +1,12 @@
 package com.rewear.delivery.service;
 
 import com.rewear.common.enums.DeliveryStatus;
+import com.rewear.common.enums.DonationStatus;
 import com.rewear.delivery.DeliveryForm;
 import com.rewear.delivery.entity.Delivery;
 import com.rewear.delivery.repository.DeliveryRepository;
 import com.rewear.donation.entity.Donation;
+import com.rewear.donation.repository.DonationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.Optional;
 public class DeliveryServiceImpl implements DeliveryService {
 
     private final DeliveryRepository deliveryRepository;
+    private final DonationRepository donationRepository;
 
     @Override
     public Delivery createDelivery(Donation donation, DeliveryForm form) {
@@ -95,6 +98,16 @@ public class DeliveryServiceImpl implements DeliveryService {
             delivery.setShippedAt(LocalDateTime.now());
         } else if (status == DeliveryStatus.DELIVERED && delivery.getDeliveredAt() == null) {
             delivery.setDeliveredAt(LocalDateTime.now());
+            
+            // 배송 완료 시 기부 상태를 COMPLETED로 변경
+            if (delivery.getDonation() != null) {
+                Donation donation = delivery.getDonation();
+                if (donation.getStatus() != DonationStatus.COMPLETED) {
+                    donation.setStatus(DonationStatus.COMPLETED);
+                    donationRepository.save(donation);
+                    log.info("배송 완료로 인해 기부 상태가 COMPLETED로 변경되었습니다. 기부 ID: {}", donation.getId());
+                }
+            }
         }
 
         return deliveryRepository.save(delivery);

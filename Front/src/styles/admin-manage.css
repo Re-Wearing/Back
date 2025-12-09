@@ -559,14 +559,14 @@
 
 .admin-card-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
 }
 
-/* 작은 화면에서는 1개씩 표시 */
-@media (max-width: 768px) {
+/* 큰 화면에서는 2개씩 표시 */
+@media (min-width: 1200px) {
   .admin-card-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -574,7 +574,7 @@
   background: #fff;
   border: 1px solid #eee;
   border-radius: 16px;
-  padding: 1.2rem;
+  padding: 2rem;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
 

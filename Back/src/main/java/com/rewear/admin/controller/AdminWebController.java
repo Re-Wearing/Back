@@ -373,7 +373,14 @@ public class AdminWebController {
             Organ organ = organService.findById(organId)
                     .filter(o -> o.getStatus() == OrganStatus.APPROVED)
                     .orElseThrow(() -> new IllegalArgumentException("유효한 기관을 선택해주세요."));
-            donationService.assignDonationToOrgan(donationId, organ);
+            
+            // 택배 회사와 운송장 번호 추출 (선택사항)
+            String carrier = null;
+            String trackingNumber = null;
+            // 웹 폼에서는 아직 택배 정보를 받지 않으므로 null로 전달
+            // 나중에 필요하면 @RequestParam으로 추가 가능
+            
+            donationService.assignDonationToOrgan(donationId, organ, carrier, trackingNumber);
             redirectAttributes.addFlashAttribute("success", "선택한 기관으로 기부를 할당했습니다. 이제 매칭 승인을 진행해주세요.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());

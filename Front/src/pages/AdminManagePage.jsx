@@ -809,7 +809,6 @@ const [showModal, setShowModal] = useState(false);
   };
 
 
-
   return (
     <div className="admin-manage-page">
       {toast && <div className="toast">{toast}</div>}

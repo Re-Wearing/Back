@@ -193,7 +193,8 @@ export default function DonationStatusPage({
               : '사유 확인 후 다시 신청해주세요.'
             : '-'),
         matchedOrganization: item.matchedOrganization || (statusLabel === '매칭됨' ? item.organization : null),
-        referenceCode: item.referenceCode || item.id || `donation-${index}`
+        referenceCode: item.referenceCode || item.id || `donation-${index}`,
+        deliveryId: item.deliveryId || null // 하위 호환성을 위해 null 허용
       }
     })
   }, [apiData, donationItems])
@@ -269,9 +270,9 @@ export default function DonationStatusPage({
     return counts
   }, [apiData, approvalItems])
 
-  const handleNavigateToDeliveryStatus = reference => {
+  const handleNavigateToDeliveryStatus = (deliveryId) => {
     if (typeof onNavigateDeliveryStatus === 'function') {
-      onNavigateDeliveryStatus(reference)
+      onNavigateDeliveryStatus(deliveryId)
     } else {
       setActiveTab('history')
     }
@@ -480,11 +481,12 @@ export default function DonationStatusPage({
                       <span className="approval-item-placeholder">
                         {approvalStatusDescriptions[item.status] || '진행 중입니다.'}
                       </span>
-                      {item.status === '배송대기' && (
+                      {/* 배송 정보가 있으면 배송 조회 버튼 표시 (배송대기 또는 매칭됨 상태) */}
+                      {item.deliveryId && (item.status === '배송대기' || item.status === '매칭됨') && (
                         <button
                           type="button"
                           className="btn-filter"
-                          onClick={() => handleNavigateToDeliveryStatus(item.referenceCode)}
+                          onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
                         >
                           배송 조회
                         </button>
@@ -668,7 +670,14 @@ export default function DonationStatusPage({
                 )}
                 {delivery && (
                   <>
-                    {delivery.status && <li><strong>배송 상태:</strong> {delivery.status}</li>}
+                    {delivery.status && (
+                      <li><strong>배송 상태:</strong> {
+                        delivery.status === 'DELIVERED' ? '완료' :
+                        delivery.status === 'IN_TRANSIT' ? '배송중' :
+                        (delivery.status === 'PENDING' || delivery.status === 'PREPARING') ? '대기' :
+                        delivery.status === 'CANCELLED' ? '취소' : delivery.status
+                      }</li>
+                    )}
                     {delivery.carrier && <li><strong>택배사:</strong> {delivery.carrier}</li>}
                     {delivery.trackingNumber && <li><strong>송장번호:</strong> {delivery.trackingNumber}</li>}
                   </>

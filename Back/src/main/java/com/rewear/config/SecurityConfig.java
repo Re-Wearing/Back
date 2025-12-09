@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/faq", "/api/faq/**").permitAll()
                         .requestMatchers("/api/faq/question", "/api/faq/my-questions").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/statistics/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import '../styles/admin-manage.css';
 
 export default function AdminItemApprovalPage({
+  donationItems = [],
   onNavigateHome
 }) {
   const [apiDonationItems, setApiDonationItems] = useState([]);

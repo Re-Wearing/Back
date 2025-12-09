@@ -184,7 +184,8 @@ public class OrganController {
         Organ organ = organOpt.get();
 
         try {
-            donationService.organApproveDonation(donationId, organ);
+            // 웹 컨트롤러에서는 택배 정보를 받지 않으므로 null 전달
+            donationService.organApproveDonation(donationId, organ, null, null);
             redirectAttributes.addFlashAttribute("success", "기부를 최종 승인하여 완료되었습니다. 받은 기부 목록에서 확인할 수 있습니다.");
         } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
