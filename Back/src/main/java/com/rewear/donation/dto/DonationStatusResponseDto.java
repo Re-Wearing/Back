@@ -34,6 +34,7 @@ public class DonationStatusResponseDto {
         private String matchingInfo; // 매칭 정보 설명
         private String matchedOrganization; // 매칭된 기관명 (null 가능)
         private String referenceCode; // 참조 코드
+        private Long deliveryId; // 배송 ID (null 가능)
     }
     
     @Data

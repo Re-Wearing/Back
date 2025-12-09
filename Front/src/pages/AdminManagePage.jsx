@@ -809,7 +809,6 @@ const [showModal, setShowModal] = useState(false);
   };
 
 
-
   return (
     <div className="admin-manage-page">
       {toast && <div className="toast">{toast}</div>}
@@ -1128,7 +1127,7 @@ const [showModal, setShowModal] = useState(false);
                     {viewingPost.images.map((img, index) => {
                       const imageUrl = img.url || img.dataUrl || img;
                       const fullUrl = imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')
-                        ? `http://localhost:8080${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`
+                        ? (imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`)
                         : imageUrl;
                       return (
                         <div key={index} style={{ position: 'relative' }}>

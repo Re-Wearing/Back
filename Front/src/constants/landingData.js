@@ -11,7 +11,7 @@ export const getNavLinksForRole = role => {
       { label: '회원 관리', href: '/admin/manage/members' },
       { label: '기관 가입 승인', href: '/admin/manage/orgs' },
       { label: '물품 승인', href: '/admin/manage/items' },
-      { label: '자동 매칭', href: '/admin/manage/matching' },
+      { label: '자동매칭', href: '/admin/manage/matching' },
       { label: 'FAQ 답변', href: '/admin/faq' },
       { label: '게시판', href: '#board' }
     ]
