@@ -431,7 +431,11 @@ public class PostApiController {
             if (post.getIsAnonymous() != null && post.getIsAnonymous()) {
                 writer = "익명";
             } else {
-                writer = post.getAuthorUser().getUsername();
+                // 닉네임이 있으면 닉네임 사용, 없으면 아이디 사용
+                String nickname = post.getAuthorUser().getNickname();
+                writer = (nickname != null && !nickname.trim().isEmpty()) 
+                    ? nickname 
+                    : post.getAuthorUser().getUsername();
             }
             writerType = "user";
             writerId = post.getAuthorUser().getId();

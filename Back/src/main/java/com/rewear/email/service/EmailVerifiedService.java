@@ -70,7 +70,7 @@ public class EmailVerifiedService {
                 "<div class=\"content\">" +
                 "<h2 style=\"color: #333; font-size: 24px; margin-bottom: 20px;\">이메일 인증코드</h2>" +
                 "<p style=\"color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;\">" +
-                "RE:WEAR 회원가입을 위한 인증코드입니다.<br>" +
+                "RE:WEAR 이용을 위한 인증코드입니다.<br>" +
                 "아래 인증코드를 입력하여 이메일 인증을 완료해주세요." +
                 "</p>" +
                 "<div class=\"code-box\">" +
@@ -82,7 +82,7 @@ public class EmailVerifiedService {
                 "타인에게 공유하지 마시고, 요청하지 않은 인증코드라면 무시해주세요." +
                 "</div>" +
                 "<p style=\"color: #999; font-size: 13px; line-height: 1.6;\">" +
-                "이 이메일은 RE:WEAR 회원가입 과정에서 자동으로 발송되었습니다.<br>" +
+                "이 이메일은 RE:WEAR 이용 과정에서 자동으로 발송되었습니다.<br>" +
                 "문의사항이 있으시면 고객센터로 연락주세요." +
                 "</p>" +
                 "</div>" +

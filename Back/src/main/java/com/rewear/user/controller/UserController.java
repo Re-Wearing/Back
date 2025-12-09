@@ -674,10 +674,10 @@ public class UserController {
     }
 
     /**
-     * ✅ 회원 탈퇴
+     * ✅ 회원 탈퇴용 이메일 인증코드 전송
      */
-    @DeleteMapping("/me")
-    public ResponseEntity<?> withdraw(Principal principal) {
+    @PostMapping("/me/withdraw/send-verification")
+    public ResponseEntity<?> sendWithdrawVerification(Principal principal) {
         try {
             if (principal == null) {
                 return ResponseEntity.status(401)
@@ -692,6 +692,116 @@ public class UserController {
             if (user.getRoles() != null && user.getRoles().contains(Role.ADMIN)) {
                 return ResponseEntity.badRequest()
                     .body(Map.of("ok", false, "message", "관리자는 웹에서 탈퇴할 수 없습니다."));
+            }
+            
+            if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("ok", false, "message", "등록된 이메일이 없습니다."));
+            }
+            
+            // 현재 이메일로 인증코드 전송
+            String normalizedEmail = user.getEmail().trim().toLowerCase();
+            emailVerifiedService.sendVerificationCode(normalizedEmail);
+            
+            return ResponseEntity.ok(Map.of(
+                "ok", true,
+                "message", "인증코드가 발송되었습니다."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("ok", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("회원 탈퇴 인증코드 전송 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("ok", false, "message", "인증코드 전송 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * ✅ 회원 탈퇴용 이메일 인증코드 확인
+     */
+    @PostMapping("/me/withdraw/verify")
+    public ResponseEntity<?> verifyWithdrawCode(
+            @RequestBody Map<String, String> request,
+            Principal principal) {
+        try {
+            if (principal == null) {
+                return ResponseEntity.status(401)
+                    .body(Map.of("ok", false, "message", "로그인이 필요합니다."));
+            }
+            
+            String code = request.get("code");
+            if (code == null || code.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("ok", false, "message", "인증코드를 입력해주세요."));
+            }
+            
+            String username = principal.getName();
+            User user = userService.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            
+            if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("ok", false, "message", "등록된 이메일이 없습니다."));
+            }
+            
+            // 이메일 인증코드 확인
+            String normalizedEmail = user.getEmail().trim().toLowerCase();
+            boolean verified = emailVerifiedService.verifyCode(normalizedEmail, code.trim());
+            
+            if (verified) {
+                return ResponseEntity.ok(Map.of(
+                    "ok", true,
+                    "message", "인증이 완료되었습니다."
+                ));
+            } else {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("ok", false, "message", "인증코드가 올바르지 않거나 만료되었습니다."));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("ok", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("회원 탈퇴 인증코드 확인 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("ok", false, "message", "인증코드 확인 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * ✅ 회원 탈퇴 (이메일 인증 후)
+     */
+    @DeleteMapping("/me")
+    public ResponseEntity<?> withdraw(
+            @RequestBody(required = false) Map<String, String> request,
+            Principal principal) {
+        try {
+            if (principal == null) {
+                return ResponseEntity.status(401)
+                    .body(Map.of("ok", false, "message", "로그인이 필요합니다."));
+            }
+            
+            String username = principal.getName();
+            User user = userService.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            
+            // 관리자는 웹에서 탈퇴할 수 없음
+            if (user.getRoles() != null && user.getRoles().contains(Role.ADMIN)) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("ok", false, "message", "관리자는 웹에서 탈퇴할 수 없습니다."));
+            }
+            
+            // 이메일 인증 확인 (선택적 - 하위 호환성을 위해)
+            if (request != null && request.containsKey("code")) {
+                String code = request.get("code");
+                if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+                    String normalizedEmail = user.getEmail().trim().toLowerCase();
+                    boolean verified = emailVerifiedService.verifyCode(normalizedEmail, code.trim());
+                    if (!verified) {
+                        return ResponseEntity.badRequest()
+                            .body(Map.of("ok", false, "message", "이메일 인증이 완료되지 않았습니다."));
+                    }
+                }
             }
             
             // 회원 탈퇴 (실제로는 삭제하지 않고 상태를 변경할 수도 있음)

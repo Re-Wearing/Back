@@ -113,7 +113,7 @@ export default function AdminDeliveryInputPage({
       })
 
       // 목록 새로고침
-      const refreshResponse = await fetch('/api/admin/donations/delivery-input', {
+      const refreshResponse = await fetch('/api/admin/donations/delivery/input', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

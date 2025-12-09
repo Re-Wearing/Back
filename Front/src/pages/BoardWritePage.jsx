@@ -21,6 +21,7 @@ export default function BoardWritePage({
   const [images, setImages] = useState([]) // 선택한 이미지 파일들
   const [imagePreviews, setImagePreviews] = useState([]) // 이미지 미리보기 URL들
   const [errors, setErrors] = useState({})
+  const [isAnonymous, setIsAnonymous] = useState(false) // 익명 작성 여부
   
   // 사용자 역할에 따라 게시판 타입 제한
   const userRole = currentUser?.role || ''
@@ -108,7 +109,7 @@ export default function BoardWritePage({
           postType: postType,
           title: title.trim(),
           content: content.trim(),
-          isAnonymous: false,
+          isAnonymous: selectedBoardType === 'review' ? isAnonymous : false, // 기부 후기일 때만 익명 옵션 적용
           images: imageUrls
         })
       })
@@ -329,6 +330,18 @@ export default function BoardWritePage({
             />
             {errors.content && <span className="error-message">{errors.content}</span>}
           </div>
+
+          {selectedBoardType === 'review' && (
+            <div className="form-group">
+              <button
+                type="button"
+                className={`anonymous-toggle-btn ${isAnonymous ? 'active' : ''}`}
+                onClick={() => setIsAnonymous(!isAnonymous)}
+              >
+                {isAnonymous ? '✓' : ''} 익명으로 작성하기
+              </button>
+            </div>
+          )}
 
           <div className="form-group">
             <div className="form-group-header">
