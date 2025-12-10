@@ -2616,6 +2616,7 @@ export default function App() {
             />
             <AdminPostManagePage
               onNavigateHome={goToMain}
+              onGoToBoardWrite={goToBoardWrite}
             />
           </div>
         </section>

@@ -80,6 +80,10 @@ public class PostServiceImpl implements PostService {
                 .imageUrl(imageUrl)
                 .imageUrls(imageUrls);
 
+        // 관리자 여부 확인
+        boolean isAdmin = author.getRoles() != null && author.getRoles().stream()
+                .anyMatch(role -> role.name().equals("ADMIN"));
+        
         // 게시판 타입에 따라 작성자 설정
         if (form.getPostType() == PostType.DONATION_REVIEW) {
             // 기부 후기: 일반 회원 작성
@@ -87,13 +91,22 @@ public class PostServiceImpl implements PostService {
                     .isAnonymous(form.getIsAnonymous() != null ? form.getIsAnonymous() : false);
         } else if (form.getPostType() == PostType.ORGAN_REQUEST) {
             // 요청 게시물: 기관 작성
-            Organ organ = organService.findByUserId(author.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("기관 정보를 찾을 수 없습니다."));
-            postBuilder.authorOrgan(organ)
-                    .reqGenderType(form.getReqGenderType())
-                    .reqMainCategory(form.getReqMainCategory())
-                    .reqDetailCategory(form.getReqDetailCategory())
-                    .reqSize(form.getReqSize());
+            // 관리자는 기관 정보가 없으므로 authorUser로 저장
+            if (isAdmin) {
+                postBuilder.authorUser(author)
+                        .reqGenderType(form.getReqGenderType())
+                        .reqMainCategory(form.getReqMainCategory())
+                        .reqDetailCategory(form.getReqDetailCategory())
+                        .reqSize(form.getReqSize());
+            } else {
+                Organ organ = organService.findByUserId(author.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("기관 정보를 찾을 수 없습니다."));
+                postBuilder.authorOrgan(organ)
+                        .reqGenderType(form.getReqGenderType())
+                        .reqMainCategory(form.getReqMainCategory())
+                        .reqDetailCategory(form.getReqDetailCategory())
+                        .reqSize(form.getReqSize());
+            }
         }
 
         return postRepository.save(postBuilder.build());
