@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import '../styles/admin-manage.css';
 
 export default function AdminPostManagePage({
-  onNavigateHome
+  onNavigateHome,
+  onGoToBoardWrite
 }) {
   const [apiPosts, setApiPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,10 @@ export default function AdminPostManagePage({
         }
         
         const data = await response.json();
-        const posts = data.content || [];
+        const posts = (data.content || []).map(post => ({
+          ...post,
+          isPinned: post.isPinned || false // 기본값 설정
+        }));
         setApiPosts(posts);
       } catch (err) {
         console.error('게시물 목록 조회 오류:', err);
@@ -72,7 +76,10 @@ export default function AdminPostManagePage({
       }
       
       const post = await response.json();
-      setViewingPost(post);
+      setViewingPost({
+        ...post,
+        isPinned: post.isPinned || false // 기본값 설정
+      });
       setEditForm({
         title: post.title || '',
         content: post.content || '',
@@ -282,15 +289,88 @@ export default function AdminPostManagePage({
     }
   };
 
+  // 게시물 고정/고정 해제 핸들러
+  const handleTogglePin = async (postId, isPinned) => {
+    try {
+      const response = await fetch(`/api/posts/${postId}/pin`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ isPinned })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '게시물 고정 처리에 실패했습니다.');
+      }
+      
+      const data = await response.json();
+      showToast(data.message || (isPinned ? '게시물이 고정되었습니다.' : '게시물 고정이 해제되었습니다.'));
+      
+      // 목록 새로고침
+      const refreshResponse = await fetch('/api/posts?page=0&size=100', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        const refreshedPosts = (refreshData.content || []).map(post => ({
+          ...post,
+          isPinned: post.isPinned || false // 기본값 설정
+        }));
+        setApiPosts(refreshedPosts);
+      }
+      
+      // 상세보기 중인 게시물이면 업데이트
+      if (viewingPost && viewingPost.id === postId) {
+        const detailResponse = await fetch(`/api/posts/${postId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (detailResponse.ok) {
+          const updatedPost = await detailResponse.json();
+          setViewingPost({
+            ...updatedPost,
+            isPinned: updatedPost.isPinned || false // 기본값 설정
+          });
+        }
+      }
+    } catch (err) {
+      console.error('게시물 고정 처리 오류:', err);
+      showToast(err.message || '게시물 고정 처리에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="admin-manage-page">
       {toast && <div className="toast">{toast}</div>}
 
       <div className="admin-manage-header">
         <h1>게시물 관리</h1>
-        <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
-          메인으로
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {onGoToBoardWrite && (
+            <button 
+              type="button" 
+              className="btn primary" 
+              onClick={() => onGoToBoardWrite({ boardType: 'review' })}
+            >
+              글쓰기
+            </button>
+          )}
+          <button type="button" className="btn primary" onClick={() => onNavigateHome('/main')}>
+            메인으로
+          </button>
+        </div>
       </div>
 
       <section className="admin-panel">
@@ -313,6 +393,7 @@ export default function AdminPostManagePage({
                   <th>작성자</th>
                   <th>조회수</th>
                   <th>작성일</th>
+                  <th>고정</th>
                   <th>작업</th>
                 </tr>
               </thead>
@@ -327,16 +408,15 @@ export default function AdminPostManagePage({
                     </td>
                     <td>
                       <div className="text-strong">{post.title}</div>
-                      {post.content && (
-                        <p className="item-detail" style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {post.content}
-                        </p>
-                      )}
                     </td>
                     <td>
                       <div className="text-strong">{post.writer || '익명'}</div>
                       {post.writerType && (
-                        <span className="anon-chip">{post.writerType === 'user' ? '일반 회원' : '기관 회원'}</span>
+                        <span className="anon-chip">
+                          {post.writerType === 'admin' ? '관리자 회원' : 
+                           post.writerType === 'user' ? '일반 회원' : 
+                           '기관 회원'}
+                        </span>
                       )}
                     </td>
                     <td>{post.viewCount || 0}</td>
@@ -350,6 +430,13 @@ export default function AdminPostManagePage({
                             minute: '2-digit'
                           })
                         : '-'}
+                    </td>
+                    <td>
+                      {(post.isPinned === true) ? (
+                        <span style={{ color: '#ff9800', fontWeight: '600' }}>📌</span>
+                      ) : (
+                        <span style={{ color: '#ccc' }}>-</span>
+                      )}
                     </td>
                     <td>
                       <div className="admin-card-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -366,6 +453,23 @@ export default function AdminPostManagePage({
                           }}
                         >
                           상세보기
+                        </button>
+                        <button
+                          type="button"
+                          className="small-btn"
+                          onClick={() => handleTogglePin(post.id, !(post.isPinned === true))}
+                          disabled={false}
+                          style={{ 
+                            padding: '6px 12px', 
+                            border: `1px solid ${(post.isPinned === true) ? '#ff9800' : '#ddd'}`, 
+                            borderRadius: '4px', 
+                            background: (post.isPinned === true) ? '#fff3e0' : '#fff',
+                            color: (post.isPinned === true) ? '#ff9800' : '#666',
+                            cursor: 'pointer',
+                            opacity: 1
+                          }}
+                        >
+                          {(post.isPinned === true) ? '📌 고정됨' : '고정'}
                         </button>
                         <button
                           type="button"
@@ -403,15 +507,29 @@ export default function AdminPostManagePage({
           setViewingPost(null);
           setIsEditing(false);
         }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '1000px', maxHeight: '95vh', overflowY: 'auto', width: '90%' }}>
             <h2>{isEditing ? '게시물 수정' : '게시물 상세보기'}</h2>
             
             <div className="modal-content" style={{ padding: '1rem 0' }}>
-              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <label style={{ fontWeight: '600' }}>게시물 타입:</label>
-                <span className={`type-badge ${viewingPost.postType === 'DONATION_REVIEW' ? 'review' : 'request'}`}>
-                  {viewingPost.postType === 'DONATION_REVIEW' ? '기부 후기' : '요청 게시물'}
-                </span>
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <label style={{ fontWeight: '600' }}>게시물 타입:</label>
+                  <span className={`type-badge ${viewingPost.postType === 'DONATION_REVIEW' ? 'review' : 'request'}`}>
+                    {viewingPost.postType === 'DONATION_REVIEW' ? '기부 후기' : '요청 게시물'}
+                  </span>
+                </div>
+                {(viewingPost.isPinned === true) && (
+                  <span style={{ 
+                    padding: '4px 8px', 
+                    background: '#fff3e0', 
+                    color: '#ff9800', 
+                    borderRadius: '4px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600'
+                  }}>
+                    📌 상단 고정
+                  </span>
+                )}
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
@@ -453,7 +571,9 @@ export default function AdminPostManagePage({
                   {viewingPost.writer || '익명'}
                   {viewingPost.writerType && (
                     <span className="anon-chip" style={{ marginLeft: '0.5rem' }}>
-                      {viewingPost.writerType === 'user' ? '일반 회원' : '기관 회원'}
+                      {viewingPost.writerType === 'admin' ? '관리자 회원' : 
+                       viewingPost.writerType === 'user' ? '일반 회원' : 
+                       '기관 회원'}
                     </span>
                   )}
                 </div>
@@ -624,6 +744,20 @@ export default function AdminPostManagePage({
                     onClick={() => setIsEditing(true)}
                   >
                     수정
+                  </button>
+                  <button
+                    className="small-btn"
+                    onClick={() => handleTogglePin(viewingPost.id, !(viewingPost.isPinned === true))}
+                    disabled={false}
+                    style={{
+                      borderColor: (viewingPost.isPinned === true) ? '#ff9800' : '#ddd',
+                      background: (viewingPost.isPinned === true) ? '#fff3e0' : '#fff',
+                      color: (viewingPost.isPinned === true) ? '#ff9800' : '#666',
+                      cursor: 'pointer',
+                      opacity: 1
+                    }}
+                  >
+                    {(viewingPost.isPinned === true) ? '📌 고정 해제' : '📌 고정'}
                   </button>
                   <button
                     className="small-btn danger"
