@@ -62,21 +62,74 @@ public class PostApiController {
 
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
             Page<Post> posts;
-
+            
             if (postType != null) {
+                Page<Post> typedPosts;
                 if (postType == PostType.ORGAN_REQUEST) {
                     // 요청 게시판: 모든 기관의 요청 게시물 조회
-                    posts = postService.getPostsByType(postType, pageable);
-                    log.debug("요청 게시판 조회 완료 - 모든 기관의 요청 게시물, 개수: {}", posts.getTotalElements());
+                    typedPosts = postService.getPostsByType(postType, pageable);
+                    log.debug("요청 게시판 조회 완료 - 모든 기관의 요청 게시물, 개수: {}", typedPosts.getTotalElements());
                 } else {
                     // 기부 후기 등 다른 타입은 전체 조회
-                    posts = postService.getPostsByType(postType, pageable);
+                    typedPosts = postService.getPostsByType(postType, pageable);
                 }
+                
+                // 관리자가 작성한 게시글 추가 (모든 타입의 목록에 표시)
+                List<Post> adminPosts = postRepository.findAll().stream()
+                        .filter(post -> post.getAuthorUser() != null 
+                                && post.getAuthorUser().hasRole(com.rewear.common.enums.Role.ADMIN)
+                                && post.getPostType() == PostType.DONATION_REVIEW)
+                        .filter(post -> {
+                            // 이미 목록에 포함된 게시글은 제외
+                            return typedPosts.getContent().stream()
+                                    .noneMatch(p -> p.getId().equals(post.getId()));
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+                
+                // 관리자 게시글을 기존 목록에 추가
+                List<Post> combinedPosts = new ArrayList<>(typedPosts.getContent());
+                combinedPosts.addAll(adminPosts);
+                
+                // 타입별 조회에서도 고정된 게시글이 먼저 오도록 정렬
+                combinedPosts.sort((a, b) -> {
+                    Boolean aPinned = a.getIsPinned() != null && a.getIsPinned();
+                    Boolean bPinned = b.getIsPinned() != null && b.getIsPinned();
+                    if (aPinned && !bPinned) {
+                        return -1; // a가 고정됨
+                    } else if (!aPinned && bPinned) {
+                        return 1; // b가 고정됨
+                    } else {
+                        // 둘 다 고정되거나 둘 다 고정되지 않은 경우 최신순
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    }
+                });
+                
+                // 페이지네이션 재적용
+                int start = (int) pageable.getOffset();
+                int end = Math.min((start + pageable.getPageSize()), combinedPosts.size());
+                List<Post> pagedPosts = start < combinedPosts.size() ? combinedPosts.subList(start, end) : new ArrayList<>();
+                
+                posts = new org.springframework.data.domain.PageImpl<>(
+                        pagedPosts,
+                        pageable,
+                        combinedPosts.size()
+                );
             } else {
                 // 전체 게시물 조회: 모든 타입의 게시글을 조회
                 List<Post> allPosts = postService.getAllPosts();
-                // 최신순으로 정렬
-                allPosts.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+                // 고정된 게시글이 먼저 오도록 정렬 (고정된 게시글은 최신순, 일반 게시글은 최신순)
+                allPosts.sort((a, b) -> {
+                    Boolean aPinned = a.getIsPinned() != null && a.getIsPinned();
+                    Boolean bPinned = b.getIsPinned() != null && b.getIsPinned();
+                    if (aPinned && !bPinned) {
+                        return -1; // a가 고정됨
+                    } else if (!aPinned && bPinned) {
+                        return 1; // b가 고정됨
+                    } else {
+                        // 둘 다 고정되거나 둘 다 고정되지 않은 경우 최신순
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    }
+                });
                 
                 // 페이지네이션 처리
                 int start = (int) pageable.getOffset();
@@ -94,6 +147,20 @@ public class PostApiController {
             List<PostResponseDto> postDtos = posts.getContent().stream()
                     .map(post -> convertToPostResponseDto(post, principal))
                     .collect(Collectors.toList());
+            
+            // 고정된 게시글이 먼저 오도록 다시 정렬 (페이지네이션 후에도 고정 게시글이 상단에 오도록)
+            postDtos.sort((a, b) -> {
+                Boolean aPinned = a.getIsPinned() != null && a.getIsPinned();
+                Boolean bPinned = b.getIsPinned() != null && b.getIsPinned();
+                if (aPinned && !bPinned) {
+                    return -1; // a가 고정됨
+                } else if (!aPinned && bPinned) {
+                    return 1; // b가 고정됨
+                } else {
+                    // 둘 다 고정되거나 둘 다 고정되지 않은 경우 최신순
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                }
+            });
 
             Map<String, Object> response = new HashMap<>();
             response.put("content", postDtos);
@@ -198,13 +265,29 @@ public class PostApiController {
             form.setReqDetailCategory(requestDto.getReqDetailCategory());
             form.setReqSize(requestDto.getReqSize());
 
-            // Base64 이미지를 파일로 저장하고 PostForm에 설정
+            // 이미지 처리: URL 형식이면 그대로 사용, Base64 형식이면 저장
             List<String> savedImageUrls = new ArrayList<>();
             if (requestDto.getImages() != null && !requestDto.getImages().isEmpty()) {
-                for (String base64Image : requestDto.getImages()) {
-                    if (base64Image != null && !base64Image.isEmpty()) {
-                        String savedUrl = saveBase64Image(base64Image);
-                        if (savedUrl != null) {
+                for (String imageData : requestDto.getImages()) {
+                    if (imageData != null && !imageData.isEmpty()) {
+                        String savedUrl;
+                        // URL 형식인지 확인 (/uploads/로 시작하거나 http로 시작)
+                        if (imageData.startsWith("/uploads/") || imageData.startsWith("http://") || imageData.startsWith("https://")) {
+                            // 이미 업로드된 URL이면 파일명만 추출
+                            if (imageData.startsWith("/uploads/")) {
+                                savedUrl = imageData.substring("/uploads/".length());
+                            } else {
+                                // 전체 URL인 경우 파일명 추출 (마지막 / 이후)
+                                savedUrl = imageData.substring(imageData.lastIndexOf("/") + 1);
+                            }
+                        } else if (imageData.startsWith("data:image")) {
+                            // Base64 형식이면 저장
+                            savedUrl = saveBase64Image(imageData);
+                        } else {
+                            // 파일명만 있는 경우 그대로 사용
+                            savedUrl = imageData;
+                        }
+                        if (savedUrl != null && !savedUrl.isEmpty()) {
                             savedImageUrls.add(savedUrl);
                         }
                     }
@@ -213,7 +296,7 @@ public class PostApiController {
 
             Post post = postService.createPost(author, form, null);
             
-            // 이미지 URL 업데이트 (Base64로 저장한 이미지)
+            // 이미지 URL 업데이트
             if (!savedImageUrls.isEmpty()) {
                 post.setImageUrls(String.join(",", savedImageUrls));
                 if (post.getImageUrl() == null || post.getImageUrl().isEmpty()) {
@@ -420,6 +503,37 @@ public class PostApiController {
         }
     }
 
+    // 관리자용 게시글 고정/고정 해제
+    @PutMapping("/{postId}/pin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> togglePinPost(
+            @PathVariable Long postId,
+            @RequestBody Map<String, Boolean> request) {
+        try {
+            log.debug("게시글 고정 토글 요청 - ID: {}, 고정 여부: {}", postId, request.get("isPinned"));
+            Post post = postService.getPostById(postId);
+            Boolean isPinned = request.get("isPinned");
+            if (isPinned == null) {
+                // 요청에 isPinned가 없으면 현재 상태를 반전
+                isPinned = !(post.getIsPinned() != null && post.getIsPinned());
+            }
+            post.setIsPinned(isPinned);
+            post = postRepository.save(post);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("isPinned", post.getIsPinned());
+            response.put("message", isPinned ? "게시글이 상단에 고정되었습니다." : "게시글 고정이 해제되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("게시글 고정 토글 실패 - ID: {}", postId, e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", "게시글 고정 처리 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     // Post 엔티티를 PostResponseDto로 변환
     private PostResponseDto convertToPostResponseDto(Post post, CustomUserDetails principal) {
         // 작성자 정보
@@ -437,7 +551,9 @@ public class PostApiController {
                     ? nickname 
                     : post.getAuthorUser().getUsername();
             }
-            writerType = "user";
+            // 관리자 여부 확인
+            boolean isAdmin = post.getAuthorUser().hasRole(com.rewear.common.enums.Role.ADMIN);
+            writerType = isAdmin ? "admin" : "user";
             writerId = post.getAuthorUser().getId();
         } else if (post.getAuthorOrgan() != null) {
             writer = post.getAuthorOrgan().getOrgName();
@@ -505,6 +621,7 @@ public class PostApiController {
                 .reqDetailCategory(post.getReqDetailCategory())
                 .reqSize(post.getReqSize())
                 .viewCount(post.getViewCount())
+                .isPinned(post.getIsPinned() != null ? post.getIsPinned() : false)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .isAuthor(isAuthor)

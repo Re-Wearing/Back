@@ -31,14 +31,49 @@ export default function BoardPage({
   const [searchScope, setSearchScope] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [apiPosts, setApiPosts] = useState({ review: [], request: [] })
+  const [pinnedPosts, setPinnedPosts] = useState([]) // 고정된 게시글 (모든 타입)
   const [loading, setLoading] = useState(true) // 초기값을 true로 설정하여 로딩 상태로 시작
   const [refreshKey, setRefreshKey] = useState(0)
   const POSTS_PER_PAGE = 10
+
+  // 날짜 포맷팅 함수 (YYYY.MM.DD 형식)
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
 
   // API에서 게시글 목록 가져오기
   const fetchPosts = async () => {
     setLoading(true)
     try {
+      // 전체 게시글 가져오기 (고정된 게시글 추출용)
+      const allPostsResponse = await fetch('/api/posts?page=0&size=1000', {
+        credentials: 'include'
+      })
+      if (allPostsResponse.ok) {
+        const allPostsData = await allPostsResponse.json()
+        // 고정된 게시글만 추출 (모든 타입)
+        const pinned = (allPostsData.content || [])
+          .filter(post => post.isPinned === true)
+          .map(post => ({
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            writer: post.writer,
+            views: post.viewCount || 0,
+            date: formatDate(post.createdAt),
+            createdAt: post.createdAt,
+            boardType: post.postType === 'DONATION_REVIEW' ? 'review' : 'request',
+            postType: post.postType,
+            isPinned: true
+          }))
+        setPinnedPosts(pinned)
+      }
+
       // 기부 후기 목록 (DONATION_REVIEW 타입만)
       const reviewResponse = await fetch('/api/posts?type=DONATION_REVIEW&page=0&size=100')
       if (reviewResponse.ok) {
@@ -49,14 +84,11 @@ export default function BoardPage({
           content: post.content,
           writer: post.writer,
           views: post.viewCount || 0,
-          date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }).replace(/\s/g, '.') : '',
+          date: formatDate(post.createdAt),
           createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
           boardType: 'review',
-          postType: post.postType // 게시글 타입 저장
+          postType: post.postType, // 게시글 타입 저장
+          isPinned: post.isPinned || false // 고정 여부
         }))
         setApiPosts(prev => ({ ...prev, review: reviewPosts })) // 완전 교체
       }
@@ -73,14 +105,11 @@ export default function BoardPage({
           content: post.content,
           writer: post.writer,
           views: post.viewCount || 0,
-          date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }).replace(/\s/g, '.') : '',
+          date: formatDate(post.createdAt),
           createdAt: post.createdAt, // 정렬을 위한 원본 날짜 저장
           boardType: 'request',
-          postType: post.postType // 게시글 타입 저장
+          postType: post.postType, // 게시글 타입 저장
+          isPinned: post.isPinned || false // 고정 여부
         }))
         setApiPosts(prev => ({ ...prev, request: requestPosts })) // 완전 교체
       }
@@ -154,9 +183,12 @@ export default function BoardPage({
       views: post.views || 0 // API에서 가져온 조회수 그대로 사용
     }))
     
+    // 고정된 게시글은 제외 (별도로 관리)
+    const normalPosts = posts.filter(post => !post.isPinned)
+    
     if (searchQuery.trim()) {
       const query = searchQuery.trim().toLowerCase()
-      posts = posts.filter(post => {
+      const filteredNormalPosts = normalPosts.filter(post => {
         const matchesTitle = post.title.toLowerCase().includes(query)
         const matchesWriter = post.writer.toLowerCase().includes(query)
         
@@ -170,38 +202,89 @@ export default function BoardPage({
             return matchesTitle || matchesWriter
         }
       })
+      
+      // 검색어가 있을 때는 고정된 게시글도 검색 필터링
+      const filteredPinnedPosts = pinnedPosts.filter(post => {
+        const matchesTitle = post.title.toLowerCase().includes(query)
+        const matchesWriter = post.writer.toLowerCase().includes(query)
+        
+        switch (searchScope) {
+          case 'title':
+            return matchesTitle
+          case 'writer':
+            return matchesWriter
+          case 'all':
+          default:
+            return matchesTitle || matchesWriter
+        }
+      })
+      
+      // 각 그룹을 정렬
+      const sortPosts = (postList) => {
+        return postList.sort((a, b) => {
+          switch (selectedSort) {
+            case 'latest':
+              // 최신순: 날짜 내림차순 (최신이 먼저)
+              if (a.createdAt && b.createdAt) {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              }
+              const dateB = parseDate(b.date)
+              const dateA = parseDate(a.date)
+              return dateB.getTime() - dateA.getTime()
+            case 'popular':
+              // 인기순: 조회수 내림차순
+              return (b.views || 0) - (a.views || 0)
+            case 'oldest':
+              // 오래된순: 날짜 오름차순 (오래된 것이 먼저)
+              if (a.createdAt && b.createdAt) {
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              }
+              const dateAOld = parseDate(a.date)
+              const dateBOld = parseDate(b.date)
+              return dateAOld.getTime() - dateBOld.getTime()
+            default:
+              return 0
+          }
+        })
+      }
+      
+      return [...sortPosts(filteredPinnedPosts), ...sortPosts(filteredNormalPosts)]
     }
     
-    posts.sort((a, b) => {
-      switch (selectedSort) {
-        case 'latest':
-          // 최신순: 날짜 내림차순 (최신이 먼저)
-          // createdAt이 있으면 사용, 없으면 date 파싱
-          if (a.createdAt && b.createdAt) {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          }
-          const dateB = parseDate(b.date)
-          const dateA = parseDate(a.date)
-          return dateB.getTime() - dateA.getTime()
-        case 'popular':
-          // 인기순: 조회수 내림차순
-          return (b.views || 0) - (a.views || 0)
-        case 'oldest':
-          // 오래된순: 날짜 오름차순 (오래된 것이 먼저)
-          // createdAt이 있으면 사용, 없으면 date 파싱
-          if (a.createdAt && b.createdAt) {
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          }
-          const dateAOld = parseDate(a.date)
-          const dateBOld = parseDate(b.date)
-          return dateAOld.getTime() - dateBOld.getTime()
-        default:
-          return 0
-      }
-    })
+    // 각 그룹을 정렬
+    const sortPosts = (postList) => {
+      return postList.sort((a, b) => {
+        switch (selectedSort) {
+          case 'latest':
+            // 최신순: 날짜 내림차순 (최신이 먼저)
+            // createdAt이 있으면 사용, 없으면 date 파싱
+            if (a.createdAt && b.createdAt) {
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            }
+            const dateB = parseDate(b.date)
+            const dateA = parseDate(a.date)
+            return dateB.getTime() - dateA.getTime()
+          case 'popular':
+            // 인기순: 조회수 내림차순
+            return (b.views || 0) - (a.views || 0)
+          case 'oldest':
+            // 오래된순: 날짜 오름차순 (오래된 것이 먼저)
+            // createdAt이 있으면 사용, 없으면 date 파싱
+            if (a.createdAt && b.createdAt) {
+              return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            }
+            const dateAOld = parseDate(a.date)
+            const dateBOld = parseDate(b.date)
+            return dateAOld.getTime() - dateBOld.getTime()
+          default:
+            return 0
+        }
+      })
+    }
     
-    return posts
-  }, [selectedBoardType, selectedSort, searchQuery, searchScope, apiPosts, boardViews])
+    // 고정된 게시글(모든 타입)과 일반 게시글을 각각 정렬한 후 합치기
+    return [...sortPosts(pinnedPosts), ...sortPosts(normalPosts)]
+  }, [selectedBoardType, selectedSort, searchQuery, searchScope, apiPosts, boardViews, pinnedPosts])
 
   const totalPages = Math.ceil(filteredAndSortedPosts.length / POSTS_PER_PAGE)
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE
@@ -418,11 +501,19 @@ export default function BoardPage({
               return (
                 <div 
                   key={post.id} 
-                  className="board-row"
+                  className={`board-row ${post.isPinned ? 'notice' : ''}`}
                   onClick={() => onGoToBoardDetail(post.id, postType)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <span>{startIndex + index + 1}</span>
+                  <span>
+                    {post.isPinned ? (
+                      <i className="board-icon" aria-hidden="true">
+                        📌
+                      </i>
+                    ) : (
+                      startIndex + index + 1
+                    )}
+                  </span>
               <span className="board-title">{post.title}</span>
               <span>{post.writer}</span>
               <span>{post.views}</span>

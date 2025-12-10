@@ -561,7 +561,6 @@ export default function AdminItemApprovalPage({
       {imageModal && (
         <div className="modal-overlay" onClick={() => setImageModal(null)}>
           <div className="modal image-modal" onClick={e => e.stopPropagation()}>
-            <h2>{imageModal.title || '기부 물품 이미지'}</h2>
             {imageModal.images?.length ? (
               imageModal.images.map((img, index) => {
                 let imageUrl = img.dataUrl || img.url || img;
@@ -592,7 +591,7 @@ export default function AdminItemApprovalPage({
             ) : (
               <p className="text-muted">등록된 이미지가 없습니다.</p>
             )}
-            <div className="modal-buttons">
+            <div className="modal-buttons" style={{ marginTop: '1.5rem', justifyContent: 'center' }}>
               <button className="small-btn" onClick={() => setImageModal(null)}>
                 닫기
               </button>

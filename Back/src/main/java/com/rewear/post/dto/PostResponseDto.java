@@ -31,6 +31,7 @@ public class PostResponseDto {
     private String reqDetailCategory;
     private Size reqSize;
     private Integer viewCount;
+    private Boolean isPinned; // 상단 고정 여부
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isAuthor; // 현재 사용자가 작성자인지 여부

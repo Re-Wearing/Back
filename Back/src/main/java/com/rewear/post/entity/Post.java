@@ -75,6 +75,10 @@ public class Post {
     @Builder.Default
     private Integer viewCount = 0; // 조회수
 
+    @Column(name = "is_pinned", nullable = false)
+    @Builder.Default
+    private Boolean isPinned = false; // 상단 고정 여부
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
