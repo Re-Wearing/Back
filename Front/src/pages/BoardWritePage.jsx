@@ -25,6 +25,7 @@ export default function BoardWritePage({
   
   // 사용자 역할에 따라 게시판 타입 제한
   const userRole = currentUser?.role || ''
+  const isAdmin = userRole === '관리자 회원'
   const canWriteReview = ['일반 회원', '기관 회원', '관리자 회원'].includes(userRole)
   const canWriteRequest = userRole === '기관 회원' || userRole === '관리자 회원'
   const initialBoardType =
@@ -84,14 +85,22 @@ export default function BoardWritePage({
     }
 
     try {
-      const postType = selectedBoardType === 'review' ? 'DONATION_REVIEW' : 'ORGAN_REQUEST'
+      // 관리자는 항상 DONATION_REVIEW로 저장하되, 모든 게시판에 표시됨
+      const postType = isAdmin ? 'DONATION_REVIEW' : (selectedBoardType === 'review' ? 'DONATION_REVIEW' : 'ORGAN_REQUEST')
       
       // 이미지 파일 업로드
       let imageUrls = []
       if (images.length > 0) {
         try {
           const uploadedFiles = await uploadImages(images)
-          imageUrls = uploadedFiles.map(file => file.url || file.dataUrl)
+          // URL에서 파일명만 추출 (/uploads/filename.jpg -> filename.jpg)
+          imageUrls = uploadedFiles.map(file => {
+            const url = file.url || file.dataUrl || file.filename
+            if (url && url.startsWith('/uploads/')) {
+              return url.substring('/uploads/'.length)
+            }
+            return url
+          })
         } catch (uploadError) {
           // 업로드 실패 시 Base64로 폴백 (하위 호환성)
           console.warn('이미지 업로드 실패, Base64로 전환:', uploadError)
@@ -109,7 +118,7 @@ export default function BoardWritePage({
           postType: postType,
           title: title.trim(),
           content: content.trim(),
-          isAnonymous: selectedBoardType === 'review' ? isAnonymous : false, // 기부 후기일 때만 익명 옵션 적용
+          isAnonymous: (isAdmin || selectedBoardType === 'review') ? isAnonymous : false, // 관리자 또는 기부 후기일 때만 익명 옵션 적용
           images: imageUrls
         })
       })
@@ -266,32 +275,44 @@ export default function BoardWritePage({
         </div>
 
         <form className="board-write-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <div className="form-group-header">
-              <label htmlFor="board-type">게시판</label>
+          {!isAdmin && (
+            <div className="form-group">
+              <div className="form-group-header">
+                <label htmlFor="board-type">게시판</label>
+              </div>
+              <div className="board-type-select">
+                <button
+                  type="button"
+                  className={`type-btn ${selectedBoardType === 'review' ? 'active' : ''}`}
+                  onClick={() => handleSelectBoardType('review')}
+                  disabled={!canWriteReview}
+                >
+                  기부 후기
+                </button>
+                <button
+                  type="button"
+                  className={`type-btn ${selectedBoardType === 'request' ? 'active' : ''}`}
+                  onClick={() => handleSelectBoardType('request')}
+                  disabled={!canWriteRequest}
+                >
+                  요청 게시판
+                </button>
+              </div>
+              {!canWriteRequest && (
+                <p className="board-type-hint">요청 게시판 글쓰기는 기관 회원만 가능합니다.</p>
+              )}
             </div>
-            <div className="board-type-select">
-              <button
-                type="button"
-                className={`type-btn ${selectedBoardType === 'review' ? 'active' : ''}`}
-                onClick={() => handleSelectBoardType('review')}
-                disabled={!canWriteReview}
-              >
-                기부 후기
-              </button>
-              <button
-                type="button"
-                className={`type-btn ${selectedBoardType === 'request' ? 'active' : ''}`}
-                onClick={() => handleSelectBoardType('request')}
-                disabled={!canWriteRequest}
-              >
-                요청 게시판
-              </button>
+          )}
+          {isAdmin && (
+            <div className="form-group">
+              <div className="form-group-header">
+                <label htmlFor="board-type">게시판</label>
+              </div>
+              <p className="board-type-hint" style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                관리자가 작성한 게시글은 기부 후기와 요청 게시판 모두에 표시됩니다.
+              </p>
             </div>
-            {!canWriteRequest && (
-              <p className="board-type-hint">요청 게시판 글쓰기는 기관 회원만 가능합니다.</p>
-            )}
-          </div>
+          )}
 
           <div className="form-group">
             <div className="form-group-header">
