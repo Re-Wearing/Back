@@ -466,6 +466,7 @@ export default function DonationStatusPage({
                 <th>진행 상태</th>
                 <th>매칭 정보</th>
                 <th>상태</th>
+                <th>배송 조회</th>
               </tr>
             </thead>
             <tbody>
@@ -499,16 +500,6 @@ export default function DonationStatusPage({
                       <span className="approval-item-placeholder">
                         {approvalStatusDescriptions[item.status] || '진행 중입니다.'}
                       </span>
-                      {/* 배송 정보가 있으면 배송 조회 버튼 표시 (배송대기 또는 매칭됨 상태) */}
-                      {item.deliveryId && (item.status === '배송대기' || item.status === '매칭됨') && (
-                        <button
-                          type="button"
-                          className="btn-filter"
-                          onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
-                        >
-                          배송 조회
-                        </button>
-                      )}
                       {['승인대기', '매칭대기'].includes(item.status) && (
                         <button
                           type="button"
@@ -519,6 +510,17 @@ export default function DonationStatusPage({
                         </button>
                       )}
                     </div>
+                  </td>
+                  <td>
+                    {item.deliveryId && (
+                      <button
+                        type="button"
+                        className="btn-filter"
+                        onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
+                      >
+                        배송 조회
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
