@@ -101,7 +101,25 @@ export default function DonationStatusPage({
         }
 
         console.log('API 응답 데이터:', data)
-        setApiData(data)
+
+        // 배송 정보를 포함한 형태로 보강 (deliveryId, deliveryStatus)
+        const enhanced = { ...data }
+        if (data?.approvalItems) {
+          enhanced.approvalItems = data.approvalItems.map(item => ({
+            ...item,
+            deliveryId: item.deliveryId ?? null,
+            deliveryStatus: item.deliveryStatus ?? null
+          }))
+        }
+        if (data?.completedDonations) {
+          enhanced.completedDonations = data.completedDonations.map(item => ({
+            ...item,
+            deliveryId: item.deliveryId ?? null,
+            deliveryStatus: item.deliveryStatus ?? null
+          }))
+        }
+
+        setApiData(enhanced)
       } catch (err) {
         console.error('기부 상태 조회 오류:', err)
         setError(err.message || '기부 상태를 불러오는 중 오류가 발생했습니다.')
