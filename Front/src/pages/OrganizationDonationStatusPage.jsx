@@ -15,8 +15,7 @@ export default function OrganizationDonationStatusPage({
   isBootstrapped = true,
   shipments = [],
   matchingInvites = [],
-  onRespondMatchingInvite,
-  onNavigateDeliveryStatus
+  onRespondMatchingInvite
 }) {
   if (!isBootstrapped) {
     return null
@@ -444,13 +443,6 @@ export default function OrganizationDonationStatusPage({
     }
   }
 
-  // 배송 조회 페이지로 이동
-  const handleNavigateToDeliveryStatus = (deliveryId = null) => {
-    // deliveryId가 없으면 배송 조회 페이지로만 이동 (상세 모달 없이)
-    if (typeof onNavigateDeliveryStatus === 'function') {
-      onNavigateDeliveryStatus(deliveryId)
-    }
-  }
 
   return (
     <section className="main-page donation-status-page">
@@ -877,6 +869,32 @@ export default function OrganizationDonationStatusPage({
                 )}
               </div>
               
+              {selectedDelivery.donation && selectedDelivery.donation.donationItem && (
+                <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                  <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>배송 물품</h3>
+                  {(selectedDelivery.donation.donationItem.detailCategory || selectedDelivery.donation.donationItem.mainCategory) && (
+                    <div><strong>카테고리:</strong> {selectedDelivery.donation.donationItem.detailCategory || selectedDelivery.donation.donationItem.mainCategory}</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.size && (
+                    <div><strong>사이즈:</strong> {selectedDelivery.donation.donationItem.size}</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.genderType && (
+                    <div><strong>성별:</strong> {selectedDelivery.donation.donationItem.genderType === 'MALE' ? '남성' : selectedDelivery.donation.donationItem.genderType === 'FEMALE' ? '여성' : '공용'}</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.quantity && selectedDelivery.donation.donationItem.quantity > 1 && (
+                    <div><strong>수량:</strong> {selectedDelivery.donation.donationItem.quantity}개</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.description && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <strong>설명:</strong>
+                      <div style={{ marginTop: '0.25rem', color: '#666', fontSize: '0.9rem' }}>
+                        {selectedDelivery.donation.donationItem.description}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
                 <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>배송 일정</h3>
                 {selectedDelivery.shippedAt && (
@@ -907,24 +925,6 @@ export default function OrganizationDonationStatusPage({
                 }}
               >
                 닫기
-              </button>
-              <button
-                onClick={() => {
-                  setShowDeliveryModal(false)
-                  setSelectedDelivery(null)
-                  // deliveryId 없이 배송 조회 페이지로 이동 (상세 모달 없이)
-                  handleNavigateToDeliveryStatus(null)
-                }}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: 'var(--primary, #7a6b55)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                배송 조회 페이지로 이동
               </button>
             </div>
           </div>

@@ -183,7 +183,36 @@ public class DeliveryApiController {
             Donation donation = delivery.getDonation();
             Map<String, Object> donationInfo = new HashMap<>();
             donationInfo.put("id", donation.getId());
-            donationInfo.put("donationItem", donation.getDonationItem() != null ? donation.getDonationItem().getMainCategory() : null);
+            
+            // 물품 상세 정보 포함
+            if (donation.getDonationItem() != null) {
+                Map<String, Object> itemInfo = new HashMap<>();
+                itemInfo.put("mainCategory", donation.getDonationItem().getMainCategory() != null 
+                    ? donation.getDonationItem().getMainCategory().name() : null);
+                itemInfo.put("detailCategory", donation.getDonationItem().getDetailCategory());
+                itemInfo.put("size", donation.getDonationItem().getSize() != null 
+                    ? donation.getDonationItem().getSize().name() : null);
+                itemInfo.put("genderType", donation.getDonationItem().getGenderType() != null 
+                    ? donation.getDonationItem().getGenderType().name() : null);
+                itemInfo.put("description", donation.getDonationItem().getDescription());
+                itemInfo.put("quantity", donation.getDonationItem().getQuantity() != null 
+                    ? donation.getDonationItem().getQuantity() : 1);
+                itemInfo.put("imageUrl", donation.getDonationItem().getImageUrl());
+                itemInfo.put("imageUrls", donation.getDonationItem().getImageUrls());
+                
+                // 물품명 (detailCategory가 있으면 사용, 없으면 mainCategory 사용)
+                String itemName = donation.getDonationItem().getDetailCategory();
+                if (itemName == null || itemName.isEmpty()) {
+                    itemName = donation.getDonationItem().getMainCategory() != null 
+                        ? donation.getDonationItem().getMainCategory().name() : "기부 물품";
+                }
+                itemInfo.put("name", itemName);
+                
+                donationInfo.put("donationItem", itemInfo);
+            } else {
+                donationInfo.put("donationItem", null);
+            }
+            
             dto.put("donation", donationInfo);
         }
         

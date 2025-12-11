@@ -48,6 +48,10 @@ public class DonationStatusResponseDto {
         private String organization; // 수혜 기관
         private String status; // 상태 (완료)
         private Long deliveryId; // 배송 ID (null 가능)
+        private String businessNo; // 기관 사업자등록번호 (null 가능)
+        private String organAddress; // 기관 주소 (null 가능)
+        private String mainCategory; // 기부 물품 메인 카테고리 (null 가능)
+        private String detailCategory; // 기부 물품 상세 카테고리 (null 가능)
     }
     
     @Data
@@ -60,7 +64,9 @@ public class DonationStatusResponseDto {
         private int 매칭됨;
         private int 거절됨;
         private int 배송대기;
+        private int 배송중;
         private int 취소됨;
+        private int 완료;
     }
 }
 

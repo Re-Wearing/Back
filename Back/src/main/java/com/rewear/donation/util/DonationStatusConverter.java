@@ -36,11 +36,47 @@ public class DonationStatusConverter {
             return "배송대기";
         }
         
-        // 매칭됨 (기관이 최종 승인한 경우 - COMPLETED 상태로 변경됨)
-        // IN_PROGRESS 상태는 관리자가 승인한 상태이므로 매칭대기로 표시
-        // (직접 매칭인 경우 organ이 할당되어 있어도 기관의 최종 승인을 기다리는 상태)
+        // 매칭됨 (기관이 최종 승인한 경우 - COMPLETED 상태이지만 배송이 시작되지 않은 경우)
+        // 배송이 시작되지 않은 COMPLETED 상태는 "매칭됨"으로 표시하여 approvalItems에 포함
+        if (status == DonationStatus.COMPLETED) {
+            // 배송 완료된 경우는 "완료"로 표시 (completedDonations에만 포함)
+            if (donation.getDelivery() != null && 
+                donation.getDelivery().getStatus() == com.rewear.common.enums.DeliveryStatus.DELIVERED) {
+                return "완료";
+            }
+            
+            // 택배사와 운송장 번호가 모두 지정된 경우 "배송대기"로 표시
+            if (donation.getDelivery() != null) {
+                String carrier = donation.getDelivery().getCarrier();
+                String trackingNumber = donation.getDelivery().getTrackingNumber();
+                
+                // 택배사와 운송장 번호가 모두 있고, "미정"이 아닌 경우
+                if (carrier != null && !carrier.trim().isEmpty() && !carrier.equals("미정") &&
+                    trackingNumber != null && !trackingNumber.trim().isEmpty() && !trackingNumber.equals("미정")) {
+                    return "배송대기";
+                }
+            }
+            
+            // 배송 정보가 없거나 배송이 시작되지 않은 경우 (PENDING, PREPARING 상태)
+            if (donation.getDelivery() == null || 
+                donation.getDelivery().getStatus() == null ||
+                donation.getDelivery().getStatus() == com.rewear.common.enums.DeliveryStatus.PENDING ||
+                donation.getDelivery().getStatus() == com.rewear.common.enums.DeliveryStatus.PREPARING) {
+                return "매칭됨";
+            }
+            
+            // 배송 중인 경우
+            if (donation.getDelivery().getStatus() == com.rewear.common.enums.DeliveryStatus.IN_TRANSIT) {
+                return "배송중";
+            }
+            
+            // 기본적으로 매칭됨으로 표시
+            return "매칭됨";
+        }
         
         // 매칭대기 (관리자가 승인했고 진행 중인 경우 - 기관의 최종 승인 대기)
+        // IN_PROGRESS 상태는 관리자가 승인한 상태이므로 매칭대기로 표시
+        // (직접 매칭인 경우 organ이 할당되어 있어도 기관의 최종 승인을 기다리는 상태)
         if (status == DonationStatus.IN_PROGRESS) {
             return "매칭대기";
         }
@@ -48,12 +84,6 @@ public class DonationStatusConverter {
         // 승인대기 (관리자가 아직 승인하지 않은 경우)
         if (status == DonationStatus.PENDING || adminDecision == AdminDecision.PENDING) {
             return "승인대기";
-        }
-        
-        // COMPLETED 상태는 approvalItems에 포함되지 않음 (completedDonations에만 포함)
-        // 하지만 혹시 모를 경우를 대비해 "완료" 반환 (실제로는 필터링됨)
-        if (status == DonationStatus.COMPLETED) {
-            return "완료";
         }
         
         // 기본값
@@ -88,6 +118,8 @@ public class DonationStatusConverter {
                 return "사유 확인 후 다시 신청해주세요.";
             case "배송대기":
                 return "배송 준비 중입니다.";
+            case "배송중":
+                return "배송 중입니다.";
             case "취소됨":
                 return "기부자가 신청을 취소했습니다.";
             default:
