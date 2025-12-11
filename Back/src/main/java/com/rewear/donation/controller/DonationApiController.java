@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -203,10 +204,14 @@ public class DonationApiController {
             log.info("기부 상태 조회 API - 조회된 기부 개수: {}", donations.size());
             
             // 각 기부에 대한 배송 정보 로드
+            Map<Long, com.rewear.delivery.entity.Delivery> deliveryMap = deliveryService.getDeliveriesByDonor(user).stream()
+                    .filter(delivery -> delivery.getDonation() != null)
+                    .collect(Collectors.toMap(delivery -> delivery.getDonation().getId(), Function.identity(), (a, b) -> a));
+
             donations.forEach(donation -> {
-                deliveryService.getDeliveryByDonation(donation).ifPresent(delivery -> {
-                    donation.setDelivery(delivery);
-                });
+                if (deliveryMap.containsKey(donation.getId())) {
+                    donation.setDelivery(deliveryMap.get(donation.getId()));
+                }
                 log.info("기부 ID: {}, 상태: {}, DonationItem: {}", 
                     donation.getId(), 
                     donation.getStatus(), 
