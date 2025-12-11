@@ -1,6 +1,7 @@
 package com.rewear.delivery.repository;
 
 import com.rewear.common.enums.DeliveryStatus;
+import com.rewear.common.enums.DonationStatus;
 import com.rewear.delivery.entity.Delivery;
 import com.rewear.donation.entity.Donation;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,14 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
     Optional<Delivery> findByDonation(Donation donation);
     Optional<Delivery> findByTrackingNumber(String trackingNumber);
     List<Delivery> findByStatus(DeliveryStatus status);
+
+    @Query("SELECT d FROM Delivery d " +
+           "LEFT JOIN FETCH d.donation don " +
+           "LEFT JOIN FETCH don.donationItem " +
+           "WHERE don.donor.id = :donorId " +
+           "AND don.status <> :excludedStatus")
+    List<Delivery> findByDonorIdExcludingStatus(@Param("donorId") Long donorId,
+                                                @Param("excludedStatus") DonationStatus excludedStatus);
     
     @Query("SELECT d FROM Delivery d " +
            "LEFT JOIN FETCH d.donation don " +

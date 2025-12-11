@@ -99,12 +99,7 @@ public class DeliveryApiController {
             }
         } else {
             // 일반 사용자(기부자)인 경우: 자신이 보낸 기부의 배송 정보
-            List<Donation> donations = donationRepository.findByDonor(user);
-            
-            deliveryList = donations.stream()
-                    .map(donation -> deliveryService.getDeliveryByDonation(donation))
-                    .filter(delivery -> delivery.isPresent())
-                    .map(delivery -> delivery.get())
+            deliveryList = deliveryService.getDeliveriesByDonor(user).stream()
                     .map(this::convertToDeliveryDto)
                     .collect(Collectors.toList());
         }
