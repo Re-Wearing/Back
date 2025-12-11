@@ -537,12 +537,12 @@ export default function App() {
     }
   }
   const goToDeliveryCheck = (deliveryId = null, options = {}) => {
-    // 로그인 상태 확인
-    if (!currentUser && !isLoggedIn) {
+    // 명시적으로 로그인하지 않은 경우에만 로그인으로 유도
+    if (!isLoggedIn) {
       goToLogin(options)
       return
     }
-    
+
     const { push = true, replace = false } = options
     setShowLanding(false)
     setActivePage('deliveryCheck')
