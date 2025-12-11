@@ -47,6 +47,7 @@ public class DonationStatusResponseDto {
         private String items; // 기부 내용
         private String organization; // 수혜 기관
         private String status; // 상태 (완료)
+        private Long deliveryId; // 배송 ID (null 가능)
     }
     
     @Data

@@ -547,9 +547,8 @@ export default function App() {
     setShowLanding(false)
     setActivePage('deliveryCheck')
     // 배송 ID를 상태로 저장 (DeliveryCheckPage에서 사용)
-    if (deliveryId) {
-      setSelectedDeliveryId(deliveryId)
-    }
+    // deliveryId가 null이면 초기화하여 상세 모달을 열지 않음
+    setSelectedDeliveryId(deliveryId)
     if (push) updatePath('/delivery-check', { replace })
     else if (replace) updatePath('/delivery-check', { replace: true })
   }

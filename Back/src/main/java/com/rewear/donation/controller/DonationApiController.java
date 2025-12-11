@@ -316,12 +316,19 @@ public class DonationApiController {
                             organization = donation.getOrgan().getOrgName();
                         }
                         
+                        // 배송 ID
+                        Long deliveryId = null;
+                        if (donation.getDelivery() != null) {
+                            deliveryId = donation.getDelivery().getId();
+                        }
+                        
                         return DonationStatusResponseDto.CompletedDonationDto.builder()
                                 .id(donation.getId())
                                 .date(DonationStatusConverter.formatDate(donation.getCreatedAt()))
                                 .items(items)
                                 .organization(organization)
                                 .status("완료")
+                                .deliveryId(deliveryId)
                                 .build();
                     })
                     .collect(Collectors.toList());
