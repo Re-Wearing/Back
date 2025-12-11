@@ -24,7 +24,8 @@ export default function DeliveryCheckPage({
   const [selectedDelivery, setSelectedDelivery] = useState(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
 
-  const isDonorView = currentUser?.role !== '기관 회원'
+  const isOrgan = currentUser?.role === '기관 회원'
+  const isDonorView = !isOrgan
   const fallbackDonorProfile = donorProfile || currentProfile
   const effectiveDonorProfile = isDonorView ? currentProfile : fallbackDonorProfile
   const senderName = effectiveDonorProfile?.useAnonymousName
@@ -48,6 +49,7 @@ export default function DeliveryCheckPage({
       try {
         setLoading(true)
         setError(null)
+        // 백엔드가 역할별로 필터링하므로 동일 엔드포인트 사용
         const response = await fetch('/api/deliveries', {
           method: 'GET',
           headers: {
@@ -72,12 +74,14 @@ export default function DeliveryCheckPage({
           sender: delivery.senderName || senderName,
           receiver: delivery.receiverName || receiverName,
           status: convertStatus(delivery.status),
-          startDate: delivery.shippedAt 
+          startDate: delivery.shippedAt
             ? new Date(delivery.shippedAt).toLocaleDateString('ko-KR')
-            : delivery.createdAt 
+            : delivery.createdAt
             ? new Date(delivery.createdAt).toLocaleDateString('ko-KR')
             : '-',
-          delivery: delivery // 전체 정보 저장
+          createdAtRaw: delivery.createdAt,
+          shippedAtRaw: delivery.shippedAt,
+          delivery // 전체 정보 저장
         }))
 
         setDeliveries(deliveryList)
@@ -168,12 +172,13 @@ export default function DeliveryCheckPage({
     : deliveries
 
   // 기존 shipments 데이터와 API 데이터 병합 (하위 호환성)
-  const tableData = filteredDeliveries.length > 0 
-    ? filteredDeliveries.map((item, index) => ({
-        ...item,
-        // 기관 회원인 경우 순서 번호 추가 (최신순이므로 1번부터)
-        orderNumber: !isDonorView ? index + 1 : null
-      }))
+  const normalizedApiData = filteredDeliveries.map((item, index) => ({
+    ...item,
+    orderNumber: isOrgan ? index + 1 : null
+  }))
+
+  const tableData = normalizedApiData.length > 0 
+    ? normalizedApiData
     : (Array.isArray(shipments) && shipments.length > 0
         ? shipments
             .filter(item => {
@@ -197,7 +202,7 @@ export default function DeliveryCheckPage({
               sender: item.sender || senderName,
               receiver: item.receiver || receiverName,
               // 기관 회원인 경우 순서 번호 추가
-              orderNumber: !isDonorView ? index + 1 : null
+              orderNumber: isOrgan ? index + 1 : null
             }))
         : [])
 
