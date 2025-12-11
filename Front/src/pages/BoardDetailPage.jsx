@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
-import { getNavLinksForRole, reviewPosts, requestPosts, boardNotices } from '../constants/landingData'
+import { getNavLinksForRole } from '../constants/landingData'
 import '../styles/board-detail.css'
 
 export default function BoardDetailPage({
@@ -84,7 +84,7 @@ export default function BoardDetailPage({
         return
       }
 
-      const combinedNotices = [...notices, ...boardNotices]
+      const combinedNotices = [...notices]
 
       // 공지사항 확인 (문자열 ID)
       if (typeof postId === 'string' && postId.startsWith('notice-')) {
@@ -150,15 +150,6 @@ export default function BoardDetailPage({
             if (foundPost) foundType = 'request'
           }
 
-          if (!foundPost) {
-            foundPost = reviewPosts.find(p => Number(p.id) === postIdNum)
-            if (foundPost) foundType = 'review'
-          }
-          if (!foundPost) {
-            foundPost = requestPosts.find(p => Number(p.id) === postIdNum)
-            if (foundPost) foundType = 'request'
-          }
-
           if (foundPost) {
             const baseViews = foundPost.views || 0
             const increment = boardViews[postId] || 0
@@ -205,8 +196,6 @@ export default function BoardDetailPage({
   }
 
   const currentPostType = (typeof postId === 'string' && postId.startsWith('notice-')) ? 'notice' :
-                         reviewPosts.some(p => Number(p.id) === Number(postId)) ? 'review' : 
-                         requestPosts.some(p => Number(p.id) === Number(postId)) ? 'request' :
                          boardPosts.review?.some(p => Number(p.id) === Number(postId)) ? 'review' : 'request'
 
   // 현재 사용자가 게시글 작성자인지 확인 (공지사항은 삭제 불가)

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
-import { getNavLinksForRole, boardTabs, boardNotices, reviewPosts, requestPosts } from '../constants/landingData'
+import { getNavLinksForRole, boardTabs } from '../constants/landingData'
 
 // 게시글에 content 필드 추가 (임시)
 const getPostContent = (post) => {
@@ -342,7 +342,7 @@ export default function BoardPage({
   }
 
   const navLinks = getNavLinksForRole(currentUser?.role)
-  const combinedNotices = [...extraNotices, ...boardNotices]
+  const combinedNotices = [...extraNotices]
 
   return (
     <div className="board-page">
@@ -487,14 +487,10 @@ export default function BoardPage({
             </div>
           ) : (
             currentPosts.map((post, index) => {
-              // 게시글 타입 결정 (reviewPosts에 있으면 review, requestPosts에 있으면 request)
+              // 게시글 타입 결정
               const postType =
                 post.boardType ||
-                (reviewPosts.some(p => p.id === post.id)
-                  ? 'review'
-                  : requestPosts.some(p => p.id === post.id)
-                  ? 'request'
-                  : boardPosts.review?.some(p => p.id === post.id)
+                (boardPosts.review?.some(p => p.id === post.id)
                   ? 'review'
                   : 'request')
               
