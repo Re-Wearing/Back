@@ -289,6 +289,10 @@ export default function DonationStatusPage({
   }, [apiData, approvalItems])
 
   const handleNavigateToDeliveryStatus = (deliveryId) => {
+    if (!deliveryId) {
+      window.alert('배송 정보가 아직 없습니다.')
+      return
+    }
     if (typeof onNavigateDeliveryStatus === 'function') {
       onNavigateDeliveryStatus(deliveryId)
     } else {
@@ -512,15 +516,14 @@ export default function DonationStatusPage({
                     </div>
                   </td>
                   <td>
-                    {item.deliveryId && (
-                      <button
-                        type="button"
-                        className="btn-filter"
-                        onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
-                      >
-                        배송 조회
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="btn-filter"
+                      disabled={!item.deliveryId}
+                      onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
+                    >
+                      배송 조회
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -772,15 +775,14 @@ export default function DonationStatusPage({
                       </span>
                     </td>
                   <td>
-                    {donation.deliveryId && (
-                      <button
-                        type="button"
-                        className="btn-filter"
-                        onClick={() => handleNavigateToDeliveryStatus(donation.deliveryId)}
-                      >
-                        배송 조회
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="btn-filter"
+                      disabled={!donation.deliveryId}
+                      onClick={() => handleNavigateToDeliveryStatus(donation.deliveryId)}
+                    >
+                      배송 조회
+                    </button>
                   </td>
                   </tr>
                 ))}
