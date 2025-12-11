@@ -295,9 +295,9 @@ export default function DonationStatusPage({
     }
     if (typeof onNavigateDeliveryStatus === 'function') {
       onNavigateDeliveryStatus(deliveryId)
-    } else {
-      setActiveTab('history')
     }
+    // 확실히 이동하도록 직접 라우팅도 수행
+    window.location.href = `/delivery-check?deliveryId=${deliveryId}`
   }
 
   const handleRowClick = async (itemId, event) => {
