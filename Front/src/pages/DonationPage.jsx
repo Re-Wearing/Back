@@ -23,7 +23,6 @@ const ITEM_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'FREE', '기타 사이즈']
 const ITEM_CONDITIONS = ['새상품', '사용감 적음', '사용감 보통', '사용감 많음']
 
 const DONATION_METHODS = ['자동 매칭', '직접 매칭']
-const DEFAULT_DIRECT_ORGANIZATIONS = ['임당초등학교', '임당중학교']
 const DELIVERY_METHODS = ['직접 배송', '택배 배송']
 
 export default function DonationPage({
@@ -456,7 +455,7 @@ export default function DonationPage({
                 value: org.username || org.value || org.label || org.name
               }
         )
-      : DEFAULT_DIRECT_ORGANIZATIONS.map(name => ({ label: name, value: name }))
+      : []
 
   const renderShippingFields = () => (
     <>

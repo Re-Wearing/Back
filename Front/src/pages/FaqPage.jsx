@@ -1,40 +1,6 @@
 import { useState, useEffect } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
 
-// 기본 FAQ 데이터 (API 실패 시 fallback)
-const DEFAULT_FAQ_ENTRIES = [
-  {
-    question: '기부 물품은 어떻게 접수하나요?',
-    answer:
-      '웹에서 기부 신청서를 작성한 뒤, 가까운 수거 파트너가 방문하여 픽업합니다. 미리 제시한 시간에만 방문하니 안심하세요.'
-  },
-  {
-    question: '기부 물품의 상태는 어떻게 확인할 수 있나요?',
-    answer:
-      '검수 후 사진과 상태를 알림으로 받아보실 수 있습니다.'
-  },
-  {
-    question: '자동 매칭은 어떻게 하나나요?',
-    answer:
-      'RE:WEAR는 의류 상태와 용도를 기준으로 필요한 기관과 자동 매칭합니다. 기부하기에서 자동 매칭을 선택해 주세요!'
-  },
-  {
-    question: '직접 매칭은 어떻게 하나요?',
-    answer:
-      'RE:WEAR는 의류 상태와 용도를 기준으로 필요한 기관과 매칭합니다. 특정 기관을 지정하고 싶으시면 직접 매칭을 선택해 주세요!'
-  },
-  {
-    question: '기부 취소는 어떻게 하나요?',
-    answer:
-      '대기 상태라면 즉시 취소할 수 있고, 대기 상태 이후에는 하단의 문의하기 버튼으로 문의하시면 상황에 따라 조정해드립니다.'
-  },
-  {
-    question: '계정이 잠겼어요. 어떻게 푸나요?',
-    answer:
-      '하단의 문의하기 버튼을 눌러 관리자에게 문의하여 주시길 바랍니다.'
-  }
-]
-
 export default function FaqPage({
   onNavLink,
   onNavigateHome,
@@ -267,37 +233,37 @@ export default function FaqPage({
                       ×
                     </button>
                   </div>
-                  <form className="faq-question-form" onSubmit={handleSubmitQuestion}>
+              <form className="faq-question-form" onSubmit={handleSubmitQuestion}>
                     <div className="faq-question-form-content">
                       <label htmlFor="question-input" className="faq-question-label">
                         궁금한 점을 입력해주세요
                       </label>
-                      <textarea
+                <textarea
                         id="question-input"
-                        className="faq-question-input"
+                  className="faq-question-input"
                         placeholder="예: 기부 물품은 어떻게 접수하나요?"
-                        value={questionInput}
-                        onChange={(e) => setQuestionInput(e.target.value)}
+                  value={questionInput}
+                  onChange={(e) => setQuestionInput(e.target.value)}
                         rows={6}
-                        required
-                      />
+                  required
+                />
                     </div>
-                    <div className="faq-question-actions">
-                      <button 
-                        type="button" 
-                        className="btn-cancel"
-                        onClick={() => {
-                          setShowQuestionForm(false)
-                          setQuestionInput('')
-                        }}
-                      >
-                        취소
-                      </button>
-                      <button type="submit" className="btn-submit">
-                        등록하기
-                      </button>
-                    </div>
-                  </form>
+                <div className="faq-question-actions">
+                  <button 
+                    type="button" 
+                    className="btn-cancel"
+                    onClick={() => {
+                      setShowQuestionForm(false)
+                      setQuestionInput('')
+                    }}
+                  >
+                    취소
+                  </button>
+                  <button type="submit" className="btn-submit">
+                    등록하기
+                  </button>
+                </div>
+              </form>
                 </div>
               </div>
             )}
