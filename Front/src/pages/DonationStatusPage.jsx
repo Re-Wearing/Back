@@ -43,6 +43,9 @@ export default function DonationStatusPage({
   const [error, setError] = useState(null)
   const [selectedDonation, setSelectedDonation] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [selectedDelivery, setSelectedDelivery] = useState(null)
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false)
+  const [deliveryLoading, setDeliveryLoading] = useState(false)
 
   // API에서 기부 상태 데이터 가져오기
   useEffect(() => {
@@ -288,11 +291,50 @@ export default function DonationStatusPage({
     return counts
   }, [apiData, approvalItems])
 
-  const handleNavigateToDeliveryStatus = (deliveryId) => {
+  // 배송 상세 정보 조회
+  const handleViewDeliveryDetail = async (deliveryId, event) => {
+    // 이벤트 전파 방지
+    if (event) {
+      event.stopPropagation()
+      event.preventDefault()
+    }
+
     if (!deliveryId) {
       window.alert('배송 정보가 아직 없습니다.')
       return
     }
+
+    console.log('배송 상세 조회 시작:', deliveryId)
+
+    try {
+      setDeliveryLoading(true)
+      const response = await fetch(`/api/deliveries/${deliveryId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('배송 상세 정보를 불러오는데 실패했습니다.')
+      }
+
+      const data = await response.json()
+      console.log('배송 상세 정보:', data)
+      setSelectedDelivery(data)
+      setShowDeliveryModal(true)
+    } catch (err) {
+      console.error('배송 상세 조회 실패:', err)
+      alert('배송 상세 정보를 불러오는데 실패했습니다.')
+    } finally {
+      setDeliveryLoading(false)
+    }
+  }
+
+  // 배송 조회 페이지로 이동
+  const handleNavigateToDeliveryStatus = (deliveryId = null) => {
+    // deliveryId가 없으면 배송 조회 페이지로만 이동 (상세 모달 없이)
     if (typeof onNavigateDeliveryStatus === 'function') {
       onNavigateDeliveryStatus(deliveryId)
     } else {
@@ -470,7 +512,6 @@ export default function DonationStatusPage({
                 <th>진행 상태</th>
                 <th>매칭 정보</th>
                 <th>상태</th>
-                <th>배송 조회</th>
               </tr>
             </thead>
             <tbody>
@@ -514,16 +555,6 @@ export default function DonationStatusPage({
                         </button>
                       )}
                     </div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn-filter"
-                      disabled={!item.deliveryId}
-                      onClick={() => handleNavigateToDeliveryStatus(item.deliveryId)}
-                    >
-                      배송 조회
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -713,6 +744,188 @@ export default function DonationStatusPage({
     )
   }
 
+  // 배송 상세 정보 모달 렌더링
+  const renderDeliveryDetailModal = () => {
+    if (!showDeliveryModal || !selectedDelivery) return null
+
+    const convertStatus = (status) => {
+      switch (status) {
+        case 'DELIVERED':
+          return '완료'
+        case 'IN_TRANSIT':
+          return '배송중'
+        case 'PREPARING':
+        case 'PENDING':
+          return '대기'
+        case 'CANCELLED':
+          return '취소'
+        default:
+          return '대기'
+      }
+    }
+
+    const statusColor = (status) => {
+      switch (status) {
+        case '완료':
+          return '#4eed90'
+        case '배송중':
+          return '#64d1ff'
+        case '대기':
+          return '#ffb347'
+        case '취소':
+          return '#ff6b6b'
+        default:
+          return '#7a6b55'
+      }
+    }
+
+    const deliveryStatus = convertStatus(selectedDelivery.status)
+    const statusColorValue = statusColor(deliveryStatus)
+
+    return (
+      <div 
+        className="modal-overlay" 
+        onClick={() => {
+          setShowDeliveryModal(false)
+          setSelectedDelivery(null)
+        }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}
+      >
+        <div 
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: 'white',
+            padding: '2rem',
+            borderRadius: '8px',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2>배송 상세 정보</h2>
+            <button 
+              onClick={() => {
+                setShowDeliveryModal(false)
+                setSelectedDelivery(null)
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#7a6b55'
+              }}
+            >
+              ×
+            </button>
+          </div>
+          
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            <div>
+              <strong>송장번호:</strong> {selectedDelivery.trackingNumber || `DEL-${selectedDelivery.id}`}
+            </div>
+            <div>
+              <strong>택배사:</strong> {selectedDelivery.carrier || '미정'}
+            </div>
+            <div>
+              <strong>배송 상태:</strong> 
+              <span 
+                className="donation-status-badge" 
+                style={{ color: statusColorValue, marginLeft: '0.5rem' }}
+              >
+                {deliveryStatus}
+              </span>
+            </div>
+            
+            <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem', marginTop: '1rem' }}>
+              <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>보내는 사람</h3>
+              <div><strong>이름:</strong> {selectedDelivery.senderName}</div>
+              <div><strong>전화번호:</strong> {selectedDelivery.senderPhone}</div>
+              <div><strong>주소:</strong> {selectedDelivery.senderAddress} {selectedDelivery.senderDetailAddress || ''}</div>
+              {selectedDelivery.senderPostalCode && (
+                <div><strong>우편번호:</strong> {selectedDelivery.senderPostalCode}</div>
+              )}
+            </div>
+            
+            <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+              <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>받는 사람</h3>
+              <div><strong>이름:</strong> {selectedDelivery.receiverName}</div>
+              <div><strong>전화번호:</strong> {selectedDelivery.receiverPhone}</div>
+              <div><strong>주소:</strong> {selectedDelivery.receiverAddress} {selectedDelivery.receiverDetailAddress || ''}</div>
+              {selectedDelivery.receiverPostalCode && (
+                <div><strong>우편번호:</strong> {selectedDelivery.receiverPostalCode}</div>
+              )}
+            </div>
+            
+            <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+              <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>배송 일정</h3>
+              {selectedDelivery.shippedAt && (
+                <div><strong>배송 시작:</strong> {new Date(selectedDelivery.shippedAt).toLocaleString('ko-KR')}</div>
+              )}
+              {selectedDelivery.deliveredAt && (
+                <div><strong>배송 완료:</strong> {new Date(selectedDelivery.deliveredAt).toLocaleString('ko-KR')}</div>
+              )}
+              {selectedDelivery.createdAt && (
+                <div><strong>등록일:</strong> {new Date(selectedDelivery.createdAt).toLocaleString('ko-KR')}</div>
+              )}
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => {
+                setShowDeliveryModal(false)
+                setSelectedDelivery(null)
+              }}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#f5f5f5',
+                color: '#2f261c',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              닫기
+            </button>
+            <button
+              onClick={() => {
+                setShowDeliveryModal(false)
+                setSelectedDelivery(null)
+                // deliveryId 없이 배송 조회 페이지로 이동 (상세 모달 없이)
+                handleNavigateToDeliveryStatus(null)
+              }}
+              style={{
+                padding: '0.5rem 1rem',
+                background: 'var(--primary, #7a6b55)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              배송 조회 페이지로 이동
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const renderHistoryTab = () => (
     <>
       <div className="donation-status-actions">
@@ -778,10 +991,15 @@ export default function DonationStatusPage({
                     <button
                       type="button"
                       className="btn-filter"
-                      disabled={!donation.deliveryId}
-                      onClick={() => handleNavigateToDeliveryStatus(donation.deliveryId)}
+                      disabled={!donation.deliveryId || deliveryLoading}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        console.log('배송 조회 버튼 클릭:', donation.deliveryId)
+                        handleViewDeliveryDetail(donation.deliveryId, e)
+                      }}
                     >
-                      배송 조회
+                      {deliveryLoading ? '로딩...' : '배송 조회'}
                     </button>
                   </td>
                   </tr>
@@ -875,6 +1093,7 @@ export default function DonationStatusPage({
       </div>
 
       {renderDonationDetailModal()}
+      {renderDeliveryDetailModal()}
     </section>
   )
 }
