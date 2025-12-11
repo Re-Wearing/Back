@@ -721,12 +721,6 @@ export default function DonationStatusPage({
         <button type="button" className="btn-cancel" onClick={onNavigateHome}>
           홈으로
         </button>
-        <button type="button" className="btn-filter">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-          </svg>
-          Filters
-        </button>
       </div>
 
       {completedDonations.length === 0 ? (
@@ -754,6 +748,7 @@ export default function DonationStatusPage({
                   <th>기부 내용 ↓</th>
                   <th>수혜 기관 ↓</th>
                   <th>기부 진행 상태 ↓</th>
+                  <th>배송 조회</th>
                 </tr>
               </thead>
               <tbody>
@@ -774,6 +769,17 @@ export default function DonationStatusPage({
                         {donation.status}
                       </span>
                     </td>
+                  <td>
+                    {donation.deliveryId && (
+                      <button
+                        type="button"
+                        className="btn-filter"
+                        onClick={() => handleNavigateToDeliveryStatus(donation.deliveryId)}
+                      >
+                        배송 조회
+                      </button>
+                    )}
+                  </td>
                   </tr>
                 ))}
               </tbody>
