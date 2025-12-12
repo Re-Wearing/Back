@@ -1,0 +1,14 @@
+# IntelliJ / IDEA
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+**/.gradle/
+
+# Build outputs
+build/
+**/build/
+
+# Java artifacts
+*.class
