@@ -1,3 +1,11 @@
+# Frontend
+node_modules/
+**/node_modules/
+
+# Vite
+.vite/
+dist/
+
 # IntelliJ / IDEA
 .idea/
 *.iml
@@ -10,5 +18,5 @@
 build/
 **/build/
 
-# Java artifacts
+# Java
 *.class
