@@ -13,7 +13,10 @@
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
+    "jspdf-customfonts": "^0.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

@@ -30,8 +30,6 @@ import OrganizationDonationStatusPage from './pages/OrganizationDonationStatusPa
 import CategoryMenu from './components/CategoryMenu'
 import HeaderLanding from './components/HeaderLanding'
 import { getNavLinksForRole } from './constants/landingData'
-import DeliveryCheckPage from './pages/DeliveryCheckPage'
-import "./styles/delivery-check.css";
 import BusinessIntroPage from './pages/BusinessIntroPage';
 import './styles/business-intro.css'
 import DonationPage from './pages/DonationPage'
@@ -100,7 +98,6 @@ export default function App() {
   const isLoggedIn = Boolean(currentUser)
   const [currentPath, setCurrentPath] = useState('/main')
   const [recoveryContext, setRecoveryContext] = useState(null)
-  const [selectedDeliveryId, setSelectedDeliveryId] = useState(null)
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
   const [unreadCount, setUnreadCount] = useState(0)
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS)
@@ -535,23 +532,6 @@ export default function App() {
       // 에러 발생 시 메인으로 이동
       goToMain('/main', options)
     }
-  }
-  const goToDeliveryCheck = (deliveryId = null, options = {}) => {
-    // 로그인 상태 확인
-    if (!currentUser && !isLoggedIn) {
-      goToLogin(options)
-      return
-    }
-    
-    const { push = true, replace = false } = options
-    setShowLanding(false)
-    setActivePage('deliveryCheck')
-    // 배송 ID를 상태로 저장 (DeliveryCheckPage에서 사용)
-    if (deliveryId) {
-      setSelectedDeliveryId(deliveryId)
-    }
-    if (push) updatePath('/delivery-check', { replace })
-    else if (replace) updatePath('/delivery-check', { replace: true })
   }
   const goToBusinessIntro = (options = {}) => {
     const { push = true, replace = false } = options;
@@ -1771,9 +1751,6 @@ export default function App() {
       case 'organizationDonationStatus':
         goToDonationStatus({ push: true }, currentUser)
         break
-      case 'deliveryCheck':
-        goToDeliveryCheck({ push: true })
-        break
       default:
         if (typeof notification.target === 'string' && notification.target.startsWith('/')) {
           navigateByPath(notification.target, { userOverride: currentUser })
@@ -1810,8 +1787,6 @@ export default function App() {
       } else {
         goToInquiry()
       }
-    } else if (href === '/delivery-check' || href === '#delivery-check') {
-      goToDeliveryCheck()
     } else if (href === '/donation' || href === '#donation') {
       goToDonation()
     } else if (href === '#board') {
@@ -1962,9 +1937,6 @@ export default function App() {
         break
       case '/donation-status':
         goToDonationStatus({ push: false, replace: true }, userOverride)
-        break
-      case '/delivery-check':
-        goToDeliveryCheck({ push: false, replace: true })
         break
       case '/business':
         goToBusinessIntro({ push: false, replace: true })
@@ -2456,26 +2428,7 @@ export default function App() {
           onRequireLogin={goToLogin}
           shipments={shipments}
           donationItems={currentUser ? donations[currentUser.username] || [] : []}
-          onNavigateDeliveryStatus={(deliveryId) => goToDeliveryCheck(deliveryId)}
           onCancelDonation={itemId => currentUser && handleCancelDonation(currentUser.username, itemId)}
-        />
-      ) : activePage === 'deliveryCheck' ? (
-        <DeliveryCheckPage
-          onNavigateHome={goToMain}
-          onNavLink={handleNavRedirection}
-          isLoggedIn={isLoggedIn}
-          onLogout={handleLogout}
-          onLogin={goToLogin}
-          onNotifications={goToNotifications}
-          unreadCount={unreadCount}
-          onMenu={() => setIsMenuOpen(true)}
-          currentUser={currentUser}
-          currentProfile={currentProfile}
-          shipments={shipments}
-          donorProfile={profiles.user}
-          organizationProfile={currentUser ? profiles[currentUser.username] : null}
-          selectedDeliveryId={selectedDeliveryId}
-          onDeliveryIdProcessed={() => setSelectedDeliveryId(null)}
         />
       ) : activePage === 'organizationDonationStatus' ? (
         <OrganizationDonationStatusPage
@@ -2493,7 +2446,6 @@ export default function App() {
           shipments={shipments}
           matchingInvites={matchingInvites}
           onRespondMatchingInvite={handleRespondMatchingInvite}
-          onNavigateDeliveryStatus={(deliveryId) => goToDeliveryCheck(deliveryId)}
         />
       ) : activePage === 'businessIntro' ? (
         <BusinessIntroPage

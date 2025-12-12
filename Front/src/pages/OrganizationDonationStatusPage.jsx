@@ -15,8 +15,7 @@ export default function OrganizationDonationStatusPage({
   isBootstrapped = true,
   shipments = [],
   matchingInvites = [],
-  onRespondMatchingInvite,
-  onNavigateDeliveryStatus
+  onRespondMatchingInvite
 }) {
   if (!isBootstrapped) {
     return null
@@ -53,6 +52,9 @@ export default function OrganizationDonationStatusPage({
   const [error, setError] = useState(null)
   const [deliveryModal, setDeliveryModal] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedDelivery, setSelectedDelivery] = useState(null)
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false)
+  const [deliveryLoading, setDeliveryLoading] = useState(false)
 
   // API에서 기관에 할당된 기부 목록 조회 (매칭 관리용)
   useEffect(() => {
@@ -400,6 +402,48 @@ export default function OrganizationDonationStatusPage({
     }
   }
 
+  // 배송 상세 정보 조회
+  const handleViewDeliveryDetail = async (deliveryId, event) => {
+    // 이벤트 전파 방지
+    if (event) {
+      event.stopPropagation()
+      event.preventDefault()
+    }
+
+    if (!deliveryId) {
+      window.alert('배송 정보가 아직 없습니다.')
+      return
+    }
+
+    console.log('배송 상세 조회 시작:', deliveryId)
+
+    try {
+      setDeliveryLoading(true)
+      const response = await fetch(`/api/deliveries/${deliveryId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('배송 상세 정보를 불러오는데 실패했습니다.')
+      }
+
+      const data = await response.json()
+      console.log('배송 상세 정보:', data)
+      setSelectedDelivery(data)
+      setShowDeliveryModal(true)
+    } catch (err) {
+      console.error('배송 상세 조회 실패:', err)
+      alert('배송 상세 정보를 불러오는데 실패했습니다.')
+    } finally {
+      setDeliveryLoading(false)
+    }
+  }
+
+
   return (
     <section className="main-page donation-status-page">
       <div className="main-shell donation-status-shell">
@@ -522,18 +566,16 @@ export default function OrganizationDonationStatusPage({
                                 <button
                                   type="button"
                                   className="btn-filter"
-                                  onClick={() => {
-                                    if (onNavigateDeliveryStatus) {
-                                      // 배송 조회 페이지로 이동하고 배송 ID 전달
-                                      onNavigateDeliveryStatus(donation.delivery.id)
-                                    } else {
-                                      // 기존 모달 방식 (하위 호환성)
-                                      setDeliveryModal(donation.delivery)
-                                    }
+                                  disabled={deliveryLoading}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
+                                    console.log('배송 조회 버튼 클릭:', donation.delivery.id)
+                                    handleViewDeliveryDetail(donation.delivery.id, e)
                                   }}
                                   style={{ fontSize: '12px', padding: '4px 8px' }}
                                 >
-                                  배송 조회
+                                  {deliveryLoading ? '로딩...' : '배송 조회'}
                                 </button>
                               ) : (
                                 <span style={{ color: '#999', fontSize: '12px' }}>배송 정보 없음</span>
@@ -728,71 +770,163 @@ export default function OrganizationDonationStatusPage({
           </div>
         </div>
       )}
-      {deliveryModal && (
-        <div className="donation-modal-overlay" onClick={() => setDeliveryModal(null)}>
-          <div className="donation-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-            <h2>배송 정보</h2>
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>배송 상태</h3>
-              <div style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: '8px' }}>
-                <p style={{ margin: '0.25rem 0' }}>
-                  <strong>상태:</strong>{' '}
-                  <span style={{
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    background: deliveryModal.status === 'DELIVERED' ? '#d1fae5' :
-                                deliveryModal.status === 'IN_TRANSIT' ? '#dbeafe' :
-                                (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '#fef3c7' : '#f3f4f6',
-                    color: deliveryModal.status === 'DELIVERED' ? '#065f46' :
-                           deliveryModal.status === 'IN_TRANSIT' ? '#1e40af' :
-                           (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '#92400e' : '#6b7280'
-                  }}>
-                    {deliveryModal.status === 'DELIVERED' ? '완료' :
-                     deliveryModal.status === 'IN_TRANSIT' ? '배송중' :
-                     (deliveryModal.status === 'PENDING' || deliveryModal.status === 'PREPARING') ? '대기' : deliveryModal.status}
-                  </span>
-                </p>
-                {deliveryModal.trackingNumber && (
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>운송장 번호:</strong> {deliveryModal.trackingNumber}
-                  </p>
+      {/* 배송 상세 정보 모달 */}
+      {showDeliveryModal && selectedDelivery && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            setShowDeliveryModal(false)
+            setSelectedDelivery(null)
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'white',
+              padding: '2rem',
+              borderRadius: '8px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2>배송 상세 정보</h2>
+              <button 
+                onClick={() => {
+                  setShowDeliveryModal(false)
+                  setSelectedDelivery(null)
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#7a6b55'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              <div>
+                <strong>송장번호:</strong> {selectedDelivery.trackingNumber || `DEL-${selectedDelivery.id}`}
+              </div>
+              <div>
+                <strong>택배사:</strong> {selectedDelivery.carrier || '미정'}
+              </div>
+              <div>
+                <strong>배송 상태:</strong> 
+                <span 
+                  className="donation-status-badge" 
+                  style={{ 
+                    color: selectedDelivery.status === 'DELIVERED' ? '#4eed90' :
+                            selectedDelivery.status === 'IN_TRANSIT' ? '#64d1ff' :
+                            (selectedDelivery.status === 'PENDING' || selectedDelivery.status === 'PREPARING') ? '#ffb347' :
+                            selectedDelivery.status === 'CANCELLED' ? '#ff6b6b' : '#7a6b55',
+                    marginLeft: '0.5rem' 
+                  }}
+                >
+                  {selectedDelivery.status === 'DELIVERED' ? '완료' :
+                   selectedDelivery.status === 'IN_TRANSIT' ? '배송중' :
+                   (selectedDelivery.status === 'PENDING' || selectedDelivery.status === 'PREPARING') ? '대기' :
+                   selectedDelivery.status === 'CANCELLED' ? '취소' : '대기'}
+                </span>
+              </div>
+              
+              <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem', marginTop: '1rem' }}>
+                <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>보내는 사람</h3>
+                <div><strong>이름:</strong> {selectedDelivery.senderName}</div>
+                <div><strong>전화번호:</strong> {selectedDelivery.senderPhone}</div>
+                <div><strong>주소:</strong> {selectedDelivery.senderAddress} {selectedDelivery.senderDetailAddress || ''}</div>
+                {selectedDelivery.senderPostalCode && (
+                  <div><strong>우편번호:</strong> {selectedDelivery.senderPostalCode}</div>
                 )}
-                {deliveryModal.carrier && (
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>택배사:</strong> {deliveryModal.carrier}
-                  </p>
+              </div>
+              
+              <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>받는 사람</h3>
+                <div><strong>이름:</strong> {selectedDelivery.receiverName}</div>
+                <div><strong>전화번호:</strong> {selectedDelivery.receiverPhone}</div>
+                <div><strong>주소:</strong> {selectedDelivery.receiverAddress} {selectedDelivery.receiverDetailAddress || ''}</div>
+                {selectedDelivery.receiverPostalCode && (
+                  <div><strong>우편번호:</strong> {selectedDelivery.receiverPostalCode}</div>
                 )}
-                {deliveryModal.shippedAt && (
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>발송일:</strong> {new Date(deliveryModal.shippedAt).toLocaleString('ko-KR')}
-                  </p>
+              </div>
+              
+              {selectedDelivery.donation && selectedDelivery.donation.donationItem && (
+                <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                  <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>배송 물품</h3>
+                  {(selectedDelivery.donation.donationItem.detailCategory || selectedDelivery.donation.donationItem.mainCategory) && (
+                    <div><strong>카테고리:</strong> {selectedDelivery.donation.donationItem.detailCategory || selectedDelivery.donation.donationItem.mainCategory}</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.size && (
+                    <div><strong>사이즈:</strong> {selectedDelivery.donation.donationItem.size}</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.genderType && (
+                    <div><strong>성별:</strong> {selectedDelivery.donation.donationItem.genderType === 'MALE' ? '남성' : selectedDelivery.donation.donationItem.genderType === 'FEMALE' ? '여성' : '공용'}</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.quantity && selectedDelivery.donation.donationItem.quantity > 1 && (
+                    <div><strong>수량:</strong> {selectedDelivery.donation.donationItem.quantity}개</div>
+                  )}
+                  {selectedDelivery.donation.donationItem.description && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <strong>설명:</strong>
+                      <div style={{ marginTop: '0.25rem', color: '#666', fontSize: '0.9rem' }}>
+                        {selectedDelivery.donation.donationItem.description}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div style={{ borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                <h3 style={{ marginBottom: '0.5rem', color: '#2f261c' }}>배송 일정</h3>
+                {selectedDelivery.shippedAt && (
+                  <div><strong>배송 시작:</strong> {new Date(selectedDelivery.shippedAt).toLocaleString('ko-KR')}</div>
                 )}
-                {deliveryModal.deliveredAt && (
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>배송완료일:</strong> {new Date(deliveryModal.deliveredAt).toLocaleString('ko-KR')}
-                  </p>
+                {selectedDelivery.deliveredAt && (
+                  <div><strong>배송 완료:</strong> {new Date(selectedDelivery.deliveredAt).toLocaleString('ko-KR')}</div>
+                )}
+                {selectedDelivery.createdAt && (
+                  <div><strong>등록일:</strong> {new Date(selectedDelivery.createdAt).toLocaleString('ko-KR')}</div>
                 )}
               </div>
             </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>발송인 정보</h3>
-              <div style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: '8px' }}>
-                <p style={{ margin: '0.25rem 0' }}><strong>이름:</strong> {deliveryModal.senderName || '-'}</p>
-                <p style={{ margin: '0.25rem 0' }}><strong>연락처:</strong> {deliveryModal.senderPhone || '-'}</p>
-                <p style={{ margin: '0.25rem 0' }}><strong>주소:</strong> {deliveryModal.senderAddress || '-'}</p>
-              </div>
+            
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowDeliveryModal(false)
+                  setSelectedDelivery(null)
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: '#f5f5f5',
+                  color: '#2f261c',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                닫기
+              </button>
             </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>수령인 정보</h3>
-              <div style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: '8px' }}>
-                <p style={{ margin: '0.25rem 0' }}><strong>이름:</strong> {deliveryModal.receiverName || '-'}</p>
-                <p style={{ margin: '0.25rem 0' }}><strong>연락처:</strong> {deliveryModal.receiverPhone || '-'}</p>
-                <p style={{ margin: '0.25rem 0' }}><strong>주소:</strong> {deliveryModal.receiverAddress || '-'}</p>
-              </div>
-            </div>
-            <button type="button" className="btn-cancel" onClick={() => setDeliveryModal(null)}>
-              닫기
-            </button>
           </div>
         </div>
       )}
