@@ -7,6 +7,7 @@ import com.rewear.delivery.entity.Delivery;
 import com.rewear.delivery.repository.DeliveryRepository;
 import com.rewear.donation.entity.Donation;
 import com.rewear.donation.repository.DonationRepository;
+import com.rewear.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -123,6 +124,15 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Transactional(readOnly = true)
     public List<Delivery> getDeliveriesByStatus(DeliveryStatus status) {
         return deliveryRepository.findByStatus(status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Delivery> getDeliveriesByDonor(User user) {
+        return deliveryRepository.findByDonorIdExcludingStatus(
+                user.getId(),
+                DonationStatus.CANCELLED
+        );
     }
 }
 

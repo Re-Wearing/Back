@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -203,10 +204,14 @@ public class DonationApiController {
             log.info("기부 상태 조회 API - 조회된 기부 개수: {}", donations.size());
             
             // 각 기부에 대한 배송 정보 로드
+            Map<Long, com.rewear.delivery.entity.Delivery> deliveryMap = deliveryService.getDeliveriesByDonor(user).stream()
+                    .filter(delivery -> delivery.getDonation() != null)
+                    .collect(Collectors.toMap(delivery -> delivery.getDonation().getId(), Function.identity(), (a, b) -> a));
+
             donations.forEach(donation -> {
-                deliveryService.getDeliveryByDonation(donation).ifPresent(delivery -> {
-                    donation.setDelivery(delivery);
-                });
+                if (deliveryMap.containsKey(donation.getId())) {
+                    donation.setDelivery(deliveryMap.get(donation.getId()));
+                }
                 log.info("기부 ID: {}, 상태: {}, DonationItem: {}", 
                     donation.getId(), 
                     donation.getStatus(), 
@@ -221,11 +226,19 @@ public class DonationApiController {
             
             List<DonationStatusResponseDto.ApprovalItemDto> approvalItems = donations.stream()
                     .filter(donation -> {
-                        boolean shouldInclude = donation.getStatus() != com.rewear.common.enums.DonationStatus.COMPLETED;
-                        if (!shouldInclude) {
-                            log.info("필터링됨 - 기부 ID: {}, 상태: {} (COMPLETED이므로 제외)", donation.getId(), donation.getStatus());
+                        // COMPLETED 상태이지만 배송이 완료되지 않은 경우는 포함 (매칭됨 상태로 표시)
+                        if (donation.getStatus() == com.rewear.common.enums.DonationStatus.COMPLETED) {
+                            // 배송이 완료된 경우만 제외 (completedDonations에 포함)
+                            if (donation.getDelivery() != null && 
+                                donation.getDelivery().getStatus() == com.rewear.common.enums.DeliveryStatus.DELIVERED) {
+                                log.info("필터링됨 - 기부 ID: {}, 상태: {} (배송 완료되어 completedDonations에 포함)", donation.getId(), donation.getStatus());
+                                return false;
+                            }
+                            // 배송이 완료되지 않은 COMPLETED 상태는 포함 (매칭됨으로 표시)
+                            return true;
                         }
-                        return shouldInclude;
+                        // COMPLETED가 아닌 경우는 모두 포함
+                        return true;
                     })
                     .map(donation -> {
                         log.info("기부 변환 시작 - ID: {}, DonationItem null 여부: {}", 
@@ -290,9 +303,24 @@ public class DonationApiController {
             
             log.info("approvalItems 생성 완료 - 총 {}개", approvalItems.size());
             
-            // CompletedDonationDto 리스트 생성 (COMPLETED 상태인 기부만)
+            // CompletedDonationDto 리스트 생성 (COMPLETED 상태이고 택배사가 지정되었으며 배송 상태가 완료인 기부만)
             List<DonationStatusResponseDto.CompletedDonationDto> completedDonations = donations.stream()
-                    .filter(donation -> donation.getStatus() == com.rewear.common.enums.DonationStatus.COMPLETED)
+                    .filter(donation -> {
+                        // COMPLETED 상태이고 배송 정보가 있으며 택배사가 지정된 경우만
+                        if (donation.getStatus() != com.rewear.common.enums.DonationStatus.COMPLETED) {
+                            return false;
+                        }
+                        if (donation.getDelivery() == null) {
+                            return false;
+                        }
+                        // 택배사가 지정되어 있어야 함
+                        String carrier = donation.getDelivery().getCarrier();
+                        if (carrier == null || carrier.trim().isEmpty() || carrier.equals("미정")) {
+                            return false;
+                        }
+                        // 배송 상태가 완료(DELIVERED)인 경우만
+                        return donation.getDelivery().getStatus() == com.rewear.common.enums.DeliveryStatus.DELIVERED;
+                    })
                     .map(donation -> {
                         // 기부 내용 생성
                         String items = "기부 물품";
@@ -307,8 +335,52 @@ public class DonationApiController {
                         
                         // 수혜 기관
                         String organization = "자동 매칭";
+                        String businessNo = null;
+                        String organAddress = null;
                         if (donation.getOrgan() != null) {
                             organization = donation.getOrgan().getOrgName();
+                            businessNo = donation.getOrgan().getBusinessNo();
+                            // 기관의 User를 통해 주소 가져오기
+                            if (donation.getOrgan().getUser() != null) {
+                                organAddress = donation.getOrgan().getUser().getAddress();
+                            }
+                        }
+                        
+                        // 기부 물품 카테고리 정보
+                        String mainCategory = null;
+                        String detailCategory = null;
+                        if (donation.getDonationItem() != null) {
+                            if (donation.getDonationItem().getMainCategory() != null) {
+                                mainCategory = donation.getDonationItem().getMainCategory().name();
+                            }
+                            detailCategory = donation.getDonationItem().getDetailCategory();
+                        }
+                        
+                        // 배송 ID 및 배송 상태
+                        Long deliveryId = null;
+                        String deliveryStatus = "대기";
+                        if (donation.getDelivery() != null) {
+                            deliveryId = donation.getDelivery().getId();
+                            com.rewear.common.enums.DeliveryStatus status = donation.getDelivery().getStatus();
+                            if (status != null) {
+                                switch (status) {
+                                    case PENDING:
+                                    case PREPARING:
+                                        deliveryStatus = "대기";
+                                        break;
+                                    case IN_TRANSIT:
+                                        deliveryStatus = "배송중";
+                                        break;
+                                    case DELIVERED:
+                                        deliveryStatus = "완료";
+                                        break;
+                                    case CANCELLED:
+                                        deliveryStatus = "취소";
+                                        break;
+                                    default:
+                                        deliveryStatus = "대기";
+                                }
+                            }
                         }
                         
                         return DonationStatusResponseDto.CompletedDonationDto.builder()
@@ -316,7 +388,12 @@ public class DonationApiController {
                                 .date(DonationStatusConverter.formatDate(donation.getCreatedAt()))
                                 .items(items)
                                 .organization(organization)
-                                .status("완료")
+                                .status(deliveryStatus) // 배송 상태로 변경
+                                .deliveryId(deliveryId)
+                                .businessNo(businessNo)
+                                .organAddress(organAddress)
+                                .mainCategory(mainCategory)
+                                .detailCategory(detailCategory)
                                 .build();
                     })
                     .collect(Collectors.toList());
@@ -328,7 +405,9 @@ public class DonationApiController {
                     .매칭됨((int) approvalItems.stream().filter(item -> item.getStatus().equals("매칭됨")).count())
                     .거절됨((int) approvalItems.stream().filter(item -> item.getStatus().equals("거절됨")).count())
                     .배송대기((int) approvalItems.stream().filter(item -> item.getStatus().equals("배송대기")).count())
+                    .배송중((int) approvalItems.stream().filter(item -> item.getStatus().equals("배송중")).count())
                     .취소됨((int) approvalItems.stream().filter(item -> item.getStatus().equals("취소됨")).count())
+                    .완료(completedDonations.size()) // 완료된 기부는 completedDonations에만 포함되므로 개수 사용
                     .build();
             
             log.info("기부 상태 조회 API - approvalItems 개수: {}, completedDonations 개수: {}", 

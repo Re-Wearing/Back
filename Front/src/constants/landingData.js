@@ -22,7 +22,6 @@ export const getNavLinksForRole = role => {
     return [
       { label: '사업소개', href: '/business' },
       { label: '내 기부 관리', href: '/donation-status' },
-      { label: '배송 조회', href: '#delivery-check' },
       { label: '게시판', href: '#board' },
       { label: '마이페이지', href: '#mypage' },
       { label: 'FAQ', href: '#faq' }

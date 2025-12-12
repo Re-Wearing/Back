@@ -5,15 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fe2226d1-648d-4b06-92b0-ffd941fb9ab2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Back/src/main/java/com/rewear/admin/controller/AdminController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Back/src/main/java/com/rewear/admin/controller/AdminController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Back/src/main/java/com/rewear/admin/service/AdminServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/Back/src/main/java/com/rewear/admin/service/AdminServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/src/pages/AdminManagePage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/AdminManagePage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/src/pages/AdminOrgApprovalPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/AdminOrgApprovalPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/src/pages/BoardWritePage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/BoardWritePage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/8.14.3/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/8.14.3/executionHistory/executionHistory.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/8.14.3/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/8.14.3/executionHistory/executionHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/8.14.3/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/8.14.3/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/8.14.3/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/8.14.3/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/8.14.3/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/8.14.3/fileHashes/resourceHashesCache.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/Back/.gradle/file-system.probe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/build/classes/java/main/com/rewear/delivery/controller/DeliveryApiController.class" beforeDir="false" afterPath="$PROJECT_DIR$/Back/build/classes/java/main/com/rewear/delivery/controller/DeliveryApiController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/build/reports/problems/problems-report.html" beforeDir="false" afterPath="$PROJECT_DIR$/Back/build/reports/problems/problems-report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/Back/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Back/src/main/java/com/rewear/delivery/controller/DeliveryApiController.java" beforeDir="false" afterPath="$PROJECT_DIR$/Back/src/main/java/com/rewear/delivery/controller/DeliveryApiController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/node_modules/.vite/deps/_metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/Front/node_modules/.vite/deps/_metadata.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Front/src/pages/DeliveryCheckPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/DeliveryCheckPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/src/pages/DonationPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/DonationPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Front/src/pages/NotificationPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/NotificationPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/src/pages/DonationStatusPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/DonationStatusPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Front/src/pages/OrganizationDonationStatusPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/Front/src/pages/OrganizationDonationStatusPage.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,9 +49,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 1
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="36PjcLjBFa2Py0NcLIKA7RZNIcJ" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -51,12 +60,16 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Gradle.Build Back.executor": "Run",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "Spring Boot.ReWearApplication.executor": "Run",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "vinn81",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/dw_42/OneDrive/바탕 화면/DW",
+    "last_opened_file_path": "C:/Users/dw_42/OneDrive/바탕 화면/front-back",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -91,6 +104,7 @@
       <option name="presentableId" value="Default" />
       <updated>1764915178529</updated>
       <workItem from="1764915179542" duration="743000" />
+      <workItem from="1765451290331" duration="1595000" />
     </task>
     <servers />
   </component>
