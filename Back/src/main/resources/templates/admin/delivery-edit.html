@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>배송 정보 수정 | RE-WEAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bd: #e5e7eb;
+            --txt: #111827;
+            --sub: #6b7280;
+            --ok: #065f46;
+            --warn: #b91c1c;
+            --bg: #f7f7fb;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--txt);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+        .wrap {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--bd);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--txt);
+        }
+        .required {
+            color: var(--warn);
+        }
+        input[type="text"],
+        input[type="tel"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--ok);
+        }
+        .error {
+            color: var(--warn);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .section {
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--bd);
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--ok);
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background: var(--ok);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #047857;
+        }
+        .btn-secondary {
+            background: var(--bd);
+            color: var(--txt);
+        }
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div th:replace="~{fragments/nav :: mainNav}"></div>
+
+    <div class="card">
+        <h1>배송 정보 수정</h1>
+
+        <form th:action="@{/admin/deliveries/{id}/edit(id=${delivery.id})}" th:object="${form}" method="post">
+            <input type="hidden" th:field="*{donationId}"/>
+
+            <div class="section">
+                <div class="section-title">발송인 정보</div>
+                <div class="form-group">
+                    <label for="senderName">이름 <span class="required">*</span></label>
+                    <input type="text" id="senderName" th:field="*{senderName}" required/>
+                    <div class="error" th:if="${#fields.hasErrors('senderName')}" th:errors="*{senderName}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="senderPhone">전화번호 <span class="required">*</span></label>
+                    <input type="tel" id="senderPhone" th:field="*{senderPhone}" placeholder="010-1234-5678" required/>
+                    <div class="error" th:if="${#fields.hasErrors('senderPhone')}" th:errors="*{senderPhone}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="senderPostalCode">우편번호</label>
+                    <input type="text" id="senderPostalCode" th:field="*{senderPostalCode}" placeholder="12345"/>
+                </div>
+                <div class="form-group">
+                    <label for="senderAddress">주소 <span class="required">*</span></label>
+                    <input type="text" id="senderAddress" th:field="*{senderAddress}" required/>
+                    <div class="error" th:if="${#fields.hasErrors('senderAddress')}" th:errors="*{senderAddress}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="senderDetailAddress">상세주소</label>
+                    <input type="text" id="senderDetailAddress" th:field="*{senderDetailAddress}"/>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">수령인 정보</div>
+                <div class="form-group">
+                    <label for="receiverName">이름 <span class="required">*</span></label>
+                    <input type="text" id="receiverName" th:field="*{receiverName}" required/>
+                    <div class="error" th:if="${#fields.hasErrors('receiverName')}" th:errors="*{receiverName}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="receiverPhone">전화번호 <span class="required">*</span></label>
+                    <input type="tel" id="receiverPhone" th:field="*{receiverPhone}" placeholder="010-1234-5678" required/>
+                    <div class="error" th:if="${#fields.hasErrors('receiverPhone')}" th:errors="*{receiverPhone}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="receiverPostalCode">우편번호</label>
+                    <input type="text" id="receiverPostalCode" th:field="*{receiverPostalCode}" placeholder="12345"/>
+                </div>
+                <div class="form-group">
+                    <label for="receiverAddress">주소 <span class="required">*</span></label>
+                    <input type="text" id="receiverAddress" th:field="*{receiverAddress}" required/>
+                    <div class="error" th:if="${#fields.hasErrors('receiverAddress')}" th:errors="*{receiverAddress}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="receiverDetailAddress">상세주소</label>
+                    <input type="text" id="receiverDetailAddress" th:field="*{receiverDetailAddress}"/>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">택배 정보 (택배 배송인 경우)</div>
+                <div class="form-group">
+                    <label for="carrier">택배사</label>
+                    <select id="carrier" th:field="*{carrier}">
+                        <option value="">택배사 선택</option>
+                        <option value="CJ대한통운">CJ대한통운</option>
+                        <option value="한진택배">한진택배</option>
+                        <option value="로젠택배">로젠택배</option>
+                        <option value="롯데택배">롯데택배</option>
+                        <option value="우체국택배">우체국택배</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trackingNumber">운송장 번호</label>
+                    <input type="text" id="trackingNumber" th:field="*{trackingNumber}" placeholder="운송장 번호를 입력하세요"/>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">수정하기</button>
+                <a th:href="@{/admin/deliveries/{id}(id=${delivery.id})}" class="btn btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+
