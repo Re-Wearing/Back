@@ -1,0 +1,22 @@
+# Frontend
+node_modules/
+**/node_modules/
+
+# Vite
+.vite/
+dist/
+
+# IntelliJ / IDEA
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+**/.gradle/
+
+# Build outputs
+build/
+**/build/
+
+# Java
+*.class
