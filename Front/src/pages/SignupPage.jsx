@@ -1,3 +1,4 @@
+import fetch from '../apiFetch'
 import { useEffect, useMemo, useState } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
 import { getNavLinksForRole, membershipOptions, membershipForms } from '../constants/landingData'
@@ -654,7 +655,6 @@ export default function SignupPage({
               <p style={{ marginBottom: '1rem' }}>
                 회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 정보주체의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.<br />
                 - 개인정보 보호책임자: RE:WEAR 관리자<br />
-                - 연락처: rewear0903@gmail.com
               </p>
 
               <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>

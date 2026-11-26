@@ -1,3 +1,4 @@
+import fetch from '../apiFetch'
 import { useEffect, useState } from 'react'
 import '../styles/admin-manage.css'
 

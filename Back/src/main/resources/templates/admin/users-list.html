@@ -160,9 +160,9 @@
                         <span class="role-badge" th:each="role : ${user.roles}" th:text="${role}">ROLE_USER</span>
                     </td>
                     <td>
-                        <a th:href="@{'/admin/users/delete/' + ${user.id}}"
+                        <form th:action="@{'/admin/users/delete/' + ${user.id}}" method="post" style="display:inline"><button type="submit"
                            onclick="return confirm('정말 이 사용자를 삭제하시겠습니까?')"
-                           class="action-link">삭제</a>
+                           class="action-link">삭제</button></form>
                     </td>
                 </tr>
 

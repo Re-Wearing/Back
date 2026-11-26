@@ -1,5 +1,7 @@
 package com.rewear.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import com.rewear.common.enums.Role;
 import com.rewear.common.enums.WarnStatus;
 import jakarta.persistence.*;
@@ -34,6 +36,7 @@ public class User {
 
     @Column(nullable = false)
     @NotBlank(message = "비밀번호는 필수입니다.")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password; // 비밀번호 (암호화 저장)
 
     @Column(nullable = false, length = 50)

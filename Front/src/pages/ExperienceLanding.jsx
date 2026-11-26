@@ -1,3 +1,4 @@
+import fetch from '../apiFetch'
 import { useEffect, useState } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
 import { getNavLinksForRole } from '../constants/landingData'
@@ -258,7 +259,7 @@ export default function ExperienceLanding({
         </section>
 
         <footer className="landing-footer">
-          <p>© {new Date().getFullYear()} RE:WEAR · 따뜻함이 이어지는 곳 | 이메일 : rewear0903@gmail.com</p>
+          <p>© {new Date().getFullYear()} RE:WEAR · 따뜻함이 이어지는 곳</p>
         </footer>
       </div>
     </section>

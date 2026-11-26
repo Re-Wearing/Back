@@ -51,8 +51,6 @@ public class AdminOrganQueryService {
                 contactName = o.getUser().getName();
             }
             
-            log.debug("기관 정보 변환 - id: {}, orgName: {}, username: {}, phone: {}, email: {}", 
-                    o.getId(), o.getOrgName(), username, phone, email);
             return PendingOrganVM.of(
                     o.getId(),
                     o.getOrgName(),

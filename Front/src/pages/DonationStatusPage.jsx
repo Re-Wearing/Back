@@ -1,3 +1,4 @@
+import fetch from '../apiFetch'
 import { useEffect, useMemo, useState } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
 import jsPDF from 'jspdf'

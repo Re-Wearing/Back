@@ -1,5 +1,7 @@
 package com.rewear.config;
 
+import org.springframework.security.access.AccessDeniedException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -86,12 +88,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ModelAndView handleException(Exception e, HttpServletRequest request) {
-        log.error("예상치 못한 오류 발생 - URI: {}, 메시지: {}", 
-                request.getRequestURI(), e.getMessage(), e);
-        
+        if (e instanceof AccessDeniedException denied) {
+            throw denied;
+        }
+        log.error("Unexpected request failure ({})", e.getClass().getSimpleName());
+
         ModelAndView mav = new ModelAndView("error");
+        mav.setStatus(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
         mav.addObject("error", "오류가 발생했습니다.");
-        mav.addObject("message", e.getMessage());
         return mav;
     }
 }

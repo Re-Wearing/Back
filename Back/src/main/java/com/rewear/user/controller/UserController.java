@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -22,6 +23,8 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import java.security.Principal;
 import java.util.EnumSet;
 import java.util.List;
@@ -44,7 +47,16 @@ public class UserController {
      * - 클라이언트에서 username, password, name, email 등을 JSON으로 전달
      */
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody User user) {
+    public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
+        User user = new User();
+        user.setUsername(request.username());
+        user.setPassword(request.password());
+        user.setName(request.name());
+        user.setEmail(request.email());
+        user.setPhone(request.phone());
+        user.setAddressPostcode(request.addressPostcode());
+        user.setAddress(request.address());
+        user.setNickname(request.nickname());
         try {
             User createdUser = userService.registerUser(user);
             return ResponseEntity.ok(createdUser);
@@ -64,8 +76,6 @@ public class UserController {
     @PostMapping("/signup/organ")
     public ResponseEntity<?> signupOrgan(@RequestBody OrganSignupRequest request) {
         try {
-            log.info("기관 회원가입 요청 - username: {}, orgName: {}, businessNumber: {}, email: {}", 
-                    request.getUsername(), request.getOrgName(), request.getBusinessNumber(), request.getEmail());
             
             // 입력 검증
             if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
@@ -114,14 +124,10 @@ public class UserController {
             user.setNickname(request.getOrgName().trim()); // 기관명을 닉네임으로 설정
             user.setRoles(EnumSet.of(Role.ORGAN)); // ORGAN 권한 부여
             
-            log.info("User 생성 시작 - username: {}, email: {}", user.getUsername(), user.getEmail());
             User createdUser = userService.registerUser(user);
-            log.info("User 생성 완료 - userId: {}, username: {}", createdUser.getId(), createdUser.getUsername());
             
             // 사업자번호에서 하이픈 제거
             String businessNoDigits = request.getBusinessNumber().replaceAll("\\D", "");
-            log.info("Organ 생성 시작 - userId: {}, businessNo: {}, orgName: {}", 
-                    createdUser.getId(), businessNoDigits, request.getOrgName());
             
             // Organ 엔티티 생성 (PENDING 상태)
             organService.createPending(createdUser, businessNoDigits, request.getOrgName().trim());
@@ -138,8 +144,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("message", e.getMessage(), "error", "STATE_ERROR"));
         } catch (Exception e) {
-            log.error("기관 회원가입 오류 발생 - username: {}, orgName: {}, error: {}", 
-                    request.getUsername(), request.getOrgName(), e.getMessage(), e);
             return ResponseEntity.internalServerError()
                 .body(Map.of("message", "기관 회원가입 중 오류가 발생했습니다: " + e.getMessage(), "error", "INTERNAL_ERROR"));
         }
@@ -167,11 +171,11 @@ public class UserController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request,
-                                    HttpServletRequest httpRequest) {
+                                    HttpServletRequest httpRequest,
+                                    HttpServletResponse httpResponse) {
         String username = request.get("username");
         String password = request.get("password");
         
-        log.info("로그인 시도: username={}", username);
         
         if (username == null || username.trim().isEmpty()) {
             log.warn("로그인 실패: 아이디가 비어있음");
@@ -185,24 +189,13 @@ public class UserController {
         }
         
         try {
-            log.debug("인증 시도 시작: username={}", username.trim().toLowerCase());
             // Spring Security 인증 수행
             UsernamePasswordAuthenticationToken authToken = 
                 new UsernamePasswordAuthenticationToken(username.trim().toLowerCase(), password);
             
             Authentication authentication = authenticationManager.authenticate(authToken);
-            log.info("인증 성공: username={}", username.trim().toLowerCase());
             
             // SecurityContext 생성 및 세션에 저장
-            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-            securityContext.setAuthentication(authentication);
-            SecurityContextHolder.setContext(securityContext);
-            
-            httpRequest.getSession().setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                securityContext
-            );
-            
             // 사용자 정보 조회
             User user = userService.findByUsername(username.trim().toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -213,7 +206,6 @@ public class UserController {
                 if (organOpt.isPresent()) {
                     var organ = organOpt.get();
                     if (organ.getStatus() == com.rewear.common.enums.OrganStatus.PENDING) {
-                        log.warn("기관 계정 로그인 차단: username={}, status=PENDING", username);
                         return ResponseEntity.ok(Map.of(
                             "ok", false,
                             "message", "기관 계정은 관리자 승인 후 로그인할 수 있습니다.",
@@ -222,14 +214,20 @@ public class UserController {
                     }
                 }
             }
+
+            httpRequest.getSession();
+            httpRequest.changeSessionId();
+            new HttpSessionCsrfTokenRepository().saveToken(null, httpRequest, httpResponse);
+            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+            securityContext.setAuthentication(authentication);
+            SecurityContextHolder.setContext(securityContext);
             
-            // 비밀번호 제거 후 반환
-            user.setPassword(null);
+            httpRequest.getSession().setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                securityContext
+            );
+
             
-            log.info("로그인 성공: username={}, role={}", username, 
-                user.getRoles() != null && !user.getRoles().isEmpty() 
-                    ? user.getRoles().iterator().next().name() 
-                    : "USER");
             
             return ResponseEntity.ok(Map.of(
                 "ok", true,
@@ -239,15 +237,12 @@ public class UserController {
                     : "USER"
             ));
         } catch (BadCredentialsException e) {
-            log.warn("로그인 실패: 잘못된 자격증명 - username={}", username);
             return ResponseEntity.status(401)
                 .body(Map.of("ok", false, "message", "아이디 또는 비밀번호가 올바르지 않습니다.", "errorType", "BAD_CREDENTIALS"));
         } catch (LockedException e) {
-            log.warn("로그인 실패: 계정 정지 - username={}, message={}", username, e.getMessage());
             return ResponseEntity.status(403)
                 .body(Map.of("ok", false, "message", e.getMessage(), "errorType", "ACCOUNT_LOCKED"));
         } catch (DisabledException e) {
-            log.warn("로그인 실패: 계정 비활성화 - username={}, message={}", username, e.getMessage());
             // 기관 승인 대기/거부인 경우
             return ResponseEntity.status(403)
                 .body(Map.of("ok", false, "message", e.getMessage(), "errorType", "ORG_PENDING", "reason", "orgPending"));
@@ -255,28 +250,22 @@ public class UserController {
             // InternalAuthenticationServiceException으로 감싸진 예외 처리
             Throwable cause = e.getCause();
             if (cause instanceof DisabledException) {
-                log.warn("로그인 실패: 계정 비활성화 (Internal) - username={}, message={}", username, cause.getMessage());
                 return ResponseEntity.status(403)
                     .body(Map.of("ok", false, "message", cause.getMessage(), "errorType", "ORG_PENDING", "reason", "orgPending"));
             } else if (cause instanceof LockedException) {
-                log.warn("로그인 실패: 계정 정지 (Internal) - username={}, message={}", username, cause.getMessage());
                 return ResponseEntity.status(403)
                     .body(Map.of("ok", false, "message", cause.getMessage(), "errorType", "ACCOUNT_LOCKED"));
             } else if (cause instanceof BadCredentialsException) {
-                log.warn("로그인 실패: 잘못된 자격증명 (Internal) - username={}", username);
                 return ResponseEntity.status(401)
                     .body(Map.of("ok", false, "message", "아이디 또는 비밀번호가 올바르지 않습니다.", "errorType", "BAD_CREDENTIALS"));
             } else {
-                log.error("로그인 중 예외 발생 (Internal): username={}, cause={}", username, cause != null ? cause.getClass().getSimpleName() : "null", e);
                 return ResponseEntity.status(500)
                     .body(Map.of("ok", false, "message", "로그인 중 오류가 발생했습니다.", "errorType", "INTERNAL_ERROR"));
             }
         } catch (IllegalArgumentException e) {
-            log.warn("로그인 실패: 사용자 없음 - username={}, message={}", username, e.getMessage());
             return ResponseEntity.status(401)
                 .body(Map.of("ok", false, "message", e.getMessage(), "errorType", "USER_NOT_FOUND"));
         } catch (Exception e) {
-            log.error("로그인 중 예외 발생: username={}", username, e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "로그인 중 오류가 발생했습니다.", "errorType", "INTERNAL_ERROR"));
         }
@@ -284,9 +273,10 @@ public class UserController {
 
     /**
      * ✅ 전체 사용자 조회
-     * - 관리자 전용으로 사용 가능 (현재는 공개)
+     * - 관리자 전용
      */
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
@@ -296,6 +286,7 @@ public class UserController {
      * ✅ 특정 사용자 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user);
@@ -306,6 +297,7 @@ public class UserController {
      * - 사용자 탈퇴 또는 관리자에 의한 삭제용
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
@@ -344,7 +336,6 @@ public class UserController {
                 "message", "인증코드가 발송되었습니다."
             ));
         } catch (Exception e) {
-            log.error("아이디 찾기 중 오류 발생: name={}, email={}", name, email, e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "아이디 찾기 중 오류가 발생했습니다."));
         }
@@ -395,7 +386,6 @@ public class UserController {
                 "message", "아이디를 찾았습니다."
             ));
         } catch (Exception e) {
-            log.error("아이디 찾기 인증 중 오류 발생: name={}, email={}", name, email, e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "아이디 찾기 중 오류가 발생했습니다."));
         }
@@ -434,7 +424,6 @@ public class UserController {
                 "message", "인증코드가 발송되었습니다."
             ));
         } catch (Exception e) {
-            log.error("비밀번호 찾기 중 오류 발생: username={}, email={}", username, email, e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "비밀번호 찾기 중 오류가 발생했습니다."));
         }
@@ -494,7 +483,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("비밀번호 재설정 중 오류 발생: username={}", username, e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "비밀번호 재설정 중 오류가 발생했습니다."));
         }
@@ -539,7 +527,6 @@ public class UserController {
                 )
             ));
         } catch (Exception e) {
-            log.error("사용자 정보 조회 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "사용자 정보 조회 중 오류가 발생했습니다."));
         }
@@ -602,7 +589,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("프로필 수정 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "프로필 수정 중 오류가 발생했습니다."));
         }
@@ -667,7 +653,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("비밀번호 변경 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "비밀번호 변경 중 오류가 발생했습니다."));
         }
@@ -711,7 +696,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("회원 탈퇴 인증코드 전송 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "인증코드 전송 중 오류가 발생했습니다."));
         }
@@ -762,7 +746,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("회원 탈퇴 인증코드 확인 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "인증코드 확인 중 오류가 발생했습니다."));
         }
@@ -815,7 +798,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("회원 탈퇴 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "회원 탈퇴 중 오류가 발생했습니다."));
         }
@@ -870,7 +852,6 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("이메일 변경 인증코드 전송 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "인증코드 전송 중 오류가 발생했습니다."));
         }
@@ -940,9 +921,12 @@ public class UserController {
             return ResponseEntity.badRequest()
                 .body(Map.of("ok", false, "message", e.getMessage()));
         } catch (Exception e) {
-            log.error("이메일 변경 중 오류 발생: username={}", principal != null ? principal.getName() : "unknown", e);
             return ResponseEntity.status(500)
                 .body(Map.of("ok", false, "message", "이메일 변경 중 오류가 발생했습니다."));
         }
+    }
+
+    public record SignupRequest(String username, String password, String name, String email,
+                                String phone, String addressPostcode, String address, String nickname) {
     }
 }

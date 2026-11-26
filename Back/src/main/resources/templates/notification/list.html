@@ -147,6 +147,8 @@
             opacity: 0.5;
         }
     </style>
+    <meta name="csrf-token" th:content="${_csrf.token}">
+    <meta name="csrf-header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <div class="wrap">
@@ -196,6 +198,7 @@ function markAsRead(notificationId) {
     fetch('/notifications/' + notificationId + '/read', {
         method: 'POST',
         headers: {
+            [document.querySelector('meta[name="csrf-header"]').content]: document.querySelector('meta[name="csrf-token"]').content,
             'Content-Type': 'application/json',
         }
     })
@@ -215,6 +218,7 @@ function markAllAsRead() {
         fetch('/notifications/read-all', {
             method: 'POST',
             headers: {
+                [document.querySelector('meta[name="csrf-header"]').content]: document.querySelector('meta[name="csrf-token"]').content,
                 'Content-Type': 'application/json',
             }
         })
