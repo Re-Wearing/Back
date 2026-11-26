@@ -1,5 +1,7 @@
 package com.rewear.common.controller;
 
+import com.rewear.common.UploadedImage;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 @Slf4j
@@ -62,14 +63,14 @@ public class FileUploadController {
 
             return ResponseEntity.ok(response);
         } catch (IOException e) {
-            log.error("파일 업로드 실패", e);
+            log.warn("File upload failed ({})", e.getClass().getSimpleName());
             response.put("success", false);
-            response.put("message", "파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "파일 업로드 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(response);
         } catch (Exception e) {
-            log.error("파일 업로드 실패", e);
+            log.warn("File upload failed ({})", e.getClass().getSimpleName());
             response.put("success", false);
-            response.put("message", "파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "파일 업로드 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(response);
         }
     }
@@ -118,8 +119,8 @@ public class FileUploadController {
                     fileInfo.put("originalName", file.getOriginalFilename());
                     uploadedFiles.add(fileInfo);
                 } catch (Exception e) {
-                    log.error("파일 업로드 실패: {}", file.getOriginalFilename(), e);
-                    errors.add(file.getOriginalFilename() + ": " + e.getMessage());
+                    log.warn("File upload failed ({})", e.getClass().getSimpleName());
+                    errors.add("파일을 저장할 수 없습니다. 지원되는 이미지 형식을 확인해 주세요.");
                 }
             }
 
@@ -133,9 +134,9 @@ public class FileUploadController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("다중 파일 업로드 실패", e);
+            log.warn("File upload failed ({})", e.getClass().getSimpleName());
             response.put("success", false);
-            response.put("message", "파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "파일 업로드 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(response);
         }
     }
@@ -144,23 +145,7 @@ public class FileUploadController {
      * 파일 저장 메서드
      */
     private String saveFile(MultipartFile file) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : ".jpg"; // 기본 확장자
-
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        log.info("파일 저장 완료: {}", filename);
-        return filename;
+        return UploadedImage.save(file, Paths.get(uploadDir));
     }
 }
 

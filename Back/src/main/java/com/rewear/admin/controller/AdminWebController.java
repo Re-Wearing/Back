@@ -62,7 +62,7 @@ public class AdminWebController {
         return "admin/users-list";
     }
 
-    @GetMapping("/users/delete/{id}")
+    @PostMapping("/users/delete/{id}")
     public String deleteUser(@PathVariable("id") Long id) {
         adminService.deleteUserById(id);
         return "redirect:/admin/users";

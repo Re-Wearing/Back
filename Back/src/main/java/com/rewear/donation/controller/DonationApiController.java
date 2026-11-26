@@ -1,5 +1,7 @@
 package com.rewear.donation.controller;
 
+import com.rewear.common.UploadedImage;
+
 import com.rewear.common.enums.MatchType;
 import com.rewear.delivery.service.DeliveryService;
 import com.rewear.donation.DonationForm;
@@ -26,15 +28,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,12 +62,6 @@ public class DonationApiController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 요청 데이터 로깅 (디버깅용)
-            log.info("기부 신청 API - 요청 데이터: itemType={}, itemDetail={}, itemSize={}, itemCondition={}, itemDescription={}, donationMethod={}, donationOrganizationId={}, images={}",
-                    requestDto.getItemType(), requestDto.getItemDetail(), requestDto.getItemSize(), 
-                    requestDto.getItemCondition(), requestDto.getItemDescription(), 
-                    requestDto.getDonationMethod(), requestDto.getDonationOrganizationId(),
-                    requestDto.getImages() != null ? requestDto.getImages().size() : 0);
             // 사용자 조회
             User donor = userService.findByUsername(principal.getUsername())
                     .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
@@ -108,14 +101,14 @@ public class DonationApiController {
                         }
                         savedImageUrls.add(imageUrl);
                     } catch (IOException e) {
-                        log.error("이미지 저장 실패", e);
+                        log.warn("Donation image could not be saved ({})", e.getClass().getSimpleName());
                         response.put("success", false);
-                        response.put("message", "이미지 저장에 실패했습니다: " + e.getMessage());
+                        response.put("message", "이미지 저장에 실패했습니다.");
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
                     } catch (IllegalArgumentException e) {
-                        log.error("이미지 처리 실패", e);
+                        log.warn("Donation image could not be processed");
                         response.put("success", false);
-                        response.put("message", "이미지 처리에 실패했습니다: " + e.getMessage());
+                        response.put("message", "이미지 형식이 올바르지 않습니다.");
                         return ResponseEntity.badRequest().body(response);
                     }
                 }
@@ -177,9 +170,9 @@ public class DonationApiController {
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
-            log.error("기부 신청 API - 오류 발생", e);
+            log.error("Donation creation failed ({})", e.getClass().getSimpleName());
             response.put("success", false);
-            response.put("message", "기부 신청 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "기부 신청 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -660,45 +653,7 @@ public class DonationApiController {
      * base64 이미지를 파일로 저장
      */
     private String saveBase64Image(String base64Image) throws IOException {
-        if (base64Image == null || base64Image.isEmpty()) {
-            throw new IllegalArgumentException("이미지 데이터가 없습니다.");
-        }
-        
-        // base64 데이터 URL 파싱 (data:image/jpeg;base64,/9j/4AAQ... 형식)
-        String base64Data = base64Image;
-        String extension = ".jpg"; // 기본 확장자
-        
-        if (base64Image.contains(",")) {
-            String[] parts = base64Image.split(",");
-            base64Data = parts[1];
-            
-            // MIME 타입에서 확장자 추출
-            String mimeType = parts[0];
-            if (mimeType.contains("image/png")) {
-                extension = ".png";
-            } else if (mimeType.contains("image/jpeg") || mimeType.contains("image/jpg")) {
-                extension = ".jpg";
-            } else if (mimeType.contains("image/gif")) {
-                extension = ".gif";
-            } else if (mimeType.contains("image/webp")) {
-                extension = ".webp";
-            }
-        }
-        
-        // base64 디코딩
-        byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Data);
-        
-        // 파일 저장
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-        
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-        Files.write(filePath, imageBytes);
-        
-        return filename;
+        return UploadedImage.saveBase64(base64Image, Paths.get(uploadDir));
     }
     
     /**

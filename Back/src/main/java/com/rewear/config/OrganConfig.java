@@ -7,7 +7,6 @@ import com.rewear.organ.repository.OrganRepository;
 import com.rewear.user.entity.User;
 import com.rewear.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 @Order(3) // UserConfig 이후 실행
@@ -28,27 +26,30 @@ public class OrganConfig implements ApplicationRunner {
     private final OrganRepository organRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${rewear.organ.username:organ}")
+    @Value("${rewear.organ.username}")
     private String organUsername;
 
-    @Value("${rewear.organ.password:organ}")
+    @Value("${rewear.organ.password}")
     private String organPassword;
 
-    @Value("${rewear.organ.business-no:1234567890}")
+    @Value("${rewear.organ.business-no}")
     private String businessNo;
 
-    @Value("${rewear.organ.org-name:테스트 기관}")
+    @Value("${rewear.organ.org-name}")
     private String orgName;
 
     @Value("${rewear.organ.reset-password:false}")
     private boolean resetPassword;
 
-    @Value("${rewear.organ.auto-approve:true}")
+    @Value("${rewear.organ.auto-approve:false}")
     private boolean autoApprove; // 자동 승인 여부
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        if (organUsername.isBlank() || organPassword.isBlank()) {
+            throw new IllegalStateException("Bootstrap username and password must be set for the organ account");
+        }
         userRepository.findByUsername(organUsername).ifPresentOrElse(u -> {
             boolean changed = false;
 
@@ -66,7 +67,6 @@ public class OrganConfig implements ApplicationRunner {
 
             if (changed) {
                 userRepository.save(u);
-                log.info("Updated organ user '{}': roles/password synced", organUsername);
             }
 
             // Organ 엔티티 확인 및 생성
@@ -75,9 +75,6 @@ public class OrganConfig implements ApplicationRunner {
                 if (autoApprove && organ.getStatus() != OrganStatus.APPROVED) {
                     organ.setStatus(OrganStatus.APPROVED);
                     organRepository.save(organ);
-                    log.info("Auto-approved organ for user '{}'", organUsername);
-                } else {
-                    log.info("Organ for user '{}' already exists with status: {}", organUsername, organ.getStatus());
                 }
             }, () -> {
                 // Organ이 없는 경우 생성
@@ -88,7 +85,6 @@ public class OrganConfig implements ApplicationRunner {
                         .status(autoApprove ? OrganStatus.APPROVED : OrganStatus.PENDING)
                         .build();
                 organRepository.save(organ);
-                log.info("Created organ for user '{}' with status: {}", organUsername, organ.getStatus());
             });
         }, () -> {
             // 새로 생성
@@ -106,7 +102,6 @@ public class OrganConfig implements ApplicationRunner {
             organUser.setRoles(EnumSet.of(Role.ORGAN));
 
             User savedUser = userRepository.save(organUser);
-            log.info("Seeded organ user '{}'", organUsername);
 
             // Organ 엔티티 생성
             Organ organ = Organ.builder()
@@ -116,7 +111,6 @@ public class OrganConfig implements ApplicationRunner {
                     .status(autoApprove ? OrganStatus.APPROVED : OrganStatus.PENDING)
                     .build();
             organRepository.save(organ);
-            log.info("Created organ for user '{}' with status: {}", organUsername, organ.getStatus());
         });
     }
 }

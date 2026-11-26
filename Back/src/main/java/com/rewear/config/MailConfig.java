@@ -47,6 +47,9 @@ public class MailConfig {
 
     @Bean
     public JavaMailSender javaMailSender() {
+        if (username.isBlank() || password.isBlank()) {
+            throw new IllegalStateException("SMTP username and password must be set");
+        }
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(host);
         mailSender.setPort(port);
@@ -58,18 +61,16 @@ public class MailConfig {
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.smtp.auth", auth);
         props.put("mail.smtp.starttls.enable", starttlsEnable);
+        props.put("mail.smtp.starttls.required", starttlsEnable);
 
         // 시간 관련 설정
         props.put("mail.smtp.connectiontimeout", connectionTimeout);
         props.put("mail.smtp.timeout", timeout);
         props.put("mail.smtp.writetimeout", writeTimeout);
         
-        // Gmail 전용 설정
-        props.put("mail.smtp.ssl.trust", host);
+        // SMTP TLS protocol
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
         
-        // 디버깅을 위한 로깅 활성화
-        props.put("mail.debug", "true");
 
         return mailSender;
     }

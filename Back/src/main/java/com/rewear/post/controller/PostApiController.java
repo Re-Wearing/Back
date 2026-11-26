@@ -1,5 +1,7 @@
 package com.rewear.post.controller;
 
+import com.rewear.common.UploadedImage;
+
 import com.rewear.common.enums.PostType;
 import com.rewear.post.dto.PostRequestDto;
 import com.rewear.post.dto.PostResponseDto;
@@ -22,8 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -630,44 +631,13 @@ public class PostApiController {
 
     // Base64 이미지를 파일로 저장
     private String saveBase64Image(String base64Image) {
+        if (base64Image == null || !base64Image.contains(",")) {
+            return null;
+        }
         try {
-            if (base64Image == null || base64Image.isEmpty()) {
-                return null;
-            }
-
-            // Base64 데이터 URL 형식: data:image/png;base64,iVBORw0KGgo...
-            String[] parts = base64Image.split(",");
-            if (parts.length != 2) {
-                log.warn("잘못된 Base64 이미지 형식");
-                return null;
-            }
-
-            String base64Data = parts[1];
-            String header = parts[0];
-            String extension = ".jpg";
-            if (header.contains("image/png")) {
-                extension = ".png";
-            } else if (header.contains("image/gif")) {
-                extension = ".gif";
-            }
-
-            byte[] imageBytes = Base64.getDecoder().decode(base64Data);
-            String filename = UUID.randomUUID().toString() + extension;
-
-            // 업로드 디렉토리 확인 및 생성
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // 파일 저장
-            Path filePath = uploadPath.resolve(filename);
-            Files.write(filePath, imageBytes);
-
-            log.info("Base64 이미지 저장 완료: {}", filename);
-            return filename;
-        } catch (Exception e) {
-            log.error("Base64 이미지 저장 실패", e);
+            return UploadedImage.saveBase64(base64Image, Paths.get(uploadDir));
+        } catch (IOException | IllegalArgumentException e) {
+            log.warn("Image upload failed ({})", e.getClass().getSimpleName());
             return null;
         }
     }

@@ -28,7 +28,7 @@ public class EmailController {
             authService.sendVerificationCode(normalizedEmail);
             return ResponseEntity.ok(Map.of("ok", true, "message", "인증코드가 발송되었습니다."));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("ok", false, "message", "이메일 발송에 실패했습니다: " + e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("ok", false, "message", "이메일 발송에 실패했습니다."));
         }
     }
 

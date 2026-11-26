@@ -1,5 +1,7 @@
 package com.rewear.donation.controller;
 
+import com.rewear.common.UploadedImage;
+
 import com.rewear.common.enums.MatchType;
 import com.rewear.delivery.service.DeliveryService;
 import com.rewear.donation.DonationForm;
@@ -29,7 +31,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -80,8 +81,8 @@ public class DonationController {
                         String imageUrl = saveImage(image);
                         savedImageUrls.add(imageUrl);
                         log.info("기부 신청 1단계 - 이미지 저장 완료: {}", imageUrl);
-                    } catch (IOException e) {
-                        log.error("이미지 저장 실패", e);
+                    } catch (IOException | IllegalArgumentException e) {
+                        log.warn("Donation image could not be saved ({})", e.getClass().getSimpleName());
                         bindingResult.rejectValue("images", "error.image", "이미지 저장에 실패했습니다.");
                         return "donation/apply-item";
                     }
@@ -97,8 +98,8 @@ public class DonationController {
                 // MultipartFile은 세션에 저장할 수 없으므로 null로 설정
                 itemForm.setImage(null);
                 log.info("기부 신청 1단계 - 이미지 저장 완료: {}", imageUrl);
-            } catch (IOException e) {
-                log.error("이미지 저장 실패", e);
+            } catch (IOException | IllegalArgumentException e) {
+                log.warn("Donation image could not be saved ({})", e.getClass().getSimpleName());
                 bindingResult.rejectValue("image", "error.image", "이미지 저장에 실패했습니다.");
                 return "donation/apply-item";
             }
@@ -220,20 +221,7 @@ public class DonationController {
     }
 
     private String saveImage(MultipartFile image) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = image.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        return filename;
+        return UploadedImage.save(image, Paths.get(uploadDir));
     }
 
     // REST API 엔드포인트는 DonationApiController로 이동됨

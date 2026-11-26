@@ -4,7 +4,6 @@ import com.rewear.common.enums.Role;
 import com.rewear.user.entity.User;
 import com.rewear.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -15,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 @Order(2) // AdminConfig 이후 실행
@@ -24,10 +22,10 @@ public class UserConfig implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${rewear.user.username:user}")
+    @Value("${rewear.user.username}")
     private String userUsername;
 
-    @Value("${rewear.user.password:user}")
+    @Value("${rewear.user.password}")
     private String userPassword;
 
     @Value("${rewear.user.reset-password:false}")
@@ -36,6 +34,9 @@ public class UserConfig implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        if (userUsername.isBlank() || userPassword.isBlank()) {
+            throw new IllegalStateException("Bootstrap username and password must be set for the user account");
+        }
         userRepository.findByUsername(userUsername).ifPresentOrElse(u -> {
             boolean changed = false;
 
@@ -53,9 +54,6 @@ public class UserConfig implements ApplicationRunner {
 
             if (changed) {
                 userRepository.save(u);
-                log.info("Updated user '{}': roles/password synced", userUsername);
-            } else {
-                log.info("User '{}' already up-to-date", userUsername);
             }
         }, () -> {
             // 새로 생성
@@ -73,7 +71,6 @@ public class UserConfig implements ApplicationRunner {
             user.setRoles(EnumSet.of(Role.USER));
 
             userRepository.save(user);
-            log.info("Seeded user '{}'", userUsername);
         });
     }
 }

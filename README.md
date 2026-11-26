@@ -86,82 +86,41 @@ RE_WEAR/
 └── README.md                # 프로젝트 메인 README
 ```
 
-## 🚀 시작하기
+## 시작하기
 
-### 사전 요구사항
+백엔드는 Java 21, Spring Boot 3.3.0, Spring Security, Spring Data JPA, MySQL 8.0, Gradle Wrapper를 사용합니다. React 개발 서버를 사용하려면 Node.js도 설치합니다.
 
-- **Java**: 21 이상
-- **Node.js**: 최신 LTS 버전
-- **MySQL**: 8.0 이상
-- **Gradle**: 7.x 이상 (또는 Gradle Wrapper 사용)
+### 격리된 로컬 DB
 
-### 설치 및 실행
+MySQL에서 별도의 빈 개발용 스키마와 해당 스키마에만 권한이 있는 전용 계정을 준비합니다. 비밀번호는 실행 환경에서 생성하고 비밀 저장소나 IDE 실행 구성으로 주입합니다. 기본 스키마 검증 모드는 validate입니다. 빈 로컬 개발 스키마를 초기화할 때만 DB_DDL_AUTO=update를 설정합니다.
 
-#### 1. 데이터베이스 설정
+### 환경변수
 
-MySQL 데이터베이스를 생성하고 설정합니다:
+| 환경변수 | 설정값 |
+| --- | --- |
+| DB_URL | 로컬 전용 MySQL JDBC URL. 예시는 jdbc:mysql://localhost:3306/rewear_dev |
+| DB_USERNAME, DB_PASSWORD | 개발용 DB 계정과 비밀번호 |
+| SPRING_MAIL_USERNAME, SPRING_MAIL_PASSWORD | 전용 테스트 SMTP 계정과 자격증명 |
+| REWEAR_ADMIN_USERNAME, REWEAR_ADMIN_PASSWORD | 앱 초기화용 관리자 계정 |
+| REWEAR_ADMIN_EMAIL, REWEAR_ADMIN_PHONE | 로컬 관리자의 테스트 연락처 |
+| REWEAR_USER_USERNAME, REWEAR_USER_PASSWORD | 앱 초기화용 일반 사용자 계정 |
+| REWEAR_ORGAN_USERNAME, REWEAR_ORGAN_PASSWORD | 앱 초기화용 기관 계정 |
+| REWEAR_ORGAN_BUSINESS_NO, REWEAR_ORGAN_NAME | 초기 기관의 테스트 사업자번호와 이름 |
+| REWEAR_ADMIN_RESET_PASSWORD, REWEAR_USER_RESET_PASSWORD, REWEAR_ORGAN_RESET_PASSWORD | 기본값 false. 의도적으로 초기 계정의 비밀번호를 교체할 때만 true |
+| REWEAR_ORGAN_AUTO_APPROVE | 기본값 false. 기존 로컬 데모처럼 초기 기관을 즉시 승인하려면 true |
 
-```sql
-CREATE DATABASE rewear CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'rewear'@'localhost' IDENTIFIED BY 'admin';
-GRANT ALL PRIVILEGES ON rewear.* TO 'rewear'@'localhost';
-FLUSH PRIVILEGES;
-```
+세 초기화 계정의 아이디는 서로 달라야 하며 기존 일반 계정과 겹치지 않는 값을 사용합니다. 앱은 최초 생성 또는 사용자가 명시한 재설정 시 비밀번호를 BCrypt로 해시합니다. Spring Boot에 환경변수를 직접 전달합니다. .env 파일은 자동으로 로드되지 않습니다.
 
-#### 2. Backend 설정
+### 실행 및 테스트
 
-```bash
-cd Back
+1. 이 표에 있는 값을 백엔드 프로세스 환경에 주입합니다.
+2. Back 디렉터리에서 Windows는 .\gradlew.bat bootRun, macOS와 Linux는 ./gradlew bootRun을 실행합니다. 백엔드 기본 포트는 8080입니다.
+3. React 화면을 쓰려면 Front에서 npm ci와 npm run dev를 실행합니다. Vite는 /api와 /uploads를 백엔드로 프록시합니다.
+4. Back에서 .\gradlew.bat test 또는 ./gradlew test를 실행합니다. 전체 컨텍스트 테스트는 격리된 인메모리 H2 DB를 사용하며 실제 메일을 발송하지 않습니다. 보안 필터만 검증하려면 .\gradlew.bat test --tests com.rewear.config.SecurityConfigTests로 실행합니다.
 
-# application.properties 파일 수정
-# 데이터베이스 연결 정보 및 이메일 설정 확인
+세션 API의 쓰기 요청은 GET /api/csrf에서 받은 헤더 이름과 토큰을 동일 세션으로 전송합니다. 로그인·로그아웃 후에는 토큰을 새로 받아야 합니다. 브라우저 외부 클라이언트는 두 요청 사이에 세션 쿠키를 유지합니다.
 
-# Gradle Wrapper를 사용하여 빌드 및 실행
-./gradlew build
-./gradlew bootRun
-
-# 또는 Windows의 경우
-gradlew.bat build
-gradlew.bat bootRun
-```
-
-백엔드 서버는 기본적으로 `http://localhost:8080`에서 실행됩니다.
-
-#### 3. Frontend 설정
-
-```bash
-cd Front
-
-# 의존성 설치
-npm install
-
-# 개발 서버 실행
-npm run dev
-
-# 프로덕션 빌드
-npm run build
-```
-
-프론트엔드 개발 서버는 기본적으로 `http://localhost:5174`에서 실행됩니다.
-
-## ⚙️ 환경 설정
-
-### Backend (application.properties)
-
-주요 설정 항목:
-
-- **데이터베이스**: MySQL 연결 정보
-- **이메일**: Gmail SMTP 설정
-- **파일 업로드**: 최대 파일 크기 및 업로드 디렉토리
-- **로그**: 로그 레벨 및 파일 저장 경로
-
-### 기본 계정
-
-프로젝트 실행 시 다음 기본 계정이 생성됩니다:
-
-- **관리자**: `admin` / `admin`
-- **일반 사용자**: `user01` / `user01`
-- **기관**: `organ01` / `organ01` (사업자번호: `1234567890`)
+UUID 이름의 JPEG, PNG, GIF, WebP 이미지 URL은 게시판 동작을 위해 공개 제공됩니다. 개인 식별정보나 비공개 문서를 이 업로드 경로에 저장하지 마세요.
 
 ## 📝 주요 기능 상세
 
