@@ -351,8 +351,6 @@ public class DonationServiceImpl implements DonationService {
                 // organ을 다시 조회하여 User 정보를 확실히 로드
                 if (organ.getUser() != null && organ.getUser().getId() != null) {
                     organUser = userService.getUserById(organ.getUser().getId());
-                    log.info("기관 User 정보 조회 성공 - organId: {}, userId: {}, phone: {}, address: {}", 
-                        organ.getId(), organUser.getId(), organUser.getPhone(), organUser.getAddress());
                 }
             } catch (Exception e) {
                 log.warn("기관 User 정보 조회 실패: {}", e.getMessage());
@@ -387,8 +385,6 @@ public class DonationServiceImpl implements DonationService {
                     receiverPostalCode = organUser.getAddressPostcode();
                 }
                 
-                log.info("기관 배송 정보 설정 - 기관명: {}, 전화번호: {}, 주소: {}, 우편번호: {}", 
-                    organ.getOrgName(), receiverPhone, receiverAddress, receiverPostalCode);
             } else {
                 log.warn("기관 User 정보를 찾을 수 없습니다. organId: {}", organ.getId());
             }
@@ -421,8 +417,6 @@ public class DonationServiceImpl implements DonationService {
                 // organ을 다시 조회하여 User 정보를 확실히 로드
                 if (organ.getUser() != null && organ.getUser().getId() != null) {
                     organUser = userService.getUserById(organ.getUser().getId());
-                    log.info("기관 User 정보 조회 성공 (업데이트) - organId: {}, userId: {}, phone: {}, address: {}", 
-                        organ.getId(), organUser.getId(), organUser.getPhone(), organUser.getAddress());
                 }
             } catch (Exception e) {
                 log.warn("기관 User 정보 조회 실패 (업데이트): {}", e.getMessage());
