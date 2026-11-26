@@ -40,6 +40,8 @@
         .modal h3{margin:0 0 12px;font-size:18px}
         .type-btn{display:block;width:100%;text-align:center;padding:12px;border:1px solid var(--bd);border-radius:12px;background:#fff;cursor:pointer}
     </style>
+    <meta name="csrf-token" th:content="${_csrf.token}">
+    <meta name="csrf-header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <div class="wrap">
@@ -274,6 +276,7 @@
                 method: "POST",
                 credentials: "same-origin",
                 headers: {
+                    [document.querySelector('meta[name="csrf-header"]').content]: document.querySelector('meta[name="csrf-token"]').content,
                     "Content-Type": "application/json",
                     [CSRF_HEADER]: CSRF_TOKEN
                 },
@@ -307,6 +310,7 @@
                 method: "POST",
                 credentials: "same-origin",
                 headers: {
+                    [document.querySelector('meta[name="csrf-header"]').content]: document.querySelector('meta[name="csrf-token"]').content,
                     "Content-Type": "application/json",
                     [CSRF_HEADER]: CSRF_TOKEN
                 },

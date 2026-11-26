@@ -3,14 +3,12 @@ package com.rewear.email.service;
 import com.rewear.email.EmailVerification;
 import com.rewear.email.Repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailVerifiedService {
@@ -40,7 +38,6 @@ public class EmailVerifiedService {
         String subject = "[RE:WEAR] 이메일 인증코드";
         String body = createVerificationEmailHtml(code);
         emailService.sendEmail(email, subject, body);
-        log.info("[DEV] email={}, code={}", email, code);
     }
 
     private String createVerificationEmailHtml(String code) {

@@ -1,3 +1,4 @@
+import fetch from '../apiFetch'
 import { useState, useEffect } from 'react'
 import HeaderLanding from '../components/HeaderLanding'
 

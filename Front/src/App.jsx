@@ -1,3 +1,4 @@
+import fetch from './apiFetch'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import IntroLanding from './pages/IntroLanding'
 import SignupPage from './pages/SignupPage'
@@ -903,7 +904,14 @@ export default function App() {
   }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/logout", { method: "POST" })
+      if (!response.ok) throw new Error("Logout failed")
+    } catch {
+      window.alert("로그아웃하지 못했습니다. 다시 시도해 주세요.")
+      return
+    }
     setCurrentUser(null)
     setUnreadCount(0) // 로그아웃 시 알림 횟수 초기화
     if (typeof window !== 'undefined') {

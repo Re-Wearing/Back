@@ -18,6 +18,8 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -34,14 +36,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/", "/main", "/login", "/signup",
-                                "/css/**", "/js/**", "/images/**", "/fragments/**", "/uploads/**").permitAll()
+                                "/css/**", "/js/**", "/images/**", "/fragments/**").permitAll()
                         // API 인증 관련 엔드포인트 (가장 먼저 체크 - 순서 중요!)
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(new RegexRequestMatcher(
+                                "(?i)^/uploads/[a-f0-9-]{36}\\.(jpe?g|png|gif|webp)(?:\\?.*)?$", "GET")).permitAll()
+                        .requestMatchers("/uploads/**").denyAll()
+                        .requestMatchers(HttpMethod.GET, "/api/csrf").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/send-verification", "/api/auth/verify-code").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/signup/organ").permitAll()
@@ -84,8 +89,16 @@ public class SecurityConfig {
                 )
 
                 .logout(out -> out
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
+                        .logoutRequestMatcher(request -> "POST".equals(request.getMethod())
+                                && (request.getRequestURI().equals(request.getContextPath() + "/logout")
+                                || request.getRequestURI().equals(request.getContextPath() + "/api/logout")))
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            if (request.getRequestURI().equals(request.getContextPath() + "/api/logout")) {
+                                response.setStatus(204);
+                            } else {
+                                response.sendRedirect(request.getContextPath() + "/");
+                            }
+                        })
                         .permitAll()
                 )
 
@@ -100,6 +113,12 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
+            if (request.getRequestURI().substring(request.getContextPath().length()).startsWith("/api/")) {
+                response.setStatus(403);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"ok\":false,\"message\":\"요청 권한이 없습니다.\"}");
+                return;
+            }
             request.getSession().setAttribute("error", "접근 권한이 없습니다. 필요한 권한이 있는 계정으로 로그인해주세요.");
             response.sendRedirect(request.getContextPath() + "/main");
         };

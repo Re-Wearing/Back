@@ -1,5 +1,7 @@
 package com.rewear.post.service;
 
+import com.rewear.common.UploadedImage;
+
 import com.rewear.common.enums.PostType;
 import com.rewear.organ.entity.Organ;
 import com.rewear.organ.service.OrganService;
@@ -20,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
@@ -376,30 +377,21 @@ public class PostServiceImpl implements PostService {
     }
 
     private String saveImage(MultipartFile image) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = image.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        return filename;
+        return UploadedImage.save(image, Paths.get(uploadDir));
     }
 
     private void deleteImage(String imagePath) {
         try {
-            Path filePath = Paths.get(uploadDir).resolve(imagePath);
+            Path directory = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path filePath = directory.resolve(imagePath).normalize();
+            if (!directory.equals(filePath.getParent())) {
+                return;
+            }
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
             }
         } catch (IOException e) {
-            log.error("이미지 삭제 실패: " + imagePath, e);
+            log.warn("Image deletion failed ({})", e.getClass().getSimpleName());
         }
     }
 }

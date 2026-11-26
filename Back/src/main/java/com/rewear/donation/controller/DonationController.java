@@ -1,5 +1,7 @@
 package com.rewear.donation.controller;
 
+import com.rewear.common.UploadedImage;
+
 import com.rewear.common.enums.MatchType;
 import com.rewear.delivery.service.DeliveryService;
 import com.rewear.donation.DonationForm;
@@ -29,7 +31,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -220,20 +221,7 @@ public class DonationController {
     }
 
     private String saveImage(MultipartFile image) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = image.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : "";
-        String filename = UUID.randomUUID().toString() + extension;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        return filename;
+        return UploadedImage.save(image, Paths.get(uploadDir));
     }
 
     // REST API 엔드포인트는 DonationApiController로 이동됨
